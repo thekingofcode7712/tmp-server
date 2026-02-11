@@ -175,3 +175,127 @@
     }
   }
 }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: oklch(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(var(--muted-foreground));
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Game canvas styling */
+.game-canvas {
+  border: 2px solid oklch(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Email editor */
+.email-editor {
+  min-height: 300px;
+  border: 1px solid oklch(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+/* CLI terminal */
+.cli-terminal {
+  font-family: 'Courier New', monospace;
+  background: oklch(var(--card));
+  border: 1px solid oklch(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+  min-height: 400px;
+  overflow-y: auto;
+}
+
+.cli-prompt {
+  color: oklch(var(--primary));
+}
+
+.cli-output {
+  color: oklch(var(--foreground));
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Storage bar */
+.storage-bar {
+  height: 8px;
+  background: oklch(var(--muted));
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.storage-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, oklch(var(--primary)), oklch(var(--accent)));
+  transition: width 0.3s ease;
+}
+
+.storage-bar-fill.warning {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+/* File upload drop zone */
+.drop-zone {
+  border: 2px dashed oklch(var(--border));
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.drop-zone.active {
+  border-color: oklch(var(--primary));
+  background: oklch(var(--primary) / 0.1);
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}

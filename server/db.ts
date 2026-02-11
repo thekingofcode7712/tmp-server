@@ -1,11 +1,17 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { 
+  InsertUser, users, files, InsertFile, links, InsertLink,
+  emailAccounts, InsertEmailAccount, emails, InsertEmail,
+  gameScores, InsertGameScore, subscriptions, InsertSubscription,
+  payments, InsertPayment, aiChats, InsertAiChat,
+  cliHistory, InsertCliHistory, videoDownloads, InsertVideoDownload,
+  backups, InsertBackup
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -17,6 +23,8 @@ export async function getDb() {
   }
   return _db;
 }
+
+// ===== USER OPERATIONS =====
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
@@ -85,8 +93,361 @@ export async function getUserByOpenId(openId: string) {
   }
 
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateUserStorage(userId: number, storageUsed: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ storageUsed }).where(eq(users.id, userId));
+}
+
+export async function updateUserSubscription(userId: number, tier: string, storageLimit: number, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({
+    subscriptionTier: tier as any,
+    storageLimit,
+    subscriptionExpiresAt: expiresAt
+  }).where(eq(users.id, userId));
+}
+
+export async function updateUserAICredits(userId: number, credits: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ aiCredits: credits }).where(eq(users.id, userId));
+}
+
+export async function updateUserCustomization(userId: number, customization: { hasCustomization: boolean, customLogo?: string, customColors?: any, customTheme?: string }) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set(customization).where(eq(users.id, userId));
+}
+
+// ===== FILE OPERATIONS =====
+
+export async function createFile(file: InsertFile) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(files).values(file);
+  return result;
+}
+
+export async function getUserFiles(userId: number, folder?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (folder) {
+    return await db.select().from(files)
+      .where(and(eq(files.userId, userId), eq(files.folder, folder), eq(files.isDeleted, false)))
+      .orderBy(desc(files.createdAt));
+  }
+  
+  return await db.select().from(files)
+    .where(and(eq(files.userId, userId), eq(files.isDeleted, false)))
+    .orderBy(desc(files.createdAt));
+}
+
+export async function deleteFile(fileId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(files).set({ isDeleted: true }).where(and(eq(files.id, fileId), eq(files.userId, userId)));
+}
+
+export async function getFileById(fileId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(files).where(eq(files.id, fileId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+// ===== LINK OPERATIONS =====
+
+export async function createLink(link: InsertLink) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(links).values(link);
+  return result;
+}
+
+export async function getUserLinks(userId: number, linkType?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (linkType) {
+    return await db.select().from(links)
+      .where(and(eq(links.userId, userId), eq(links.linkType, linkType as any)))
+      .orderBy(desc(links.createdAt));
+  }
+  
+  return await db.select().from(links)
+    .where(eq(links.userId, userId))
+    .orderBy(desc(links.createdAt));
+}
+
+export async function deleteLink(linkId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(links).where(and(eq(links.id, linkId), eq(links.userId, userId)));
+}
+
+// ===== EMAIL OPERATIONS =====
+
+export async function createEmailAccount(account: InsertEmailAccount) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(emailAccounts).values(account);
+  return result;
+}
+
+export async function getEmailAccountByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(emailAccounts).where(eq(emailAccounts.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getEmailAccountByEmail(emailAddress: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(emailAccounts).where(eq(emailAccounts.emailAddress, emailAddress)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function createEmail(email: InsertEmail) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(emails).values(email);
+  return result;
+}
+
+export async function getEmailsByFolder(emailAccountId: number, folder: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(emails)
+    .where(and(eq(emails.emailAccountId, emailAccountId), eq(emails.folder, folder as any)))
+    .orderBy(desc(emails.createdAt));
+}
+
+export async function getEmailById(emailId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(emails).where(eq(emails.id, emailId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateEmail(emailId: number, updates: Partial<InsertEmail>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(emails).set(updates).where(eq(emails.id, emailId));
+}
+
+export async function deleteEmail(emailId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(emails).where(eq(emails.id, emailId));
+}
+
+// ===== GAME OPERATIONS =====
+
+export async function createGameScore(score: InsertGameScore) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(gameScores).values(score);
+  return result;
+}
+
+export async function getGameLeaderboard(gameName: string, limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select({
+    id: gameScores.id,
+    userId: gameScores.userId,
+    userName: users.name,
+    score: gameScores.score,
+    level: gameScores.level,
+    duration: gameScores.duration,
+    createdAt: gameScores.createdAt
+  })
+    .from(gameScores)
+    .leftJoin(users, eq(gameScores.userId, users.id))
+    .where(eq(gameScores.gameName, gameName))
+    .orderBy(desc(gameScores.score))
+    .limit(limit);
+}
+
+export async function getUserGameScores(userId: number, gameName?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (gameName) {
+    return await db.select().from(gameScores)
+      .where(and(eq(gameScores.userId, userId), eq(gameScores.gameName, gameName)))
+      .orderBy(desc(gameScores.score));
+  }
+  
+  return await db.select().from(gameScores)
+    .where(eq(gameScores.userId, userId))
+    .orderBy(desc(gameScores.createdAt));
+}
+
+// ===== SUBSCRIPTION & PAYMENT OPERATIONS =====
+
+export async function createSubscription(subscription: InsertSubscription) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(subscriptions).values(subscription);
+  return result;
+}
+
+export async function getActiveSubscription(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(subscriptions)
+    .where(and(eq(subscriptions.userId, userId), eq(subscriptions.status, "active")))
+    .orderBy(desc(subscriptions.createdAt))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateSubscription(subscriptionId: number, updates: Partial<InsertSubscription>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(subscriptions).set(updates).where(eq(subscriptions.id, subscriptionId));
+}
+
+export async function createPayment(payment: InsertPayment) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(payments).values(payment);
+  return result;
+}
+
+export async function getUserPayments(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(payments)
+    .where(eq(payments.userId, userId))
+    .orderBy(desc(payments.createdAt));
+}
+
+// ===== AI CHAT OPERATIONS =====
+
+export async function createAIChat(chat: InsertAiChat) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(aiChats).values(chat);
+  return result;
+}
+
+export async function getAIChat(chatId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(aiChats).where(eq(aiChats.id, chatId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateAIChat(chatId: number, messages: any, creditsUsed: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(aiChats).set({ messages, creditsUsed, updatedAt: new Date() }).where(eq(aiChats.id, chatId));
+}
+
+export async function getUserAIChats(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(aiChats)
+    .where(eq(aiChats.userId, userId))
+    .orderBy(desc(aiChats.updatedAt));
+}
+
+// ===== CLI HISTORY OPERATIONS =====
+
+export async function createCliHistory(history: InsertCliHistory) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(cliHistory).values(history);
+  return result;
+}
+
+export async function getUserCliHistory(userId: number, limit: number = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(cliHistory)
+    .where(eq(cliHistory.userId, userId))
+    .orderBy(desc(cliHistory.executedAt))
+    .limit(limit);
+}
+
+// ===== VIDEO DOWNLOAD OPERATIONS =====
+
+export async function createVideoDownload(download: InsertVideoDownload) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(videoDownloads).values(download);
+  return result;
+}
+
+export async function getVideoDownload(downloadId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(videoDownloads).where(eq(videoDownloads.id, downloadId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateVideoDownload(downloadId: number, updates: Partial<InsertVideoDownload>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(videoDownloads).set(updates).where(eq(videoDownloads.id, downloadId));
+}
+
+export async function getUserVideoDownloads(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(videoDownloads)
+    .where(eq(videoDownloads.userId, userId))
+    .orderBy(desc(videoDownloads.createdAt));
+}
+
+// ===== BACKUP OPERATIONS =====
+
+export async function createBackup(backup: InsertBackup) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(backups).values(backup);
+  return result;
+}
+
+export async function getBackup(backupId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(backups).where(eq(backups.id, backupId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateBackup(backupId: number, updates: Partial<InsertBackup>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(backups).set(updates).where(eq(backups.id, backupId));
+}
+
+export async function getUserBackups(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(backups)
+    .where(eq(backups.userId, userId))
+    .orderBy(desc(backups.createdAt));
+}
+
+export async function deleteBackup(backupId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(backups).where(and(eq(backups.id, backupId), eq(backups.userId, userId)));
+}
