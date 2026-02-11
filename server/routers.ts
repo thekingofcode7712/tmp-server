@@ -541,7 +541,7 @@ export const appRouter = router({
             },
           ],
           mode: product.interval ? 'subscription' : 'payment',
-          success_url: `${origin}/?success=true`,
+          success_url: `${origin}/checkout-success`,
           cancel_url: `${origin}/subscription?canceled=true`,
           client_reference_id: ctx.user.id.toString(),
           customer_email: ctx.user.email || undefined,

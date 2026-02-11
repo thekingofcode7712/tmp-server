@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
-import { ArrowLeft, Send, Bot } from "lucide-react";
+import { ArrowLeft, Send, Bot, Plus } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -61,8 +61,16 @@ export default function AIChat() {
                 <p className="text-sm text-muted-foreground">Chat with AI assistant</p>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {user?.aiCredits || 0} credits
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-muted-foreground">
+                {user?.aiCredits || 0} credits
+              </div>
+              <Link href="/buy-credits">
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Buy
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

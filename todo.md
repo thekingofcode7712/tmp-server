@@ -226,3 +226,27 @@
 - [ ] Add real backup creation and restoration logic
 - [ ] Complete all email functionality with proper internal routing
 - [ ] Remove any "coming soon" or placeholder messages
+
+### Subscription Plan Update Issue
+- [ ] Fix subscription plan not updating in UI after Stripe checkout
+- [ ] Ensure webhook properly updates user subscription tier
+- [ ] Add success redirect page that refreshes user data
+
+### Implement Remaining 10 Games
+- [ ] Space Invaders - enemy waves, shooting, collision
+- [ ] Sudoku - number puzzle with validation
+- [ ] Solitaire - card game with drag and drop
+- [ ] Chess - full chess rules and piece movement
+- [ ] Checkers - board game with jump mechanics
+- [ ] Pac-Man - maze navigation, ghosts AI
+- [ ] Platformer - jumping, platforms, obstacles
+- [ ] Racing - car controls, track, lap timing
+- [ ] Puzzle - tile sliding or matching puzzle
+- [ ] Trivia Quiz - questions database, scoring
+
+### AI Credit Purchase Options
+- [ ] Add 1000 credits for £4.99
+- [ ] Add 3000 credits for £5.99
+- [ ] Add 10000 credits for £12.99
+- [ ] Create credit purchase page/section
+- [ ] Implement credit purchase Stripe checkout

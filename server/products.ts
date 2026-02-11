@@ -66,6 +66,29 @@ export const PRODUCTS = {
     currency: "gbp",
     interval: null, // One-time payment
   },
+
+  // AI Credit Packs
+  "credits_1000": {
+    name: "1000 AI Credits",
+    price: 499, // £4.99
+    currency: "gbp",
+    interval: null,
+    credits: 1000,
+  },
+  "credits_3000": {
+    name: "3000 AI Credits",
+    price: 599, // £5.99
+    currency: "gbp",
+    interval: null,
+    credits: 3000,
+  },
+  "credits_10000": {
+    name: "10000 AI Credits",
+    price: 1299, // £12.99
+    currency: "gbp",
+    interval: null,
+    credits: 10000,
+  },
 } as const;
 
 export type ProductId = keyof typeof PRODUCTS;

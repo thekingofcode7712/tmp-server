@@ -16,6 +16,8 @@ import CLI from "./pages/CLI";
 import Settings from "./pages/Settings";
 import Subscription from "./pages/Subscription";
 import Backups from "./pages/Backups";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import BuyCredits from "./pages/BuyCredits";
 
 function Router() {
   return (
@@ -32,6 +34,8 @@ function Router() {
       <Route path={"/settings"} component={Settings} />
       <Route path={"/subscription"} component={Subscription} />
       <Route path={"/backups"} component={Backups} />
+      <Route path={"/buy-credits"} component={BuyCredits} />
+      <Route path={"/checkout-success"} component={CheckoutSuccess} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

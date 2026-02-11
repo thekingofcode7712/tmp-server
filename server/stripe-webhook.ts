@@ -110,6 +110,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
+  // Handle credit purchases
+  if (planId.startsWith("credits_")) {
+    if ('credits' in product && typeof product.credits === 'number') {
+      const user = await db.getUserById(userIdNum);
+      if (user) {
+        await db.updateUserAICredits(userIdNum, user.aiCredits + product.credits);
+        console.log(`[Webhook] Added ${product.credits} credits for user ${userIdNum}`);
+      }
+    }
+    return;
+  }
+
   // Handle subscriptions
   if (session.subscription) {
     const subscriptionId = session.subscription as string;
