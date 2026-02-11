@@ -385,3 +385,11 @@
 - [x] Upload backup zip to S3
 - [x] Restore files from backup zip to S3
 - [ ] Test complete backup and restore workflow
+
+### Flexible Pay-What-You-Want Subscription
+- [x] Add custom amount input field to subscription page
+- [x] Set minimum amount (e.g., £1.00) for flexible subscription
+- [x] Create Stripe checkout with custom pricing
+- [x] Map flexible subscription to appropriate storage tier based on amount
+- [x] Update subscription page UI with flexible option
+- [ ] Test flexible subscription checkout flow

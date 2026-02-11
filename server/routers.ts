@@ -704,7 +704,10 @@ export const appRouter = router({
   // Payment & Stripe
   payment: router({
     createCheckout: protectedProcedure
-      .input(z.object({ planId: z.string() }))
+      .input(z.object({ 
+        planId: z.string(),
+        customAmount: z.number().optional()
+      }))
       .mutation(async ({ ctx, input }) => {
         const Stripe = (await import('stripe')).default;
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -712,10 +715,25 @@ export const appRouter = router({
         });
 
         const { PRODUCTS } = await import('./products');
-        const product = PRODUCTS[input.planId as keyof typeof PRODUCTS];
         
-        if (!product) {
-          throw new Error('Invalid plan');
+        let product;
+        let productName = '';
+        let productPrice = 0;
+        let interval: 'month' | undefined;
+        
+        if (input.planId === 'flexible' && input.customAmount) {
+          // Flexible subscription with custom amount
+          productName = `Flexible Subscription (£${input.customAmount}/month)`;
+          productPrice = Math.round(input.customAmount * 100); // Convert to cents
+          interval = 'month';
+        } else {
+          product = PRODUCTS[input.planId as keyof typeof PRODUCTS];
+          if (!product) {
+            throw new Error('Invalid plan');
+          }
+          productName = product.name;
+          productPrice = product.price;
+          interval = product.interval || undefined;
         }
 
         const origin = ctx.req.headers.origin || 'http://localhost:3000';
@@ -725,17 +743,17 @@ export const appRouter = router({
           line_items: [
             {
               price_data: {
-                currency: product.currency,
+                currency: 'gbp',
                 product_data: {
-                  name: product.name,
+                  name: productName,
                 },
-                unit_amount: product.price,
-                ...(product.interval ? { recurring: { interval: product.interval } } : {}),
+                unit_amount: productPrice,
+                ...(interval ? { recurring: { interval } } : {}),
               },
               quantity: 1,
             },
           ],
-          mode: product.interval ? 'subscription' : 'payment',
+          mode: interval ? 'subscription' : 'payment',
           success_url: `${origin}/checkout-success`,
           cancel_url: `${origin}/subscription?canceled=true`,
           client_reference_id: ctx.user.id.toString(),

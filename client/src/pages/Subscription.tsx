@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -19,6 +21,7 @@ const plans = [
 
 export default function Subscription() {
   const { user } = useAuth();
+  const [customAmount, setCustomAmount] = useState<string>("");
 
   const createCheckoutMutation = trpc.payment.createCheckout.useMutation({
     onSuccess: (data) => {
@@ -39,6 +42,16 @@ export default function Subscription() {
     }
 
     createCheckoutMutation.mutate({ planId });
+  };
+
+  const handleFlexibleSubscribe = () => {
+    const amount = parseFloat(customAmount);
+    if (isNaN(amount) || amount < 1) {
+      toast.error("Please enter a valid amount (minimum £1.00)");
+      return;
+    }
+
+    createCheckoutMutation.mutate({ planId: "flexible", customAmount: amount });
   };
 
   return (
@@ -67,6 +80,71 @@ export default function Subscription() {
           </p>
         </div>
 
+        {/* Flexible Pay-What-You-Want Option */}
+        <Card className="mb-8 border-2 border-primary bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Flexible Subscription
+            </CardTitle>
+            <CardDescription>Pay what you want - Choose your own monthly amount</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Support TMP Server with a custom monthly amount. Storage and AI credits scale with your contribution.
+                </p>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">£</span>
+                    <Input
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      placeholder="Enter amount"
+                      value={customAmount}
+                      onChange={(e) => setCustomAmount(e.target.value)}
+                      className="pl-7"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleFlexibleSubscribe}
+                    disabled={createCheckoutMutation.isPending || !customAmount}
+                  >
+                    {createCheckoutMutation.isPending ? "Loading..." : "Subscribe"}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Minimum: £1.00/month • Storage: ~{customAmount ? Math.floor(parseFloat(customAmount) * 10) : 0}GB
+                </p>
+              </div>
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-2 text-sm">What you get:</h4>
+                <ul className="space-y-1 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary" />
+                    Storage scales with amount (~10GB per £1)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary" />
+                    AI Credits scale with amount (~1000 per £1)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary" />
+                    All premium features included
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-primary" />
+                    Priority support
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <h3 className="text-xl font-bold mb-4">Or choose a preset plan:</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {plans.map((plan) => (
             <Card key={plan.id} className={user?.subscriptionTier === plan.id ? "border-primary" : ""}>
