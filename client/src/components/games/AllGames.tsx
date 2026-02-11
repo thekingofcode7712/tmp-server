@@ -1425,3 +1425,441 @@ export function BreakoutGame({ onScoreUpdate, onGameOver }: { onScoreUpdate: (sc
     </div>
   );
 }
+
+// Space Invaders Game
+export function SpaceInvadersGame({ onScoreUpdate, onGameOver }: { onScoreUpdate: (score: number) => void; onGameOver: (score: number) => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [gameStarted, setGameStarted] = useState(false);
+  const gameStateRef = useRef({
+    player: { x: 200, y: 550, width: 40, height: 30 },
+    bullets: [] as Array<{ x: number; y: number }>,
+    enemies: [] as Array<{ x: number; y: number; alive: boolean }>,
+    enemyBullets: [] as Array<{ x: number; y: number }>,
+    score: 0,
+    gameOver: false,
+    direction: 1,
+  });
+
+  useEffect(() => {
+    if (!canvasRef.current || !gameStarted) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const state = gameStateRef.current;
+
+    // Initialize enemies
+    if (state.enemies.length === 0) {
+      for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 8; col++) {
+          state.enemies.push({ x: col * 50 + 50, y: row * 40 + 50, alive: true });
+        }
+      }
+    }
+
+    const draw = () => {
+      ctx.fillStyle = "oklch(0.1 0 0)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw player
+      ctx.fillStyle = "oklch(0.7 0.25 142)";
+      ctx.fillRect(state.player.x, state.player.y, state.player.width, state.player.height);
+
+      // Draw enemies
+      ctx.fillStyle = "oklch(0.65 0.25 29)";
+      state.enemies.forEach((enemy) => {
+        if (enemy.alive) {
+          ctx.fillRect(enemy.x, enemy.y, 30, 30);
+        }
+      });
+
+      // Draw bullets
+      ctx.fillStyle = "oklch(0.9 0 0)";
+      state.bullets.forEach((bullet) => {
+        ctx.fillRect(bullet.x, bullet.y, 3, 10);
+      });
+
+      // Draw enemy bullets
+      ctx.fillStyle = "oklch(0.65 0.25 0)";
+      state.enemyBullets.forEach((bullet) => {
+        ctx.fillRect(bullet.x, bullet.y, 3, 10);
+      });
+
+      // Draw score
+      ctx.fillStyle = "oklch(0.9 0 0)";
+      ctx.font = "16px monospace";
+      ctx.fillText(`Score: ${state.score}`, 10, 20);
+    };
+
+    const update = () => {
+      // Move bullets
+      state.bullets = state.bullets.filter((bullet) => {
+        bullet.y -= 5;
+        return bullet.y > 0;
+      });
+
+      // Move enemy bullets
+      state.enemyBullets = state.enemyBullets.filter((bullet) => {
+        bullet.y += 3;
+        return bullet.y < canvas.height;
+      });
+
+      // Move enemies
+      let hitEdge = false;
+      state.enemies.forEach((enemy) => {
+        if (enemy.alive) {
+          enemy.x += state.direction * 2;
+          if (enemy.x <= 0 || enemy.x >= canvas.width - 30) {
+            hitEdge = true;
+          }
+        }
+      });
+
+      if (hitEdge) {
+        state.direction *= -1;
+        state.enemies.forEach((enemy) => {
+          if (enemy.alive) enemy.y += 20;
+        });
+      }
+
+      // Check bullet collisions
+      state.bullets.forEach((bullet) => {
+        state.enemies.forEach((enemy) => {
+          if (
+            enemy.alive &&
+            bullet.x > enemy.x &&
+            bullet.x < enemy.x + 30 &&
+            bullet.y > enemy.y &&
+            bullet.y < enemy.y + 30
+          ) {
+            enemy.alive = false;
+            bullet.y = -100;
+            state.score += 10;
+            onScoreUpdate(state.score);
+          }
+        });
+      });
+
+      // Enemy shooting
+      if (Math.random() < 0.02) {
+        const aliveEnemies = state.enemies.filter((e) => e.alive);
+        if (aliveEnemies.length > 0) {
+          const shooter = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+          state.enemyBullets.push({ x: shooter.x + 15, y: shooter.y + 30 });
+        }
+      }
+
+      // Check player hit
+      state.enemyBullets.forEach((bullet) => {
+        if (
+          bullet.x > state.player.x &&
+          bullet.x < state.player.x + state.player.width &&
+          bullet.y > state.player.y &&
+          bullet.y < state.player.y + state.player.height
+        ) {
+          state.gameOver = true;
+          onGameOver(state.score);
+        }
+      });
+
+      // Check if all enemies dead
+      if (state.enemies.every((e) => !e.alive)) {
+        state.gameOver = true;
+        onGameOver(state.score);
+      }
+    };
+
+    const gameLoop = setInterval(() => {
+      if (state.gameOver) {
+        clearInterval(gameLoop);
+        return;
+      }
+      update();
+      draw();
+    }, 1000 / 60);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" && state.player.x > 0) {
+        state.player.x -= 15;
+      } else if (e.key === "ArrowRight" && state.player.x < canvas.width - state.player.width) {
+        state.player.x += 15;
+      } else if (e.key === " ") {
+        e.preventDefault();
+        state.bullets.push({ x: state.player.x + state.player.width / 2, y: state.player.y });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      clearInterval(gameLoop);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [gameStarted, onScoreUpdate, onGameOver]);
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <canvas ref={canvasRef} width={500} height={600} className="border border-border rounded" />
+      {!gameStarted && (
+        <Button onClick={() => setGameStarted(true)}>Start Space Invaders</Button>
+      )}
+      <p className="text-sm text-muted-foreground">Arrow keys to move, Space to shoot</p>
+    </div>
+  );
+}
+
+// Sudoku Game
+export function SudokuGame({ onScoreUpdate, onGameOver }: { onScoreUpdate: (score: number) => void; onGameOver: (score: number) => void }) {
+  const [board, setBoard] = useState<number[][]>([]);
+  const [solution, setSolution] = useState<number[][]>([]);
+  const [selected, setSelected] = useState<{ row: number; col: number } | null>(null);
+  const [gameStarted, setGameStarted] = useState(false);
+
+  const generateSudoku = () => {
+    // Simple sudoku generator - creates a valid solved board then removes numbers
+    const newBoard: number[][] = Array(9).fill(0).map(() => Array(9).fill(0));
+    const newSolution: number[][] = Array(9).fill(0).map(() => Array(9).fill(0));
+    
+    // Fill diagonal 3x3 boxes
+    for (let box = 0; box < 9; box += 3) {
+      const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+      let idx = 0;
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          newSolution[box + i][box + j] = nums[idx++];
+        }
+      }
+    }
+
+    // Copy solution and remove some numbers for puzzle
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 9; j++) {
+        newBoard[i][j] = Math.random() < 0.4 ? newSolution[i][j] : 0;
+      }
+    }
+
+    setBoard(newBoard);
+    setSolution(newSolution);
+    setGameStarted(true);
+  };
+
+  const handleCellClick = (row: number, col: number) => {
+    if (board[row][col] === 0) {
+      setSelected({ row, col });
+    }
+  };
+
+  const handleNumberInput = (num: number) => {
+    if (selected) {
+      const newBoard = board.map(row => [...row]);
+      newBoard[selected.row][selected.col] = num;
+      setBoard(newBoard);
+
+      // Check if correct
+      if (num === solution[selected.row][selected.col]) {
+        onScoreUpdate(10);
+        
+        // Check if puzzle complete
+        let complete = true;
+        for (let i = 0; i < 9; i++) {
+          for (let j = 0; j < 9; j++) {
+            if (newBoard[i][j] !== solution[i][j]) {
+              complete = false;
+              break;
+            }
+          }
+        }
+        if (complete) {
+          onGameOver(100);
+        }
+      }
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      {!gameStarted ? (
+        <Button onClick={generateSudoku}>Start Sudoku</Button>
+      ) : (
+        <>
+          <div className="grid grid-cols-9 gap-0 border-2 border-border">
+            {board.map((row, i) =>
+              row.map((cell, j) => (
+                <div
+                  key={`${i}-${j}`}
+                  onClick={() => handleCellClick(i, j)}
+                  className={`w-10 h-10 flex items-center justify-center border border-border cursor-pointer
+                    ${selected?.row === i && selected?.col === j ? "bg-primary/20" : ""}
+                    ${cell !== 0 ? "font-bold" : ""}
+                    ${(i + 1) % 3 === 0 && i !== 8 ? "border-b-2 border-b-foreground" : ""}
+                    ${(j + 1) % 3 === 0 && j !== 8 ? "border-r-2 border-r-foreground" : ""}
+                  `}
+                >
+                  {cell !== 0 ? cell : ""}
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+              <Button key={num} onClick={() => handleNumberInput(num)} variant="outline" size="sm">
+                {num}
+              </Button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Trivia Quiz Game
+export function TriviaGame({ onScoreUpdate, onGameOver }: { onScoreUpdate: (score: number) => void; onGameOver: (score: number) => void }) {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [score, setScore] = useState(0);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [answered, setAnswered] = useState(false);
+
+  const questions = [
+    { q: "What is the capital of France?", a: ["London", "Berlin", "Paris", "Madrid"], correct: 2 },
+    { q: "What is 2 + 2?", a: ["3", "4", "5", "6"], correct: 1 },
+    { q: "Which planet is closest to the Sun?", a: ["Venus", "Mercury", "Earth", "Mars"], correct: 1 },
+    { q: "Who painted the Mona Lisa?", a: ["Van Gogh", "Picasso", "Da Vinci", "Monet"], correct: 2 },
+    { q: "What is the largest ocean?", a: ["Atlantic", "Indian", "Arctic", "Pacific"], correct: 3 },
+    { q: "How many continents are there?", a: ["5", "6", "7", "8"], correct: 2 },
+    { q: "What is the speed of light?", a: ["300,000 km/s", "150,000 km/s", "450,000 km/s", "600,000 km/s"], correct: 0 },
+    { q: "Who wrote Romeo and Juliet?", a: ["Dickens", "Shakespeare", "Austen", "Hemingway"], correct: 1 },
+    { q: "What is the smallest prime number?", a: ["0", "1", "2", "3"], correct: 2 },
+    { q: "What year did World War II end?", a: ["1943", "1944", "1945", "1946"], correct: 2 },
+  ];
+
+  const handleAnswer = (index: number) => {
+    if (answered) return;
+    
+    setAnswered(true);
+    const correct = index === questions[currentQuestion].correct;
+    
+    if (correct) {
+      const newScore = score + 10;
+      setScore(newScore);
+      onScoreUpdate(newScore);
+    }
+
+    setTimeout(() => {
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+        setAnswered(false);
+      } else {
+        onGameOver(score);
+      }
+    }, 1500);
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-6 max-w-2xl">
+      {!gameStarted ? (
+        <Button onClick={() => setGameStarted(true)}>Start Trivia Quiz</Button>
+      ) : (
+        <>
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-2">Question {currentQuestion + 1} of {questions.length}</p>
+            <h3 className="text-2xl font-bold mb-6">{questions[currentQuestion].q}</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            {questions[currentQuestion].a.map((answer, index) => (
+              <Button
+                key={index}
+                onClick={() => handleAnswer(index)}
+                variant="outline"
+                className={`h-auto py-4 text-lg ${
+                  answered && index === questions[currentQuestion].correct
+                    ? "bg-green-500/20 border-green-500"
+                    : answered
+                    ? "opacity-50"
+                    : ""
+                }`}
+                disabled={answered}
+              >
+                {answer}
+              </Button>
+            ))}
+          </div>
+          <p className="text-lg font-semibold">Score: {score}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Simple Puzzle Game (Sliding Tiles)
+export function PuzzleGame({ onScoreUpdate, onGameOver }: { onScoreUpdate: (score: number) => void; onGameOver: (score: number) => void }) {
+  const [tiles, setTiles] = useState<number[]>([]);
+  const [moves, setMoves] = useState(0);
+  const [gameStarted, setGameStarted] = useState(false);
+
+  const initGame = () => {
+    const initialTiles = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+    // Shuffle
+    for (let i = 0; i < 100; i++) {
+      const emptyIndex = initialTiles.indexOf(0);
+      const neighbors = [];
+      if (emptyIndex % 3 !== 0) neighbors.push(emptyIndex - 1);
+      if (emptyIndex % 3 !== 2) neighbors.push(emptyIndex + 1);
+      if (emptyIndex >= 3) neighbors.push(emptyIndex - 3);
+      if (emptyIndex < 6) neighbors.push(emptyIndex + 3);
+      const randomNeighbor = neighbors[Math.floor(Math.random() * neighbors.length)];
+      [initialTiles[emptyIndex], initialTiles[randomNeighbor]] = [initialTiles[randomNeighbor], initialTiles[emptyIndex]];
+    }
+    setTiles(initialTiles);
+    setMoves(0);
+    setGameStarted(true);
+  };
+
+  const handleTileClick = (index: number) => {
+    const emptyIndex = tiles.indexOf(0);
+    const canMove =
+      (index === emptyIndex - 1 && emptyIndex % 3 !== 0) ||
+      (index === emptyIndex + 1 && emptyIndex % 3 !== 2) ||
+      index === emptyIndex - 3 ||
+      index === emptyIndex + 3;
+
+    if (canMove) {
+      const newTiles = [...tiles];
+      [newTiles[index], newTiles[emptyIndex]] = [newTiles[emptyIndex], newTiles[index]];
+      setTiles(newTiles);
+      setMoves(moves + 1);
+
+      // Check win
+      if (newTiles.every((tile, i) => tile === i + 1 || (i === 8 && tile === 0))) {
+        onGameOver(Math.max(100 - moves, 10));
+      }
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      {!gameStarted ? (
+        <Button onClick={initGame}>Start Puzzle</Button>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            {tiles.map((tile, index) => (
+              <div
+                key={index}
+                onClick={() => handleTileClick(index)}
+                className={`w-20 h-20 flex items-center justify-center text-2xl font-bold border-2 rounded cursor-pointer
+                  ${tile === 0 ? "bg-background border-border" : "bg-primary text-primary-foreground border-primary hover:opacity-80"}
+                `}
+              >
+                {tile !== 0 ? tile : ""}
+              </div>
+            ))}
+          </div>
+          <p className="text-lg">Moves: {moves}</p>
+          <p className="text-sm text-muted-foreground">Click tiles adjacent to empty space</p>
+        </>
+      )}
+    </div>
+  );
+}

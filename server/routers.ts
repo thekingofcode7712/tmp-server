@@ -558,6 +558,31 @@ export const appRouter = router({
         
         return { url: session.url };
       }),
+
+    getSubscription: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserSubscription(ctx.user.id);
+    }),
+
+    getPaymentHistory: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserPayments(ctx.user.id);
+    }),
+
+    cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+      const subscription = await db.getUserSubscription(ctx.user.id);
+      if (!subscription || !subscription.stripeSubscriptionId) {
+        throw new Error('No active subscription found');
+      }
+
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+        apiVersion: '2026-01-28.clover',
+      });
+
+      await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
+      await db.updateSubscriptionStatus(subscription.id, 'canceled');
+      
+      return { success: true };
+    }),
   }),
 
   // User Profile

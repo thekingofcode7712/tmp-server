@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import Stripe from "stripe";
 import * as db from "./db";
 import { PRODUCTS } from "./products";
@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2026-01-28.clover",
 });
 
-export async function handleStripeWebhook(req: Request, res: Response) {
+export async function handleStripeWebhook(req: any, res: any) {
   const sig = req.headers["stripe-signature"];
 
   if (!sig) {

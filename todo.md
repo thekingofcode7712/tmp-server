@@ -233,16 +233,16 @@
 - [ ] Add success redirect page that refreshes user data
 
 ### Implement Remaining 10 Games
-- [ ] Space Invaders - enemy waves, shooting, collision
-- [ ] Sudoku - number puzzle with validation
+- [x] Space Invaders - enemy waves, shooting, collision
+- [x] Sudoku - number puzzle with validation
 - [ ] Solitaire - card game with drag and drop
 - [ ] Chess - full chess rules and piece movement
 - [ ] Checkers - board game with jump mechanics
 - [ ] Pac-Man - maze navigation, ghosts AI
 - [ ] Platformer - jumping, platforms, obstacles
 - [ ] Racing - car controls, track, lap timing
-- [ ] Puzzle - tile sliding or matching puzzle
-- [ ] Trivia Quiz - questions database, scoring
+- [x] Puzzle - tile sliding or matching puzzle
+- [x] Trivia Quiz - questions database, scoring
 
 ### AI Credit Purchase Options
 - [ ] Add 1000 credits for £4.99
@@ -250,3 +250,16 @@
 - [ ] Add 10000 credits for £12.99
 - [ ] Create credit purchase page/section
 - [ ] Implement credit purchase Stripe checkout
+
+### Current Priority Tasks
+- [ ] Complete all 10 remaining games (6 remaining: Solitaire, Chess, Checkers, Pac-Man, Platformer, Racing)
+- [x] Add subscription cancellation feature
+- [x] Add billing history page
+- [ ] Add payment method management
+- [ ] Implement real CLI command execution for all 200 commands
+
+### Critical Bug - Subscription Not Updating
+- [x] Fix webhook registration to ensure it's called after Stripe checkout
+- [x] Verify database updates are happening in webhook handler
+- [x] Add logging to track webhook events
+- [ ] Test end-to-end subscription flow

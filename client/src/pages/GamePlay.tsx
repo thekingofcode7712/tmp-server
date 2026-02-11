@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { SnakeGame, TetrisGame, PongGame, Game2048, MemoryGame, TicTacToeGame, ConnectFourGame, MinesweeperGame, FlappyBirdGame, BreakoutGame } from "@/components/games/AllGames";
+import { SnakeGame, TetrisGame, PongGame, Game2048, MemoryGame, TicTacToeGame, ConnectFourGame, MinesweeperGame, FlappyBirdGame, BreakoutGame, SpaceInvadersGame, SudokuGame, TriviaGame, PuzzleGame } from "@/components/games/AllGames";
 
 export default function GamePlay() {
   const { gameName } = useParams();
@@ -85,6 +85,14 @@ export default function GamePlay() {
         return <FlappyBirdGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
       case "breakout":
         return <BreakoutGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
+      case "space-invaders":
+        return <SpaceInvadersGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
+      case "sudoku":
+        return <SudokuGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
+      case "trivia":
+        return <TriviaGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
+      case "puzzle":
+        return <PuzzleGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
       default:
         return (
           <div className="w-full h-96 flex items-center justify-center border-2 border-dashed border-border rounded-lg">

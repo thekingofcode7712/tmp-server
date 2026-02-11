@@ -338,6 +338,22 @@ export async function updateSubscription(subscriptionId: number, updates: Partia
   await db.update(subscriptions).set(updates).where(eq(subscriptions.id, subscriptionId));
 }
 
+export async function getUserSubscription(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(subscriptions)
+    .where(eq(subscriptions.userId, userId))
+    .orderBy(desc(subscriptions.createdAt))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateSubscriptionStatus(subscriptionId: number, status: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(subscriptions).set({ status: status as any }).where(eq(subscriptions.id, subscriptionId));
+}
+
 export async function createPayment(payment: InsertPayment) {
   const db = await getDb();
   if (!db) return null;
