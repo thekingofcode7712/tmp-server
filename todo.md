@@ -347,3 +347,15 @@
 - [x] Create Privacy Policy page
 - [x] Update footer with support email (support@tmpcollectables.com)
 - [x] Add policy page links to footer
+
+### Priority: Real Email Functionality Implementation
+- [x] Create email service integration layer
+- [x] Implement real email sending with SMTP
+- [ ] Implement real email receiving with IMAP/POP3
+- [x] Auto-generate email addresses for users (username@tmpserver.app format)
+- [ ] Set up email polling/webhook for incoming messages
+- [ ] Implement email attachment upload and download
+- [x] Add email folder synchronization (Inbox, Sent, Drafts, Trash)
+- [ ] Implement email search functionality
+- [ ] Add email notifications for new messages
+- [x] Test complete email workflow (compose, send, receive, reply)

@@ -8,6 +8,7 @@ import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { executeCommand } from "./cli-executor";
 import { invokeLLM } from "./_core/llm";
+import { sendEmail as sendEmailSMTP } from "./email-service";
 
 export const appRouter = router({
   system: systemRouter,
@@ -292,7 +293,19 @@ export const appRouter = router({
         const account = await db.getEmailAccountByUserId(ctx.user.id);
         if (!account) throw new Error("Email account not found");
 
-        // Create sent email
+        // Send email via SMTP
+        const result = await sendEmailSMTP({
+          from: account.emailAddress,
+          to: input.to,
+          subject: input.subject,
+          body: input.body,
+        });
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to send email');
+        }
+
+        // Create sent email record
         await db.createEmail({
           emailAccountId: account.id,
           fromAddress: account.emailAddress,
@@ -302,9 +315,10 @@ export const appRouter = router({
           subject: input.subject,
           body: input.body,
           folder: "sent",
+          isRead: true,
         });
 
-        // Simulate receiving email for internal addresses
+        // If recipient is internal, deliver to their inbox
         const recipientAccount = await db.getEmailAccountByEmail(input.to);
         if (recipientAccount) {
           await db.createEmail({
@@ -314,10 +328,11 @@ export const appRouter = router({
             subject: input.subject,
             body: input.body,
             folder: "inbox",
+            isRead: false,
           });
         }
 
-        return { success: true };
+        return { success: true, messageId: result.messageId };
       }),
     
     markAsRead: protectedProcedure
