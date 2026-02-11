@@ -378,3 +378,10 @@
 - [x] Create status page UI with real-time updates
 - [x] Add status indicators (operational, degraded, down)
 - [x] Implement auto-refresh every 30 seconds
+
+### Fix Backup System to Include Actual File Data
+- [x] Fetch actual file data from S3 when creating backups
+- [x] Create zip archive with all user files
+- [x] Upload backup zip to S3
+- [x] Restore files from backup zip to S3
+- [ ] Test complete backup and restore workflow

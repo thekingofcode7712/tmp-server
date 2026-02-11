@@ -11,6 +11,9 @@ import { nanoid } from "nanoid";
 import { executeCommand } from "./cli-executor";
 import { invokeLLM } from "./_core/llm";
 import { sendEmail as sendEmailSMTP, pollUserEmails } from "./email-service";
+import { storageGet } from "./storage";
+import AdmZip from 'adm-zip';
+import axios from 'axios';
 
 export const appRouter = router({
   system: router({
@@ -574,17 +577,50 @@ export const appRouter = router({
         const files = await db.getUserFiles(ctx.user.id);
         const totalSize = files.reduce((sum, file) => sum + file.fileSize, 0);
         
+        // Create zip archive with actual file data
+        const zip = new AdmZip();
+        
+        for (const file of files) {
+          try {
+            // Get presigned URL for file
+            const { url } = await storageGet(file.fileKey);
+            
+            // Download file data
+            const response = await axios.get(url, { responseType: 'arraybuffer' });
+            const fileBuffer = Buffer.from(response.data);
+            
+            // Add to zip with original filename
+            zip.addFile(file.fileName, fileBuffer);
+          } catch (error) {
+            console.error(`[Backup] Failed to add file ${file.fileName}:`, error);
+          }
+        }
+        
+        // Upload zip to S3
+        const backupKey = `users/${ctx.user.id}/backups/${nanoid()}-${input.backupName}.zip`;
+        const zipBuffer = zip.toBuffer();
+        const { url: backupUrl } = await storagePut(backupKey, zipBuffer, 'application/zip');
+        
         await db.createBackup({
           userId: ctx.user.id,
           backupName: input.backupName,
-          backupSize: totalSize,
+          backupSize: zipBuffer.length,
           fileCount: files.length,
-          backupKey: `users/${ctx.user.id}/backups/${nanoid()}-${input.backupName}.zip`,
-          status: "creating",
-          metadata: { files: files.map(f => ({ id: f.id, fileName: f.fileName, fileKey: f.fileKey })) },
+          backupKey,
+          status: "completed",
+          metadata: { 
+            files: files.map(f => ({ 
+              id: f.id, 
+              fileName: f.fileName, 
+              fileKey: f.fileKey,
+              fileSize: f.fileSize,
+              mimeType: f.mimeType
+            })),
+            backupUrl
+          },
         });
         
-        return { success: true };
+        return { success: true, backupUrl };
       }),
     
     restoreBackup: protectedProcedure
@@ -595,34 +631,62 @@ export const appRouter = router({
           throw new Error("Backup not found");
         }
         
-        // Get backup metadata with file list
-        const metadata = backup.metadata as { files: Array<{ id: number; fileName: string; fileKey: string }> };
+        // Get backup metadata
+        const metadata = backup.metadata as { 
+          files: Array<{ 
+            id: number; 
+            fileName: string; 
+            fileKey: string;
+            fileSize: number;
+            mimeType: string;
+          }>;
+          backupUrl: string;
+        };
+        
         if (!metadata || !metadata.files) {
           throw new Error("Invalid backup metadata");
         }
         
-        // In a real implementation, this would:
-        // 1. Download the backup zip from S3
-        // 2. Extract files
-        // 3. Upload each file back to S3
-        // 4. Create file records in database
+        // Download backup zip from S3
+        const { url: backupUrl } = await storageGet(backup.backupKey);
+        const response = await axios.get(backupUrl, { responseType: 'arraybuffer' });
+        const zipBuffer = Buffer.from(response.data);
         
-        // For now, we'll restore the file records from backup metadata
+        // Extract zip
+        const zip = new AdmZip(zipBuffer);
+        const zipEntries = zip.getEntries();
+        
         let restoredCount = 0;
-        for (const fileInfo of metadata.files) {
-          // Check if file still exists in S3, if so restore the database record
+        
+        // Restore each file
+        for (const entry of zipEntries) {
+          if (entry.isDirectory) continue;
+          
           try {
+            // Find file metadata
+            const fileInfo = metadata.files.find(f => f.fileName === entry.entryName);
+            if (!fileInfo) continue;
+            
+            // Extract file data
+            const fileData = entry.getData();
+            
+            // Upload to S3 with new key
+            const newFileKey = `users/${ctx.user.id}/files/${nanoid()}-${entry.entryName}`;
+            const { url: fileUrl } = await storagePut(newFileKey, fileData, fileInfo.mimeType || 'application/octet-stream');
+            
+            // Create file record in database
             await db.createFile({
               userId: ctx.user.id,
-              fileName: fileInfo.fileName,
-              fileKey: fileInfo.fileKey,
-              fileSize: 0, // Would get actual size from S3
-              fileUrl: `https://storage.example.com/${fileInfo.fileKey}`,
-              mimeType: "application/octet-stream",
+              fileName: entry.entryName,
+              fileKey: newFileKey,
+              fileSize: fileData.length,
+              fileUrl,
+              mimeType: fileInfo.mimeType || 'application/octet-stream',
             });
+            
             restoredCount++;
           } catch (err) {
-            // File might already exist, skip
+            console.error(`[Restore] Failed to restore file ${entry.entryName}:`, err);
           }
         }
         
