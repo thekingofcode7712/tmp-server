@@ -1,6 +1,8 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
+import { verifyEmailConnection } from "./email-service";
+import { getDb } from "./db";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
@@ -8,10 +10,70 @@ import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { executeCommand } from "./cli-executor";
 import { invokeLLM } from "./_core/llm";
-import { sendEmail as sendEmailSMTP } from "./email-service";
+import { sendEmail as sendEmailSMTP, pollUserEmails } from "./email-service";
 
 export const appRouter = router({
-  system: systemRouter,
+  system: router({
+    ...systemRouter._def.procedures,
+    status: publicProcedure.query(async () => {
+      const checks = {
+        server: true, // If we're responding, server is up
+        database: false,
+        storage: false,
+        email: false,
+        ai: false,
+        payment: false,
+        uptime: process.uptime(),
+      };
+
+      // Check database
+      try {
+        const db = await getDb();
+        if (db) {
+          await db.execute('SELECT 1');
+          checks.database = true;
+        }
+      } catch (error) {
+        console.error('[Status] Database check failed:', error);
+      }
+
+      // Check S3 storage
+      try {
+        // Storage is available if env vars are set
+        checks.storage = !!process.env.AWS_ACCESS_KEY_ID;
+      } catch (error) {
+        console.error('[Status] Storage check failed:', error);
+      }
+
+      // Check email service
+      try {
+        checks.email = await verifyEmailConnection();
+      } catch (error) {
+        console.error('[Status] Email check failed:', error);
+      }
+
+      // Check AI service
+      try {
+        checks.ai = !!process.env.BUILT_IN_FORGE_API_KEY;
+      } catch (error) {
+        console.error('[Status] AI check failed:', error);
+      }
+
+      // Check Stripe
+      try {
+        checks.payment = !!process.env.STRIPE_SECRET_KEY;
+      } catch (error) {
+        console.error('[Status] Payment check failed:', error);
+      }
+
+      const overall = checks.server && checks.database && checks.storage;
+
+      return {
+        ...checks,
+        overall,
+      };
+    }),
+  }),
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -352,6 +414,12 @@ export const appRouter = router({
           await db.updateEmail(input.emailId, { folder: "trash" });
         }
         return { success: true };
+      }),
+    
+    checkNewEmails: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const newCount = await pollUserEmails(ctx.user.id);
+        return { success: true, newEmails: newCount };
       }),
   }),
 

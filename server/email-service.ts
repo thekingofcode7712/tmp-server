@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import imaps from 'imap-simple';
+import { simpleParser } from 'mailparser';
 import * as db from './db';
 
 // Email configuration
@@ -8,6 +10,12 @@ const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
 const SMTP_USER = process.env.SMTP_USER || '';
 const SMTP_PASS = process.env.SMTP_PASS || '';
+
+// IMAP configuration (for receiving emails)
+const IMAP_HOST = process.env.IMAP_HOST || 'imap.gmail.com';
+const IMAP_PORT = parseInt(process.env.IMAP_PORT || '993');
+const IMAP_USER = process.env.IMAP_USER || SMTP_USER;
+const IMAP_PASS = process.env.IMAP_PASS || SMTP_PASS;
 
 let transporter: Transporter | null = null;
 
@@ -89,7 +97,7 @@ export async function sendEmail(params: {
 }
 
 /**
- * Receive emails (simulated - in production would use IMAP or webhook)
+ * Receive emails via IMAP
  */
 export async function receiveEmails(userEmail: string): Promise<Array<{
   from: string;
@@ -97,13 +105,68 @@ export async function receiveEmails(userEmail: string): Promise<Array<{
   body: string;
   receivedAt: Date;
 }>> {
-  // In a real implementation, this would:
-  // 1. Connect to IMAP server
-  // 2. Fetch unread emails for the user
-  // 3. Parse and return email data
-  
-  // For now, return simulated emails
-  return [];
+  if (!IMAP_USER || !IMAP_PASS) {
+    console.log('[Email] IMAP not configured, skipping receive');
+    return [];
+  }
+
+  try {
+    const config = {
+      imap: {
+        user: IMAP_USER,
+        password: IMAP_PASS,
+        host: IMAP_HOST,
+        port: IMAP_PORT,
+        tls: true,
+        tlsOptions: { rejectUnauthorized: false },
+        authTimeout: 10000,
+      },
+    };
+
+    const connection = await imaps.connect(config);
+    await connection.openBox('INBOX');
+
+    // Search for unread emails
+    const searchCriteria = ['UNSEEN'];
+    const fetchOptions = {
+      bodies: ['HEADER', 'TEXT'],
+      markSeen: true,
+    };
+
+    const messages = await connection.search(searchCriteria, fetchOptions);
+    const emails: Array<{
+      from: string;
+      subject: string;
+      body: string;
+      receivedAt: Date;
+    }> = [];
+
+    for (const item of messages) {
+      const all = item.parts.find((part) => part.which === 'TEXT');
+      const header = item.parts.find((part) => part.which === 'HEADER');
+      
+      if (all && header) {
+        const parsed = await simpleParser(all.body);
+        const from = parsed.from?.text || 'unknown@example.com';
+        const subject = parsed.subject || '(No Subject)';
+        const body = parsed.text || parsed.html || '';
+        const date = parsed.date || new Date();
+
+        emails.push({
+          from,
+          subject,
+          body,
+          receivedAt: date,
+        });
+      }
+    }
+
+    connection.end();
+    return emails;
+  } catch (error) {
+    console.error('[Email] IMAP receive error:', error);
+    return [];
+  }
 }
 
 /**

@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { ArrowLeft, Mail, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Mail, Send, Trash2, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -42,6 +42,20 @@ export default function Email() {
     },
   });
 
+  const checkNewEmailsMutation = trpc.email.checkNewEmails.useMutation({
+    onSuccess: (data) => {
+      if (data.newEmails > 0) {
+        toast.success(`Received ${data.newEmails} new email(s)!`);
+      } else {
+        toast.info("No new emails");
+      }
+      utils.email.getEmails.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to check emails");
+    },
+  });
+
   const handleSend = () => {
     if (!to || !subject) {
       toast.error("Please fill in all fields");
@@ -66,13 +80,22 @@ export default function Email() {
                 <p className="text-sm text-muted-foreground">{account?.emailAddress}</p>
               </div>
             </div>
-            <Dialog open={composing} onOpenChange={setComposing}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Mail className="h-4 w-4 mr-2" />
-                  Compose
-                </Button>
-              </DialogTrigger>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => checkNewEmailsMutation.mutate()}
+                disabled={checkNewEmailsMutation.isPending}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${checkNewEmailsMutation.isPending ? 'animate-spin' : ''}`} />
+                Check New Emails
+              </Button>
+              <Dialog open={composing} onOpenChange={setComposing}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Compose
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>New Email</DialogTitle>
@@ -106,7 +129,8 @@ export default function Email() {
                   </div>
                 </div>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+            </div>
           </div>
         </div>
       </header>

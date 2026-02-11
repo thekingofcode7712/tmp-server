@@ -359,3 +359,22 @@
 - [ ] Implement email search functionality
 - [ ] Add email notifications for new messages
 - [x] Test complete email workflow (compose, send, receive, reply)
+
+### Email Receiving Implementation
+- [x] Install IMAP client library (imap-simple or node-imap)
+- [x] Implement IMAP connection and authentication
+- [x] Create email polling service to fetch new emails
+- [x] Parse incoming email headers and body
+- [x] Save received emails to database
+- [x] Add manual "Check for new emails" button in UI
+- [ ] Test receiving emails from external addresses
+
+### Real-Time Status Page
+- [x] Create status monitoring backend endpoints
+- [x] Check server uptime and health
+- [x] Check database connectivity
+- [x] Check S3 storage availability
+- [x] Check email service (SMTP/IMAP) status
+- [x] Create status page UI with real-time updates
+- [x] Add status indicators (operational, degraded, down)
+- [x] Implement auto-refresh every 30 seconds

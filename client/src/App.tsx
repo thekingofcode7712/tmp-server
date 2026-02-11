@@ -23,6 +23,7 @@ import VPN from "./pages/VPN";
 import AdBlocker from "./pages/AdBlocker";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Status from "./pages/Status";
 
 function Router() {
   return (
@@ -46,6 +47,7 @@ function Router() {
       <Route path={"/checkout-success"} component={CheckoutSuccess} />
       <Route path={"/terms"} component={TermsOfService} />
       <Route path={"/privacy"} component={PrivacyPolicy} />
+      <Route path={"/status"} component={Status} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
