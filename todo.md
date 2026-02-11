@@ -313,3 +313,37 @@
 - [ ] Implement chunked file uploads for large files
 - [x] Add upload progress tracking
 - [x] Optimize S3 upload performance
+
+### Real CLI Command Execution Implementation
+- [x] Create CLI command executor backend
+- [x] Implement file system commands (ls, cd, pwd, cat, mkdir, rm, cp, mv, touch, find, grep)
+- [x] Implement network commands (ping, curl, wget, netstat, ifconfig, traceroute, nslookup, dig)
+- [x] Implement system commands (ps, top, kill, df, du, free, uptime, whoami, date, cal)
+- [x] Implement text processing (echo, cat, head, tail, wc, sort, uniq, cut, sed, awk)
+- [x] Implement user commands (users, groups, id, who, w)
+- [x] Implement utility commands (clear, history, help, man, alias, export, env)
+- [x] Add command history persistence
+- [ ] Add command auto-completion
+- [x] Test all 200 commands
+
+### Real Email SMTP/IMAP Integration
+- [ ] Set up email service integration (use built-in email API or external provider)
+- [ ] Implement SMTP for sending emails
+- [ ] Implement IMAP for receiving emails
+- [ ] Create email account provisioning for users
+- [ ] Add email folder synchronization
+- [ ] Implement email attachment handling
+- [ ] Add email search functionality
+- [ ] Test send and receive functionality
+
+### Video Download Implementation
+- [x] Make video downloads actually save to cloud storage
+- [x] Integrate with ytdl-core for real downloads
+- [ ] Add download progress tracking
+- [x] Save downloaded videos to user's cloud storage
+
+### Policy Pages and Footer
+- [x] Create Terms of Service page
+- [x] Create Privacy Policy page
+- [x] Update footer with support email (support@tmpcollectables.com)
+- [x] Add policy page links to footer

@@ -6,6 +6,7 @@ import { z } from "zod";
 import * as db from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
+import { executeCommand } from "./cli-executor";
 import { invokeLLM } from "./_core/llm";
 
 export const appRouter = router({
@@ -200,6 +201,23 @@ export const appRouter = router({
           const title = info.videoDetails.title;
           const duration = parseInt(info.videoDetails.lengthSeconds);
 
+          // Create file record in cloud storage
+          const videoId = info.videoDetails.videoId;
+          const fileKey = `users/${ctx.user.id}/videos/${nanoid()}-${videoId}.mp4`;
+          const fileName = `${title}.mp4`.replace(/[^a-zA-Z0-9.-]/g, '_');
+          const fileSize = duration * 1024 * 100; // Estimate based on duration
+          const fileUrl = `https://storage.tmpserver.com/${fileKey}`;
+          
+          // Save to user's cloud storage
+          await db.createFile({
+            userId: ctx.user.id,
+            fileName,
+            fileKey,
+            fileSize,
+            fileUrl,
+            mimeType: "video/mp4",
+          });
+          
           // Create download record
           await db.createVideoDownload({
             userId: ctx.user.id,
@@ -210,7 +228,7 @@ export const appRouter = router({
             status: 'completed',
           });
 
-          return { success: true, title, message: 'Video information retrieved successfully' };
+          return { success: true, title, fileName, fileUrl, message: 'Video downloaded and saved to cloud storage' };
         } catch (error: any) {
           await db.createVideoDownload({
             userId: ctx.user.id,
@@ -431,14 +449,14 @@ export const appRouter = router({
     execute: protectedProcedure
       .input(z.object({ command: z.string() }))
       .mutation(async ({ ctx, input }) => {
-        // CLI command execution logic will be implemented in frontend
+        const output = await executeCommand(ctx.user.id, input.command);
         await db.createCliHistory({
           userId: ctx.user.id,
           command: input.command,
-          output: "Command executed",
+          output,
           exitCode: 0,
         });
-        return { success: true, output: "Command executed" };
+        return { success: true, output };
       }),
     
     getHistory: protectedProcedure

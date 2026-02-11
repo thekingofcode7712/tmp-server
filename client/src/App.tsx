@@ -21,6 +21,8 @@ import BuyCredits from "./pages/BuyCredits";
 import ManageSubscription from "./pages/ManageSubscription";
 import VPN from "./pages/VPN";
 import AdBlocker from "./pages/AdBlocker";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 function Router() {
   return (
@@ -42,6 +44,8 @@ function Router() {
       <Route path={"/vpn"} component={VPN} />
       <Route path={"/adblocker"} component={AdBlocker} />
       <Route path={"/checkout-success"} component={CheckoutSuccess} />
+      <Route path={"/terms"} component={TermsOfService} />
+      <Route path={"/privacy"} component={PrivacyPolicy} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
