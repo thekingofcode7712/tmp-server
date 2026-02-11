@@ -6,11 +6,14 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { ArrowLeft, Upload, Trash2, Download, FolderOpen } from "lucide-react";
 import { useState, useRef } from "react";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 
 export default function CloudStorage() {
   const { isAuthenticated } = useAuth();
   const [selectedFolder, setSelectedFolder] = useState("/");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
@@ -24,9 +27,13 @@ export default function CloudStorage() {
       toast.success("File uploaded successfully");
       utils.storage.getFiles.invalidate();
       utils.dashboard.stats.invalidate();
+      setIsUploading(false);
+      setUploadProgress(0);
     },
     onError: (error) => {
       toast.error(error.message);
+      setIsUploading(false);
+      setUploadProgress(0);
     },
   });
 
@@ -45,18 +52,33 @@ export default function CloudStorage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setIsUploading(true);
+    setUploadProgress(0);
+
     const reader = new FileReader();
+    
+    reader.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const progress = Math.round((event.loaded / event.total) * 50);
+        setUploadProgress(progress);
+      }
+    };
+    
     reader.onload = async (event) => {
+      setUploadProgress(60);
       const base64 = event.target?.result as string;
       const base64Data = base64.split(',')[1];
 
+      setUploadProgress(80);
       uploadMutation.mutate({
         fileName: file.name,
         fileData: base64Data,
         mimeType: file.type,
         folder: selectedFolder,
       });
+      setUploadProgress(100);
     };
+    
     reader.readAsDataURL(file);
   };
 
@@ -87,6 +109,20 @@ export default function CloudStorage() {
       </header>
 
       <div className="container py-8">
+        {isUploading && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Uploading file...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <Progress value={uploadProgress} />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FolderOpen className="h-5 w-5 text-muted-foreground" />

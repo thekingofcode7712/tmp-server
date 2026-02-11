@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Link } from "wouter";
 import { 
   HardDrive, Mail, Gamepad2, Terminal, Bot, Link as LinkIcon, 
-  Download, Settings, CreditCard, Database, LogOut 
+  Download, Settings, CreditCard, Database, LogOut, Shield, ShieldOff 
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -222,6 +222,26 @@ export default function Dashboard() {
                 <CreditCard className="h-8 w-8 text-primary mb-2" />
                 <CardTitle>Subscription</CardTitle>
                 <CardDescription>Manage your plan</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/vpn">
+            <Card className="card-hover cursor-pointer">
+              <CardHeader>
+                <Shield className="h-8 w-8 text-primary mb-2" />
+                <CardTitle>VPN Service</CardTitle>
+                <CardDescription>Secure your connection</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/adblocker">
+            <Card className="card-hover cursor-pointer">
+              <CardHeader>
+                <ShieldOff className="h-8 w-8 text-primary mb-2" />
+                <CardTitle>Ad Blocker</CardTitle>
+                <CardDescription>Block ads and trackers</CardDescription>
               </CardHeader>
             </Card>
           </Link>

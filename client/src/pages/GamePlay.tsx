@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { SnakeGame, TetrisGame, PongGame, Game2048, MemoryGame, TicTacToeGame, ConnectFourGame, MinesweeperGame, FlappyBirdGame, BreakoutGame, SpaceInvadersGame, SudokuGame, TriviaGame, PuzzleGame } from "@/components/games/AllGames";
+import { SnakeGame, TetrisGame, PongGame, Game2048, MemoryGame, TicTacToeGame, ConnectFourGame, MinesweeperGame, FlappyBirdGame, BreakoutGame, SpaceInvadersGame, SudokuGame, TriviaGame, PuzzleGame, PacManGame, RacingGame, PlatformerGame, SolitaireGame, ChessGame, CheckersGame } from "@/components/games/AllGames";
 
 export default function GamePlay() {
   const { gameName } = useParams();
@@ -93,19 +93,20 @@ export default function GamePlay() {
         return <TriviaGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
       case "puzzle":
         return <PuzzleGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
+      case "pacman":
+        return <PacManGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
+      case "racing":
+        return <RacingGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
+      case "platformer":
+        return <PlatformerGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
+      case "solitaire":
+        return <SolitaireGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
+      case "chess":
+        return <ChessGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
+      case "checkers":
+        return <CheckersGame onScoreUpdate={handleScoreUpdate} onGameOver={handleGameOver} />;
       default:
-        return (
-          <div className="w-full h-96 flex items-center justify-center border-2 border-dashed border-border rounded-lg">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-2">
-                {getGameTitle()} game coming soon!
-              </p>
-              <p className="text-sm text-muted-foreground">
-                This game is being developed and will be available shortly.
-              </p>
-            </div>
-          </div>
-        );
+        return <div>Game not found</div>;
     }
   };
 
@@ -121,7 +122,7 @@ export default function GamePlay() {
             </Link>
             <div>
               <h1 className="text-2xl font-bold">{getGameTitle()}</h1>
-              <p className="text-sm text-muted-foreground">Score: {score}</p>
+              <p className="text-sm text-muted-foreground">Current Score: {score}</p>
             </div>
           </div>
         </div>
@@ -131,15 +132,7 @@ export default function GamePlay() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader>
-                <CardTitle>Game</CardTitle>
-                <CardDescription>
-                  {gameOver && <span className="text-primary font-semibold">Game Over! Final Score: {score}</span>}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center gap-4">
-                {renderGame()}
-              </CardContent>
+              <CardContent className="p-6">{renderGame()}</CardContent>
             </Card>
           </div>
 
@@ -153,20 +146,17 @@ export default function GamePlay() {
                 {leaderboard && leaderboard.length > 0 ? (
                   <div className="space-y-2">
                     {leaderboard.map((entry, index) => (
-                      <div
-                        key={entry.id}
-                        className="flex items-center justify-between p-2 rounded bg-muted"
-                      >
+                      <div key={entry.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-primary">#{index + 1}</span>
-                          <span className="text-sm">{entry.userName || "Anonymous"}</span>
+                          <span className="text-sm">{entry.userName || 'Anonymous'}</span>
                         </div>
                         <span className="font-semibold">{entry.score}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No scores yet. Be the first!</p>
+                  <p className="text-center text-muted-foreground py-4">No scores yet</p>
                 )}
               </CardContent>
             </Card>

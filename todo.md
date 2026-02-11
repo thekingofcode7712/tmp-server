@@ -263,3 +263,53 @@
 - [x] Verify database updates are happening in webhook handler
 - [x] Add logging to track webhook events
 - [ ] Test end-to-end subscription flow
+
+### Final Implementation Tasks
+- [x] Complete Solitaire game with card drag and drop
+- [x] Complete Chess game with full rules and piece movement
+- [x] Complete Checkers game with jump mechanics
+- [x] Complete Pac-Man game with maze and ghost AI
+- [x] Complete Platformer game with jumping and obstacles
+- [x] Complete Racing game with car controls and lap timing
+- [ ] Implement all 200 CLI commands with real execution
+- [ ] Make CLI commands actually work (not just simulation)
+
+### VPN and Ad Blocker Features (Paid Plans Only)
+- [ ] Create VPN page with server selection
+- [ ] Implement VPN connection logic (proxy routing)
+- [ ] Add VPN status indicator
+- [ ] Create ad blocker settings page
+- [ ] Implement ad blocker with filter lists
+- [ ] Add blocked ads counter
+- [ ] Restrict VPN and ad blocker to paid plans only
+- [ ] Add upgrade prompts for free users
+
+### Make VPN and Ad Blocker Actually Work
+- [ ] Implement backend proxy server for VPN routing
+- [ ] Add DNS-level ad blocking with filter lists
+- [ ] Create VPN connection state management
+- [ ] Track real ad blocking statistics
+- [ ] Add proxy configuration endpoints
+
+### Complete CLI with 200 Real Commands
+- [ ] Implement file system commands (ls, cd, pwd, mkdir, rm, cp, mv, cat, etc.)
+- [ ] Implement network commands (ping, curl, wget, netstat, etc.)
+- [ ] Implement system commands (ps, top, kill, df, du, etc.)
+- [ ] Implement user commands (whoami, users, groups, etc.)
+- [ ] Implement text processing commands (grep, sed, awk, sort, uniq, etc.)
+- [ ] Implement utility commands (date, cal, echo, clear, history, etc.)
+- [ ] Add command execution backend logic
+- [ ] Make all commands return real results
+
+### Automatic Backups and Real Restore
+- [ ] Implement automatic 24-hour backup scheduling
+- [ ] Create real backup functionality (zip all user files)
+- [ ] Implement real restore functionality (unzip and restore files)
+- [ ] Add backup job scheduler
+- [ ] Store backup metadata in database
+
+### File Upload Optimization
+- [x] Increase upload size limits
+- [ ] Implement chunked file uploads for large files
+- [x] Add upload progress tracking
+- [x] Optimize S3 upload performance

@@ -19,6 +19,8 @@ import Backups from "./pages/Backups";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import BuyCredits from "./pages/BuyCredits";
 import ManageSubscription from "./pages/ManageSubscription";
+import VPN from "./pages/VPN";
+import AdBlocker from "./pages/AdBlocker";
 
 function Router() {
   return (
@@ -37,6 +39,8 @@ function Router() {
       <Route path={"/backups"} component={Backups} />
       <Route path={"/buy-credits"} component={BuyCredits} />
       <Route path={"/manage-subscription"} component={ManageSubscription} />
+      <Route path={"/vpn"} component={VPN} />
+      <Route path={"/adblocker"} component={AdBlocker} />
       <Route path={"/checkout-success"} component={CheckoutSuccess} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
