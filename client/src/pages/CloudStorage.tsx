@@ -22,7 +22,8 @@ export default function CloudStorage() {
     { enabled: isAuthenticated }
   );
 
-  const uploadMutation = trpc.storage.uploadFile.useMutation({
+  const getPresignedUrlMutation = trpc.storage.getPresignedUploadUrl.useMutation();
+  const confirmUploadMutation = trpc.storage.confirmUpload.useMutation({
     onSuccess: () => {
       toast.success("File uploaded successfully");
       utils.storage.getFiles.invalidate();
@@ -52,34 +53,65 @@ export default function CloudStorage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
-    setUploadProgress(0);
+    try {
+      setIsUploading(true);
+      setUploadProgress(10);
 
-    const reader = new FileReader();
-    
-    reader.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const progress = Math.round((event.loaded / event.total) * 50);
-        setUploadProgress(progress);
-      }
-    };
-    
-    reader.onload = async (event) => {
-      setUploadProgress(60);
-      const base64 = event.target?.result as string;
-      const base64Data = base64.split(',')[1];
-
-      setUploadProgress(80);
-      uploadMutation.mutate({
+      // Get presigned upload URL
+      const presignedData = await getPresignedUrlMutation.mutateAsync({
         fileName: file.name,
-        fileData: base64Data,
-        mimeType: file.type,
+        mimeType: file.type || 'application/octet-stream',
+        fileSize: file.size,
         folder: selectedFolder,
       });
-      setUploadProgress(100);
-    };
-    
-    reader.readAsDataURL(file);
+
+      setUploadProgress(20);
+
+      // Upload directly to S3 using presigned URL
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = 20 + Math.round((event.loaded / event.total) * 70);
+          setUploadProgress(progress);
+        }
+      };
+
+      xhr.onload = async () => {
+        if (xhr.status === 200 || xhr.status === 204) {
+          setUploadProgress(95);
+          
+          // Confirm upload to create database record
+          await confirmUploadMutation.mutateAsync({
+            fileName: presignedData.fileName,
+            fileKey: presignedData.fileKey,
+            fileUrl: presignedData.fileUrl,
+            fileSize: presignedData.fileSize,
+            mimeType: presignedData.mimeType,
+            folder: presignedData.folder,
+          });
+          
+          setUploadProgress(100);
+        } else {
+          throw new Error(`Upload failed with status ${xhr.status}`);
+        }
+      };
+
+      xhr.onerror = () => {
+        toast.error("Upload failed");
+        setIsUploading(false);
+        setUploadProgress(0);
+      };
+
+      xhr.open('PUT', presignedData.uploadUrl);
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+      xhr.send(file);
+      
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed");
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   if (!isAuthenticated) {
@@ -135,9 +167,9 @@ export default function CloudStorage() {
               className="hidden"
               onChange={handleFileSelect}
             />
-            <Button onClick={() => fileInputRef.current?.click()} disabled={uploadMutation.isPending}>
+            <Button onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
               <Upload className="h-4 w-4 mr-2" />
-              {uploadMutation.isPending ? "Uploading..." : "Upload File"}
+              {isUploading ? "Uploading..." : "Upload File"}
             </Button>
           </div>
         </div>

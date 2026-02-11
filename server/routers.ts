@@ -11,7 +11,7 @@ import { nanoid } from "nanoid";
 import { executeCommand } from "./cli-executor";
 import { invokeLLM } from "./_core/llm";
 import { sendEmail as sendEmailSMTP, pollUserEmails } from "./email-service";
-import { storageGet } from "./storage";
+import { storageGet, getPresignedUploadUrl } from "./storage";
 import AdmZip from 'adm-zip';
 import axios from 'axios';
 
@@ -107,6 +107,64 @@ export const appRouter = router({
 
   // Cloud Storage
   storage: router({
+    getPresignedUploadUrl: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        mimeType: z.string(),
+        fileSize: z.number(),
+        folder: z.string().default("/"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (!user) throw new Error("User not found");
+
+        // Check storage limit
+        if (user.subscriptionTier !== "unlimited" && user.storageUsed + input.fileSize > user.storageLimit) {
+          throw new Error("Storage limit exceeded");
+        }
+
+        const fileKey = `users/${ctx.user.id}/files/${nanoid()}-${input.fileName}`;
+        const { uploadUrl, fileUrl } = await getPresignedUploadUrl(fileKey, input.mimeType);
+
+        return { 
+          uploadUrl, 
+          fileKey,
+          fileUrl,
+          fileName: input.fileName,
+          fileSize: input.fileSize,
+          mimeType: input.mimeType,
+          folder: input.folder,
+        };
+      }),
+    
+    confirmUpload: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileKey: z.string(),
+        fileUrl: z.string(),
+        fileSize: z.number(),
+        mimeType: z.string(),
+        folder: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (!user) throw new Error("User not found");
+
+        await db.createFile({
+          userId: ctx.user.id,
+          fileName: input.fileName,
+          fileKey: input.fileKey,
+          fileUrl: input.fileUrl,
+          fileSize: input.fileSize,
+          mimeType: input.mimeType,
+          folder: input.folder,
+        });
+
+        await db.updateUserStorage(ctx.user.id, user.storageUsed + input.fileSize);
+
+        return { success: true };
+      }),
+
     getFiles: protectedProcedure
       .input(z.object({ folder: z.string().optional() }))
       .query(async ({ ctx, input }) => {

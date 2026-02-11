@@ -393,3 +393,11 @@
 - [x] Map flexible subscription to appropriate storage tier based on amount
 - [x] Update subscription page UI with flexible option
 - [ ] Test flexible subscription checkout flow
+
+### Direct S3 Upload for Instant Large File Uploads
+- [x] Create presigned URL endpoint for direct S3 uploads
+- [x] Update frontend to upload directly to S3 using presigned URLs
+- [x] Remove file size limit from frontend
+- [x] Show real-time upload progress
+- [x] Create file record in database after successful upload
+- [ ] Test with large files (100MB+)
