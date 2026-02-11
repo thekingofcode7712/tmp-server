@@ -131,6 +131,12 @@ export async function updateUserCustomization(userId: number, customization: { h
   await db.update(users).set(customization).where(eq(users.id, userId));
 }
 
+export async function updateUserProfile(userId: number, profile: { name?: string, email?: string }) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set(profile).where(eq(users.id, userId));
+}
+
 // ===== FILE OPERATIONS =====
 
 export async function createFile(file: InsertFile) {
@@ -313,6 +319,15 @@ export async function getActiveSubscription(userId: number) {
   const result = await db.select().from(subscriptions)
     .where(and(eq(subscriptions.userId, userId), eq(subscriptions.status, "active")))
     .orderBy(desc(subscriptions.createdAt))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getSubscriptionByStripeId(stripeSubscriptionId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(subscriptions)
+    .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId))
     .limit(1);
   return result.length > 0 ? result[0] : null;
 }

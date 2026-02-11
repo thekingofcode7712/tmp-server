@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { ArrowLeft, Check } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 const plans = [
   { id: "free", name: "Free", storage: "5GB", price: "£0", features: ["5GB Storage", "100 AI Credits", "Email Account", "All Games"] },
@@ -19,9 +20,25 @@ const plans = [
 export default function Subscription() {
   const { user } = useAuth();
 
+  const createCheckoutMutation = trpc.payment.createCheckout.useMutation({
+    onSuccess: (data) => {
+      if (data.url) {
+        // Open in same tab
+        window.location.href = data.url;
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
   const handleUpgrade = (planId: string) => {
-    toast.info("Stripe checkout will open here");
-    // Stripe integration will be added
+    if (planId === "free") {
+      toast.info("Contact support to downgrade to free plan");
+      return;
+    }
+
+    createCheckoutMutation.mutate({ planId });
   };
 
   return (
@@ -72,8 +89,12 @@ export default function Subscription() {
                     Current Plan
                   </Button>
                 ) : (
-                  <Button onClick={() => handleUpgrade(plan.id)} className="w-full">
-                    {plan.id === "free" ? "Downgrade" : "Upgrade"}
+                  <Button 
+                    onClick={() => handleUpgrade(plan.id)} 
+                    className="w-full"
+                    disabled={createCheckoutMutation.isPending}
+                  >
+                    {createCheckoutMutation.isPending ? "Loading..." : plan.id === "free" ? "Downgrade" : "Upgrade"}
                   </Button>
                 )}
               </CardContent>
@@ -101,8 +122,12 @@ export default function Subscription() {
                     Purchased
                   </Button>
                 ) : (
-                  <Button onClick={() => handleUpgrade("customization")} className="mt-2">
-                    Purchase
+                  <Button 
+                    onClick={() => handleUpgrade("customization")} 
+                    className="mt-2"
+                    disabled={createCheckoutMutation.isPending}
+                  >
+                    {createCheckoutMutation.isPending ? "Loading..." : "Purchase"}
                   </Button>
                 )}
               </div>

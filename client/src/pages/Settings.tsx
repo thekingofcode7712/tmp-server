@@ -8,11 +8,32 @@ import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 export default function Settings() {
   const { user } = useAuth();
   const [customLogo, setCustomLogo] = useState("");
   const [customTheme, setCustomTheme] = useState("");
+  const [editName, setEditName] = useState(user?.name || "");
+  const [editEmail, setEditEmail] = useState(user?.email || "");
+  const utils = trpc.useUtils();
+
+  const updateProfileMutation = trpc.user.updateProfile.useMutation({
+    onSuccess: () => {
+      toast.success("Profile updated!");
+      utils.auth.me.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleSaveProfile = () => {
+    updateProfileMutation.mutate({
+      name: editName,
+      email: editEmail,
+    });
+  };
 
   const handleSaveCustomization = () => {
     toast.success("Settings saved!");
@@ -54,11 +75,20 @@ export default function Settings() {
               <CardContent className="space-y-4">
                 <div>
                   <Label>Name</Label>
-                  <Input value={user?.name || ""} disabled />
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Your name"
+                  />
                 </div>
                 <div>
                   <Label>Email</Label>
-                  <Input value={user?.email || ""} disabled />
+                  <Input
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="your.email@example.com"
+                    type="email"
+                  />
                 </div>
                 <div>
                   <Label>Login Method</Label>
@@ -68,6 +98,9 @@ export default function Settings() {
                   <Label>Member Since</Label>
                   <Input value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : ""} disabled />
                 </div>
+                <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="w-full">
+                  {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>

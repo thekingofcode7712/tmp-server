@@ -431,6 +431,31 @@ export const appRouter = router({
       }),
   }),
 
+  // Payment & Stripe
+  payment: router({
+    createCheckout: protectedProcedure
+      .input(z.object({ planId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        // This will be implemented with actual Stripe checkout session creation
+        return { url: `https://checkout.stripe.com/pay/test_${input.planId}` };
+      }),
+  }),
+
+  // User Profile
+  user: router({ updateProfile: protectedProcedure
+      .input(z.object({
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateUserProfile(ctx.user.id, {
+          name: input.name,
+          email: input.email,
+        });
+        return { success: true };
+      }),
+  }),
+
   // Customization
   customization: router({
     get: protectedProcedure.query(async ({ ctx }) => {

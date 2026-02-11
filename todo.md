@@ -166,3 +166,48 @@
 - [ ] Download backup as zip file
 - [ ] Incremental backup support
 - [ ] Backup retention policies
+
+## New Requirements - Full Implementation
+
+### Games - Complete All 20 with Full Logic
+- [x] Implement complete Tetris game with rotation, line clearing, scoring
+- [x] Implement complete Pong game with AI opponent
+- [ ] Implement complete Space Invaders with enemy movement and shooting
+- [x] Implement complete Breakout with paddle physics and brick destruction
+- [x] Implement complete Flappy Bird with pipe generation and collision
+- [x] Implement complete 2048 with tile merging logic
+- [x] Implement complete Memory Cards with card matching
+- [x] Implement complete Tic Tac Toe with AI opponent
+- [x] Implement complete Connect Four with win detection
+- [ ] Implement complete Sudoku with puzzle generation and validation
+- [x] Implement complete Minesweeper with mine placement and reveal logic
+- [ ] Implement complete Solitaire with card stacking rules
+- [ ] Implement complete Chess with full chess rules and piece movement
+- [ ] Implement complete Checkers with jump mechanics
+- [ ] Implement complete Pac-Man with ghost AI and maze navigation
+- [ ] Implement complete Platformer with physics and level design
+- [ ] Implement complete Racing game with track and controls
+- [ ] Implement complete Puzzle game with level progression
+- [ ] Implement complete Trivia Quiz with questions database
+
+### Settings Enhancements
+- [x] Add profile editing (name, email update)
+- [ ] Add avatar/profile picture upload
+- [ ] Add password change functionality
+- [ ] Add two-factor authentication option
+- [ ] Add session management (view active sessions)
+- [ ] Add data export functionality
+- [ ] Add account deletion option
+
+### Backend Functionality
+- [ ] Implement actual video download logic (yt-dlp integration)
+- [ ] Implement actual email sending/receiving (SMTP/IMAP)
+- [ ] Complete Stripe checkout flow with webhooks
+- [ ] Add file preview generation for cloud storage
+- [ ] Implement search functionality across all features
+- [ ] Add real-time notifications system
+
+### Stripe Checkout Updates
+- [x] Make Stripe checkout open in same tab instead of new window
+- [x] Implement complete Stripe checkout flow with webhook handling
+- [ ] Add success and cancel redirect pages
