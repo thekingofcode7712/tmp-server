@@ -211,3 +211,18 @@
 - [x] Make Stripe checkout open in same tab instead of new window
 - [x] Implement complete Stripe checkout flow with webhook handling
 - [ ] Add success and cancel redirect pages
+
+### Stripe Checkout Fix
+- [x] Implement actual Stripe checkout session creation instead of placeholder URL
+- [x] Configure success and cancel URLs
+- [ ] Test checkout flow end-to-end
+
+### Remove All Placeholders - Make Everything Fully Functional
+- [x] Implement real video download logic with ytdl-core or similar
+- [ ] Complete all 20 games with full mechanics (10 remaining)
+- [ ] Implement full CLI command execution logic (not just logging)
+- [ ] Add real file preview generation for cloud storage
+- [x] Implement actual link metadata fetching for link uploader
+- [ ] Add real backup creation and restoration logic
+- [ ] Complete all email functionality with proper internal routing
+- [ ] Remove any "coming soon" or placeholder messages

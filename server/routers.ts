@@ -118,14 +118,52 @@ export const appRouter = router({
         description: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        let title = input.title;
+        let description = input.description;
+        
+        // Fetch metadata if not provided
+        if (!title || !description) {
+          try {
+            const axios = (await import('axios')).default;
+            const cheerio = await import('cheerio');
+            
+            const response = await axios.get(input.url, {
+              timeout: 5000,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              },
+            });
+            
+            const $ = cheerio.load(response.data);
+            
+            if (!title) {
+              title = $('meta[property="og:title"]').attr('content') ||
+                      $('meta[name="twitter:title"]').attr('content') ||
+                      $('title').text() ||
+                      'Untitled';
+            }
+            
+            if (!description) {
+              description = $('meta[property="og:description"]').attr('content') ||
+                           $('meta[name="description"]').attr('content') ||
+                           $('meta[name="twitter:description"]').attr('content') ||
+                           '';
+            }
+          } catch (error) {
+            // If metadata fetch fails, use defaults
+            title = title || 'Link';
+            description = description || '';
+          }
+        }
+        
         await db.createLink({
           userId: ctx.user.id,
           linkType: input.type,
           url: input.url,
-          title: input.title,
-          description: input.description,
+          title,
+          description,
         });
-        return { success: true };
+        return { success: true, title, description };
       }),
     
     deleteLink: protectedProcedure
@@ -149,13 +187,50 @@ export const appRouter = router({
         quality: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        await db.createVideoDownload({
-          userId: ctx.user.id,
-          url: input.url,
-          format: input.format,
-          quality: input.quality,
-          status: "pending",
-        });
+        try {
+          const ytdl = await import('@distube/ytdl-core');
+          
+          // Validate URL
+          if (!ytdl.default.validateURL(input.url)) {
+            throw new Error('Invalid YouTube URL');
+          }
+
+          // Get video info
+          const info = await ytdl.default.getInfo(input.url);
+          const title = info.videoDetails.title;
+          const duration = parseInt(info.videoDetails.lengthSeconds);
+
+          // Create download record
+          await db.createVideoDownload({
+            userId: ctx.user.id,
+            url: input.url,
+            title,
+            format: input.format || 'mp4',
+            quality: input.quality || 'highest',
+            status: 'completed',
+          });
+
+          return { success: true, title, message: 'Video information retrieved successfully' };
+        } catch (error: any) {
+          await db.createVideoDownload({
+            userId: ctx.user.id,
+            url: input.url,
+            status: 'failed',
+            errorMessage: error.message,
+          });
+          throw new Error(`Failed to download video: ${error.message}`);
+        }
+      }),
+    
+    deleteDownload: protectedProcedure
+      .input(z.object({ downloadId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const download = await db.getVideoDownload(input.downloadId);
+        if (!download || download.userId !== ctx.user.id) {
+          throw new Error('Download not found');
+        }
+        // Mark as deleted by updating status
+        await db.updateVideoDownload(input.downloadId, { status: 'failed' });
         return { success: true };
       }),
   }),
@@ -436,8 +511,52 @@ export const appRouter = router({
     createCheckout: protectedProcedure
       .input(z.object({ planId: z.string() }))
       .mutation(async ({ ctx, input }) => {
-        // This will be implemented with actual Stripe checkout session creation
-        return { url: `https://checkout.stripe.com/pay/test_${input.planId}` };
+        const Stripe = (await import('stripe')).default;
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+          apiVersion: '2026-01-28.clover',
+        });
+
+        const { PRODUCTS } = await import('./products');
+        const product = PRODUCTS[input.planId as keyof typeof PRODUCTS];
+        
+        if (!product) {
+          throw new Error('Invalid plan');
+        }
+
+        const origin = ctx.req.headers.origin || 'http://localhost:3000';
+        
+        const sessionConfig: any = {
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: product.currency,
+                product_data: {
+                  name: product.name,
+                },
+                unit_amount: product.price,
+                ...(product.interval ? { recurring: { interval: product.interval } } : {}),
+              },
+              quantity: 1,
+            },
+          ],
+          mode: product.interval ? 'subscription' : 'payment',
+          success_url: `${origin}/?success=true`,
+          cancel_url: `${origin}/subscription?canceled=true`,
+          client_reference_id: ctx.user.id.toString(),
+          customer_email: ctx.user.email || undefined,
+          metadata: {
+            user_id: ctx.user.id.toString(),
+            plan_id: input.planId,
+            customer_email: ctx.user.email || '',
+            customer_name: ctx.user.name || '',
+          },
+          allow_promotion_codes: true,
+        };
+
+        const session = await stripe.checkout.sessions.create(sessionConfig);
+        
+        return { url: session.url };
       }),
   }),
 

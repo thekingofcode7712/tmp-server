@@ -14,12 +14,12 @@ export default function VideoDownloader() {
   const { data: downloads } = trpc.videoDownload.getDownloads.useQuery();
 
   const startDownloadMutation = trpc.videoDownload.startDownload.useMutation({
-    onSuccess: () => {
-      toast.success("Download started!");
+    onSuccess: (data: any) => {
+      toast.success(`Video found: ${data.title}`);
       utils.videoDownload.getDownloads.invalidate();
       setUrl("");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(error.message);
     },
   });
