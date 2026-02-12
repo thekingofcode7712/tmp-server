@@ -1078,6 +1078,49 @@ export const appRouter = router({
         await db.incrementBlockedCount(ctx.user.id, input.count);
         return { success: true };
       }),
+
+    getFilterLists: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getAdFilterLists(ctx.user.id);
+    }),
+
+    addFilterList: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        url: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (user?.subscriptionTier === 'free') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Custom filter lists require paid subscription' });
+        }
+        await db.createAdFilterList({
+          userId: ctx.user.id,
+          name: input.name,
+          url: input.url || null,
+          isEnabled: true,
+        });
+        return { success: true };
+      }),
+
+    updateFilterList: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        url: z.string().optional(),
+        isEnabled: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...updates } = input;
+        await db.updateAdFilterList(id, updates);
+        return { success: true };
+      }),
+
+    deleteFilterList: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteAdFilterList(input.id);
+        return { success: true };
+      }),
   }),
 
   // VPN
@@ -1165,6 +1208,52 @@ export const appRouter = router({
           const config = `client\ndev tun\nproto udp\nremote ${input.server} 1194\nresolv-retry infinite\nnobind\npersist-key\npersist-tun\nca ca.crt\ncert client.crt\nkey client.key\ncipher AES-256-CBC\nverb 3`;
           return { config, protocol: 'openvpn' };
         }
+      }),
+
+    getBandwidthUsage: protectedProcedure
+      .input(z.object({ period: z.enum(['daily', 'monthly']) }))
+      .query(async ({ ctx, input }) => {
+        const usage = await db.getVpnBandwidthUsage(ctx.user.id, input.period);
+        const settings = await db.getVpnSettings(ctx.user.id);
+        const limit = input.period === 'daily' 
+          ? settings?.bandwidthLimitDaily || 10737418240
+          : settings?.bandwidthLimitMonthly || 107374182400;
+        
+        return {
+          ...usage,
+          limit,
+          percentage: (usage.total / limit) * 100,
+        };
+      }),
+
+    runSpeedTest: protectedProcedure
+      .input(z.object({ server: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (user?.subscriptionTier === 'free') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'VPN requires paid subscription' });
+        }
+        
+        // Simulate speed test (in real implementation, this would test actual server)
+        const latency = Math.floor(Math.random() * 100) + 10; // 10-110ms
+        const downloadSpeed = Math.floor(Math.random() * 50000000) + 10000000; // 10-60 Mbps
+        const uploadSpeed = Math.floor(Math.random() * 20000000) + 5000000; // 5-25 Mbps
+        
+        await db.createVpnSpeedTest({
+          userId: ctx.user.id,
+          server: input.server,
+          latency,
+          downloadSpeed,
+          uploadSpeed,
+        });
+        
+        return { latency, downloadSpeed, uploadSpeed };
+      }),
+
+    getSpeedTests: protectedProcedure
+      .input(z.object({ server: z.string().optional() }))
+      .query(async ({ ctx, input }) => {
+        return await db.getVpnSpeedTests(ctx.user.id, input.server, 10);
       }),
   }),
 });

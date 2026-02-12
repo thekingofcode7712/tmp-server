@@ -9,7 +9,8 @@ import {
   backups, InsertBackup, alertPreferences, InsertAlertPreference,
   alertHistory, InsertAlertHistory, notifications, InsertNotification,
   adBlockerSettings, InsertAdBlockerSettings, vpnSettings, InsertVpnSettings,
-  vpnConnections, InsertVpnConnection
+  vpnConnections, InsertVpnConnection, vpnSpeedTests, InsertVpnSpeedTest,
+  adFilterLists, InsertAdFilterList
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -680,4 +681,105 @@ export async function updateVpnConnection(connectionId: number, updates: Partial
   await db.update(vpnConnections)
     .set(updates)
     .where(eq(vpnConnections.id, connectionId));
+}
+
+
+// ===== VPN Speed Tests =====
+export async function createVpnSpeedTest(speedTest: InsertVpnSpeedTest) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(vpnSpeedTests).values(speedTest);
+  return result;
+}
+
+export async function getVpnSpeedTests(userId: number, server?: string, limit = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (server) {
+    return await db.select().from(vpnSpeedTests)
+      .where(and(
+        eq(vpnSpeedTests.userId, userId),
+        eq(vpnSpeedTests.server, server)
+      ))
+      .orderBy(desc(vpnSpeedTests.testedAt))
+      .limit(limit);
+  }
+  
+  return await db.select().from(vpnSpeedTests)
+    .where(eq(vpnSpeedTests.userId, userId))
+    .orderBy(desc(vpnSpeedTests.testedAt))
+    .limit(limit);
+}
+
+export async function getLatestSpeedTest(userId: number, server: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(vpnSpeedTests)
+    .where(and(
+      eq(vpnSpeedTests.userId, userId),
+      eq(vpnSpeedTests.server, server)
+    ))
+    .orderBy(desc(vpnSpeedTests.testedAt))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+// ===== Ad Filter Lists =====
+export async function getAdFilterLists(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(adFilterLists)
+    .where(eq(adFilterLists.userId, userId))
+    .orderBy(desc(adFilterLists.createdAt));
+}
+
+export async function createAdFilterList(filterList: InsertAdFilterList) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(adFilterLists).values(filterList);
+  return result;
+}
+
+export async function updateAdFilterList(id: number, updates: Partial<InsertAdFilterList>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(adFilterLists)
+    .set({ ...updates, lastUpdated: new Date() })
+    .where(eq(adFilterLists.id, id));
+}
+
+export async function deleteAdFilterList(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(adFilterLists).where(eq(adFilterLists.id, id));
+}
+
+// ===== VPN Bandwidth Tracking =====
+export async function getVpnBandwidthUsage(userId: number, period: 'daily' | 'monthly') {
+  const db = await getDb();
+  if (!db) return { uploaded: 0, downloaded: 0, total: 0 };
+  
+  const now = new Date();
+  const startDate = period === 'daily'
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    : new Date(now.getFullYear(), now.getMonth(), 1);
+  
+  const result = await db.select({
+    uploaded: sql<number>`SUM(${vpnConnections.bytesUploaded})`,
+    downloaded: sql<number>`SUM(${vpnConnections.bytesDownloaded})`,
+    total: sql<number>`SUM(${vpnConnections.bytesTransferred})`,
+  }).from(vpnConnections)
+    .where(and(
+      eq(vpnConnections.userId, userId),
+      sql`${vpnConnections.connectedAt} >= ${startDate}`
+    ));
+  
+  return {
+    uploaded: Number(result[0]?.uploaded || 0),
+    downloaded: Number(result[0]?.downloaded || 0),
+    total: Number(result[0]?.total || 0),
+  };
 }

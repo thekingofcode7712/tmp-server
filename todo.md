@@ -560,3 +560,32 @@
 - [ ] Speed test functionality (future enhancement)
 - [ ] Auto-connect option (future enhancement)
 - [ ] Kill switch feature (future enhancement)
+
+### Bandwidth Usage Tracking
+- [x] Add bandwidth usage fields to VPN connections table
+- [x] Track upload/download bytes for each VPN session
+- [x] Calculate daily and monthly bandwidth totals
+- [x] Add bandwidth limit settings per user
+- [x] Create bandwidth usage graph component
+- [x] Display current usage vs limit in VPN page
+- [ ] Send alerts when approaching bandwidth limit (future enhancement)
+
+### Custom Ad Filter Lists
+- [x] Add filter list URL import functionality
+- [x] Support EasyList, EasyPrivacy, and other standard lists
+- [x] Add custom blocking rules UI
+- [x] Store filter rules in database
+- [ ] Implement whitelist domain management (future enhancement)
+- [ ] Implement blacklist domain management (future enhancement)
+- [ ] Apply custom filters to ad blocking logic (future enhancement)
+- [ ] Add filter list update/refresh functionality (future enhancement)
+
+### VPN Speed Test
+- [x] Add speed test button for each VPN server
+- [x] Implement latency (ping) test
+- [x] Implement download speed test
+- [x] Implement upload speed test
+- [x] Display test results with visual indicators
+- [x] Store historical speed test results
+- [ ] Show recommended server based on speed (future enhancement)
+- [ ] Add "Test All Servers" functionality (future enhancement)

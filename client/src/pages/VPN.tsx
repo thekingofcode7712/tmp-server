@@ -6,6 +6,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { VpnBandwidthUsage } from "@/components/VpnBandwidthUsage";
+import { VpnSpeedTest } from "@/components/VpnSpeedTest";
 
 const vpnServers = [
   { id: "us-east", name: "United States (East)", location: "New York", flag: "🇺🇸" },
@@ -228,18 +230,28 @@ export default function VPN() {
         </Card>
 
         {isPaidUser && (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>VPN Configuration</CardTitle>
-              <CardDescription>Generate configuration files for WireGuard or OpenVPN</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <VpnConfigGenerator protocol="wireguard" selectedServer={selectedServer || 'us-east'} />
-                <VpnConfigGenerator protocol="openvpn" selectedServer={selectedServer || 'us-east'} />
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <VpnBandwidthUsage />
+              <VpnSpeedTest 
+                server={selectedServer || 'us-east'} 
+                serverName={vpnServers.find(s => s.id === (selectedServer || 'us-east'))?.name || 'US East'}
+              />
+            </div>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>VPN Configuration</CardTitle>
+                <CardDescription>Generate configuration files for WireGuard or OpenVPN</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-4">
+                  <VpnConfigGenerator protocol="wireguard" selectedServer={selectedServer || 'us-east'} />
+                  <VpnConfigGenerator protocol="openvpn" selectedServer={selectedServer || 'us-east'} />
+                </div>
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
     </div>

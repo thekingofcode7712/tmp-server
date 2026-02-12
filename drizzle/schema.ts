@@ -330,6 +330,8 @@ export const vpnSettings = mysqlTable("vpnSettings", {
   protocol: mysqlEnum("protocol", ["wireguard", "openvpn", "proxy"]).default("proxy").notNull(),
   autoConnect: boolean("autoConnect").default(false).notNull(),
   killSwitch: boolean("killSwitch").default(false).notNull(),
+  bandwidthLimitDaily: bigint("bandwidthLimitDaily", { mode: "number" }).default(10737418240).notNull(), // 10GB default
+  bandwidthLimitMonthly: bigint("bandwidthLimitMonthly", { mode: "number" }).default(107374182400).notNull(), // 100GB default
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -347,8 +349,42 @@ export const vpnConnections = mysqlTable("vpnConnections", {
   protocol: varchar("protocol", { length: 50 }).notNull(),
   connectedAt: timestamp("connectedAt").defaultNow().notNull(),
   disconnectedAt: timestamp("disconnectedAt"),
+  bytesUploaded: bigint("bytesUploaded", { mode: "number" }).default(0).notNull(),
+  bytesDownloaded: bigint("bytesDownloaded", { mode: "number" }).default(0).notNull(),
   bytesTransferred: bigint("bytesTransferred", { mode: "number" }).default(0).notNull(),
 });
 
 export type VpnConnection = typeof vpnConnections.$inferSelect;
 export type InsertVpnConnection = typeof vpnConnections.$inferInsert;
+
+/**
+ * VPN speed test results
+ */
+export const vpnSpeedTests = mysqlTable("vpnSpeedTests", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  server: varchar("server", { length: 100 }).notNull(),
+  latency: int("latency").notNull(), // milliseconds
+  downloadSpeed: bigint("downloadSpeed", { mode: "number" }).notNull(), // bytes per second
+  uploadSpeed: bigint("uploadSpeed", { mode: "number" }).notNull(), // bytes per second
+  testedAt: timestamp("testedAt").defaultNow().notNull(),
+});
+
+export type VpnSpeedTest = typeof vpnSpeedTests.$inferSelect;
+export type InsertVpnSpeedTest = typeof vpnSpeedTests.$inferInsert;
+
+/**
+ * Ad blocker custom filter lists
+ */
+export const adFilterLists = mysqlTable("adFilterLists", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  url: text("url"),
+  isEnabled: boolean("isEnabled").default(true).notNull(),
+  lastUpdated: timestamp("lastUpdated"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AdFilterList = typeof adFilterLists.$inferSelect;
+export type InsertAdFilterList = typeof adFilterLists.$inferInsert;

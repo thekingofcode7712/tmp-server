@@ -43,6 +43,13 @@
       "when": 1770882420575,
       "tag": "0005_adorable_starbolt",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1770883037991,
+      "tag": "0006_lush_la_nuit",
+      "breakpoints": true
     }
   ]
 }

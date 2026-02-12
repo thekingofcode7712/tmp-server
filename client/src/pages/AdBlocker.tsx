@@ -7,6 +7,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { FilterListsManager } from "@/components/FilterListsManager";
 
 export default function AdBlocker() {
   const { user } = useAuth();
@@ -215,6 +216,8 @@ export default function AdBlocker() {
             </div>
           </CardContent>
         </Card>
+
+        {isPaidUser && <FilterListsManager />}
       </div>
     </div>
   );
