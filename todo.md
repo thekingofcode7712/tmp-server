@@ -5,11 +5,20 @@
 ### Bugs to Fix
 - [x] Fix infinite loading spinner in Email Settings tab (added retry limits and error handling)
 - [x] Fix email settings "Unable to load email settings" error - backend endpoint issue
+- [x] Fix instant uploads not actually uploading files to backend
 
 ### Performance Improvements
 - [x] Implement optimistic file uploads with instant UI feedback
 - [x] Show files immediately in UI while uploading in background
 - [x] Add upload retry logic for failed uploads (rollback on error)
+
+### Cloud Storage Enhancements
+- [x] Add bulk file operations with multi-select checkboxes
+- [x] Implement batch delete for selected files
+- [x] Create file preview modal for images, PDFs, and videos
+- [x] Add shareable links with expiration options (24h/7d/30d)
+- [x] Implement password protection for shared links
+- [x] Track access/downloads for shared links
 
 ### Email Storage Plans Upgrade UI
 - [x] Create email storage plan selection UI in Email Settings

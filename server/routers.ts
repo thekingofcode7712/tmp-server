@@ -238,7 +238,7 @@ export const appRouter = router({
         return { success: true, url };
       }),
     
-    deleteFile: protectedProcedure
+       deleteFile: protectedProcedure
       .input(z.object({ fileId: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const file = await db.getFileById(input.fileId);
@@ -247,13 +247,96 @@ export const appRouter = router({
         }
 
         await db.deleteFile(input.fileId, ctx.user.id);
-        
         const user = await db.getUserById(ctx.user.id);
         if (user) {
           await db.updateUserStorage(ctx.user.id, Math.max(0, user.storageUsed - file.fileSize));
         }
 
         return { success: true };
+      }),
+
+    createShareLink: protectedProcedure
+      .input(z.object({
+        fileId: z.number(),
+        expiresIn: z.enum(['24h', '7d', '30d']),
+        password: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const file = await db.getFileById(input.fileId);
+        if (!file || file.userId !== ctx.user.id) {
+          throw new Error("File not found");
+        }
+
+        const shareToken = nanoid(32);
+        const expiresAt = new Date();
+        
+        switch (input.expiresIn) {
+          case '24h':
+            expiresAt.setHours(expiresAt.getHours() + 24);
+            break;
+          case '7d':
+            expiresAt.setDate(expiresAt.getDate() + 7);
+            break;
+          case '30d':
+            expiresAt.setDate(expiresAt.getDate() + 30);
+            break;
+        }
+
+        await db.createFileShare({
+          fileId: input.fileId,
+          userId: ctx.user.id,
+          shareToken,
+          expiresAt,
+          password: input.password,
+          accessCount: 0,
+        });
+
+        const shareUrl = `${ctx.req.headers.origin}/share/${shareToken}`;
+        return { shareUrl, shareToken };
+      }),
+
+    getShareLink: publicProcedure
+      .input(z.object({ shareToken: z.string() }))
+      .query(async ({ input }) => {
+        const share = await db.getFileShareByToken(input.shareToken);
+        if (!share) throw new Error("Share link not found");
+        if (share.expiresAt && new Date(share.expiresAt) < new Date()) {
+          throw new Error("Share link expired");
+        }
+
+        const file = await db.getFileById(share.fileId);
+        if (!file) throw new Error("File not found");
+
+        await db.incrementShareAccessCount(share.id);
+
+        return {
+          fileName: file.fileName,
+          fileSize: file.fileSize,
+          mimeType: file.mimeType,
+          requiresPassword: !!share.password,
+          accessCount: share.accessCount,
+        };
+      }),
+
+    downloadSharedFile: publicProcedure
+      .input(z.object({
+        shareToken: z.string(),
+        password: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const share = await db.getFileShareByToken(input.shareToken);
+        if (!share) throw new Error("Share link not found");
+        if (share.expiresAt && new Date(share.expiresAt) < new Date()) {
+          throw new Error("Share link expired");
+        }
+        if (share.password && share.password !== input.password) {
+          throw new Error("Invalid password");
+        }
+
+        const file = await db.getFileById(share.fileId);
+        if (!file) throw new Error("File not found");
+
+        return { fileUrl: file.fileUrl };
       }),
   }),
 

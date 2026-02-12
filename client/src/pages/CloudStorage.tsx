@@ -4,8 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { ArrowLeft, Upload, Trash2, Download, FolderOpen, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Upload, Trash2, Download, FolderOpen, ArrowUpDown, Eye, Share2, X, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -17,6 +21,12 @@ export default function CloudStorage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "date-asc" | "date-desc" | "size-asc" | "size-desc">("date-desc");
+  const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
+  const [previewFile, setPreviewFile] = useState<any>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareFileId, setShareFileId] = useState<number | null>(null);
+  const [shareExpiration, setShareExpiration] = useState<'24h' | '7d' | '30d'>('7d');
+  const [sharePassword, setSharePassword] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
@@ -81,17 +91,64 @@ export default function CloudStorage() {
       toast.success("File deleted");
       utils.storage.getFiles.invalidate();
       utils.dashboard.stats.invalidate();
+      setSelectedFiles([]);
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
 
+  const createShareLinkMutation = trpc.storage.createShareLink.useMutation({
+    onSuccess: (data) => {
+      navigator.clipboard.writeText(data.shareUrl);
+      toast.success("Share link copied to clipboard!");
+      setShareDialogOpen(false);
+      setSharePassword('');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedFiles.length} file(s)?`)) return;
+    for (const fileId of selectedFiles) {
+      await deleteMutation.mutateAsync({ fileId });
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedFiles.length === files?.length) {
+      setSelectedFiles([]);
+    } else {
+      setSelectedFiles(files?.map(f => f.id) || []);
+    }
+  };
+
+  const handleShare = (fileId: number) => {
+    setShareFileId(fileId);
+    setShareDialogOpen(true);
+  };
+
+  const handleCreateShareLink = () => {
+    if (!shareFileId) return;
+    createShareLinkMutation.mutate({
+      fileId: shareFileId,
+      expiresIn: shareExpiration,
+      password: sharePassword || undefined,
+    });
+  };
+
+  const isPreviewable = (mimeType: string | null) => {
+    if (!mimeType) return false;
+    return mimeType.startsWith('image/') || mimeType === 'application/pdf' || mimeType.startsWith('video/');
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Don't show uploading state - optimistic update handles UI
+    setIsUploading(true);
     setUploadProgress(0);
 
     // Detect MIME type with fallback
@@ -229,7 +286,13 @@ export default function CloudStorage() {
             <FolderOpen className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">{selectedFolder}</span>
           </div>
-          <div>
+          <div className="flex items-center gap-2">
+            {selectedFiles.length > 0 && (
+              <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete ({selectedFiles.length})
+              </Button>
+            )}
             <input
               ref={fileInputRef}
               type="file"
@@ -243,7 +306,18 @@ export default function CloudStorage() {
           </div>
         </div>
 
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between items-center mb-4">
+          {files && files.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={selectedFiles.length === files.length}
+                onCheckedChange={handleSelectAll}
+              />
+              <span className="text-sm text-muted-foreground">
+                {selectedFiles.length > 0 ? `${selectedFiles.length} selected` : 'Select all'}
+              </span>
+            </div>
+          )}
           <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
             <SelectTrigger className="w-[200px]">
               <ArrowUpDown className="h-4 w-4 mr-2" />
@@ -284,15 +358,39 @@ export default function CloudStorage() {
                   return 0;
               }
             }).map((file) => (
-              <Card key={file.id}>
+              <Card key={file.id} className={selectedFiles.includes(file.id) ? "ring-2 ring-primary" : ""}>
                 <CardHeader>
-                  <CardTitle className="text-base truncate">{file.fileName}</CardTitle>
-                  <CardDescription>
-                    {((file.fileSize || 0) / 1024).toFixed(2)} KB
-                  </CardDescription>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-base truncate">{file.fileName}</CardTitle>
+                      <CardDescription>
+                        {((file.fileSize || 0) / 1024).toFixed(2)} KB
+                      </CardDescription>
+                    </div>
+                    <Checkbox
+                      checked={selectedFiles.includes(file.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedFiles([...selectedFiles, file.id]);
+                        } else {
+                          setSelectedFiles(selectedFiles.filter(id => id !== file.id));
+                        }
+                      }}
+                    />
+                  </div>
                 </CardHeader>
-                <CardContent className="flex gap-2">
-                  <Button variant="outline" size="sm" asChild className="flex-1">
+                <CardContent className="flex gap-2 flex-wrap">
+                  {isPreviewable(file.mimeType) && (
+                    <Button variant="outline" size="sm" onClick={() => setPreviewFile(file)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Preview
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => handleShare(file.id)}>
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
                     <a href={file.fileUrl} target="_blank" rel="noopener noreferrer">
                       <Download className="h-4 w-4 mr-2" />
                       Download
@@ -318,6 +416,74 @@ export default function CloudStorage() {
             </CardContent>
           </Card>
         )}
+
+        {/* File Preview Modal */}
+        <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>{previewFile?.fileName}</DialogTitle>
+              <DialogDescription>
+                {previewFile && ((previewFile.fileSize || 0) / 1024).toFixed(2)} KB
+              </DialogDescription>
+            </DialogHeader>
+            {previewFile && (
+              <div className="mt-4">
+                {previewFile.mimeType?.startsWith('image/') && (
+                  <img src={previewFile.fileUrl} alt={previewFile.fileName} className="w-full h-auto rounded" />
+                )}
+                {previewFile.mimeType === 'application/pdf' && (
+                  <iframe src={previewFile.fileUrl} className="w-full h-[600px] rounded" />
+                )}
+                {previewFile.mimeType?.startsWith('video/') && (
+                  <video src={previewFile.fileUrl} controls className="w-full h-auto rounded" />
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Share Dialog */}
+        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Share File</DialogTitle>
+              <DialogDescription>
+                Create a shareable link with optional password protection
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div>
+                <Label>Expiration</Label>
+                <Select value={shareExpiration} onValueChange={(value: any) => setShareExpiration(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24h">24 hours</SelectItem>
+                    <SelectItem value="7d">7 days</SelectItem>
+                    <SelectItem value="30d">30 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Password (optional)</Label>
+                <Input
+                  type="password"
+                  placeholder="Leave empty for no password"
+                  value={sharePassword}
+                  onChange={(e) => setSharePassword(e.target.value)}
+                />
+              </div>
+              <Button
+                onClick={handleCreateShareLink}
+                disabled={createShareLinkMutation.isPending}
+                className="w-full"
+              >
+                {createShareLinkMutation.isPending ? "Creating..." : "Create Share Link"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

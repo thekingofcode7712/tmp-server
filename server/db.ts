@@ -16,7 +16,7 @@ import {
   themes, InsertTheme, userThemes, InsertUserTheme,
   externalEmailCredentials, InsertExternalEmailCredential,
   emailFolders, InsertEmailFolder, emailAttachments, InsertEmailAttachment,
-  emailStoragePlans, InsertEmailStoragePlan
+  emailStoragePlans, InsertEmailStoragePlan, fileShares, InsertFileShare
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -201,6 +201,31 @@ export async function getFileById(fileId: number) {
   if (!db) return null;
   const result = await db.select().from(files).where(eq(files.id, fileId)).limit(1);
   return result.length > 0 ? result[0] : null;
+}
+
+export async function createFileShare(share: InsertFileShare) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(fileShares).values(share);
+  return result;
+}
+
+export async function getFileShareByToken(shareToken: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(fileShares).where(eq(fileShares.shareToken, shareToken)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function incrementShareAccessCount(shareId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(fileShares)
+    .set({ 
+      accessCount: sql`${fileShares.accessCount} + 1`,
+      lastAccessedAt: new Date()
+    })
+    .where(eq(fileShares.id, shareId));
 }
 
 // ===== LINK OPERATIONS =====
