@@ -55,31 +55,78 @@ export default function CloudStorage() {
     setIsUploading(true);
     setUploadProgress(0);
 
-    const reader = new FileReader();
+    const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+    const shouldChunk = file.size > CHUNK_SIZE;
     
-    reader.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const progress = Math.round((event.loaded / event.total) * 50);
-        setUploadProgress(progress);
+    if (shouldChunk) {
+      // Chunked upload for large files
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      const uploadId = Math.random().toString(36).substring(7);
+      
+      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+        const start = chunkIndex * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+        
+        const reader = new FileReader();
+        await new Promise<void>((resolve, reject) => {
+          reader.onload = async (event) => {
+            try {
+              const base64 = event.target?.result as string;
+              const base64Data = base64.split(',')[1];
+              
+              await uploadMutation.mutateAsync({
+                fileName: file.name,
+                fileData: base64Data,
+                mimeType: file.type,
+                folder: selectedFolder,
+                chunkIndex,
+                totalChunks,
+                uploadId,
+              });
+              
+              const progress = Math.round(((chunkIndex + 1) / totalChunks) * 100);
+              setUploadProgress(progress);
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(chunk);
+        });
       }
-    };
-    
-    reader.onload = async (event) => {
-      setUploadProgress(60);
-      const base64 = event.target?.result as string;
-      const base64Data = base64.split(',')[1];
+      
+      setIsUploading(false);
+      setUploadProgress(0);
+    } else {
+      // Single upload for small files
+      const reader = new FileReader();
+      
+      reader.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 50);
+          setUploadProgress(progress);
+        }
+      };
+      
+      reader.onload = async (event) => {
+        setUploadProgress(60);
+        const base64 = event.target?.result as string;
+        const base64Data = base64.split(',')[1];
 
-      setUploadProgress(80);
-      uploadMutation.mutate({
-        fileName: file.name,
-        fileData: base64Data,
-        mimeType: file.type,
-        folder: selectedFolder,
-      });
-      setUploadProgress(100);
-    };
-    
-    reader.readAsDataURL(file);
+        setUploadProgress(80);
+        uploadMutation.mutate({
+          fileName: file.name,
+          fileData: base64Data,
+          mimeType: file.type,
+          folder: selectedFolder,
+        });
+        setUploadProgress(100);
+      };
+      
+      reader.readAsDataURL(file);
+    }
   };
 
   if (!isAuthenticated) {

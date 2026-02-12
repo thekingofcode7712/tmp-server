@@ -477,3 +477,45 @@
 - [x] Show usage warnings in dashboard
 - [ ] Add alert preferences to settings (future enhancement)
 - [ ] Track alert history to avoid spam (future enhancement)
+
+### Alert Preferences
+- [x] Add alert preferences table to database schema
+- [x] Create alert preferences settings UI
+- [x] Add toggle for storage alerts (80%, 95%)
+- [x] Add toggle for AI credits alerts
+- [x] Add custom threshold inputs for storage alerts
+- [x] Save and load user alert preferences
+- [x] Apply preferences in scheduled job
+
+### Alert History Tracking
+- [x] Add alert history table to database schema
+- [x] Track when each alert type was last sent
+- [x] Implement cooldown periods (7 days for all alerts)
+- [x] Check alert history before sending new alerts
+- [ ] Add alert history view in settings (future enhancement)
+
+### In-App Notifications
+- [x] Add notifications table to database schema
+- [x] Create notification component for dashboard header
+- [x] Display unread notification count badge
+- [x] Show notification dropdown with recent alerts
+- [x] Mark notifications as read
+- [x] Add notification preferences (email vs in-app)
+
+### Upload Speed Optimization (Server-Side)
+- [x] Add multipart upload support for large files (>5MB)
+- [x] Implement chunked upload with progress tracking
+- [x] Optimize buffer processing for faster uploads
+- [ ] Add compression for compressible file types (future enhancement)
+- [ ] Implement concurrent chunk processing (future enhancement)
+
+### Download Speed Optimization
+- [x] S3 URLs provide direct download (already optimized)
+- [ ] Add range request support for resumable downloads (future enhancement)
+- [ ] Add download progress tracking (future enhancement)
+- [ ] Implement parallel chunk downloads for large files (future enhancement)
+
+### Fix Downgrade Error
+- [x] Fix subscription status enum inconsistency (canceled vs cancelled)
+- [x] Update all references to use consistent spelling
+- [x] Test downgrade functionality

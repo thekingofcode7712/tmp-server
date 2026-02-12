@@ -59,10 +59,11 @@ export default function Settings() {
 
       <div className="container py-8 max-w-4xl">
         <Tabs defaultValue="account">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
             <TabsTrigger value="customization">Customization</TabsTrigger>
+            <TabsTrigger value="alerts">Alerts</TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
           </TabsList>
 
@@ -177,6 +178,67 @@ export default function Settings() {
                     </Link>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="alerts">
+            <Card>
+              <CardHeader>
+                <CardTitle>Alert Preferences</CardTitle>
+                <CardDescription>Configure when and how you receive alerts</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Storage Alerts</Label>
+                      <p className="text-sm text-muted-foreground">Get notified when storage is running low</p>
+                    </div>
+                    <input type="checkbox" className="h-5 w-5" defaultChecked />
+                  </div>
+                  <div className="ml-6 space-y-2">
+                    <div>
+                      <Label className="text-sm">First Warning Threshold</Label>
+                      <Input type="number" defaultValue="80" className="w-24" />%
+                    </div>
+                    <div>
+                      <Label className="text-sm">Critical Warning Threshold</Label>
+                      <Input type="number" defaultValue="95" className="w-24" />%
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>AI Credits Alerts</Label>
+                      <p className="text-sm text-muted-foreground">Get notified when credits are running low</p>
+                    </div>
+                    <input type="checkbox" className="h-5 w-5" defaultChecked />
+                  </div>
+                  <div className="ml-6">
+                    <Label className="text-sm">Alert When Credits Below</Label>
+                    <Input type="number" defaultValue="10" className="w-24" />
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t">
+                  <div>
+                    <Label>Notification Channels</Label>
+                    <p className="text-sm text-muted-foreground mb-3">Choose how you want to receive alerts</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Email Notifications</Label>
+                    <input type="checkbox" className="h-5 w-5" defaultChecked />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">In-App Notifications</Label>
+                    <input type="checkbox" className="h-5 w-5" defaultChecked />
+                  </div>
+                </div>
+
+                <Button className="w-full">Save Alert Preferences</Button>
               </CardContent>
             </Card>
           </TabsContent>

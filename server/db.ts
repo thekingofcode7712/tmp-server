@@ -6,7 +6,8 @@ import {
   gameScores, InsertGameScore, subscriptions, InsertSubscription,
   payments, InsertPayment, aiChats, InsertAiChat,
   cliHistory, InsertCliHistory, videoDownloads, InsertVideoDownload,
-  backups, InsertBackup
+  backups, InsertBackup, alertPreferences, InsertAlertPreference,
+  alertHistory, InsertAlertHistory, notifications, InsertNotification
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -488,3 +489,106 @@ export async function deleteBackup(backupId: number, userId: number) {
   if (!db) return;
   await db.delete(backups).where(and(eq(backups.id, backupId), eq(backups.userId, userId)));
 }
+
+// ===== ALERT PREFERENCES =====
+
+export async function getAlertPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(alertPreferences).where(eq(alertPreferences.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function upsertAlertPreferences(userId: number, prefs: Partial<InsertAlertPreference>) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const existing = await getAlertPreferences(userId);
+  if (existing) {
+    await db.update(alertPreferences).set(prefs).where(eq(alertPreferences.userId, userId));
+  } else {
+    await db.insert(alertPreferences).values({ userId, ...prefs });
+  }
+}
+
+// ===== ALERT HISTORY =====
+
+export async function getLastAlert(userId: number, alertType: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(alertHistory)
+    .where(and(eq(alertHistory.userId, userId), eq(alertHistory.alertType, alertType as any)))
+    .orderBy(desc(alertHistory.sentAt))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function recordAlert(userId: number, alertType: string, metadata?: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(alertHistory).values({
+    userId,
+    alertType: alertType as any,
+    metadata,
+  });
+}
+
+export async function getUserAlertHistory(userId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(alertHistory)
+    .where(eq(alertHistory.userId, userId))
+    .orderBy(desc(alertHistory.sentAt))
+    .limit(limit);
+}
+
+// ===== NOTIFICATIONS =====
+
+export async function createNotification(notification: InsertNotification) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(notifications).values(notification);
+  return result;
+}
+
+export async function getUserNotifications(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit);
+}
+
+export async function getUnreadNotificationCount(userId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ count: sql<number>`count(*)` })
+    .from(notifications)
+    .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  return result[0]?.count || 0;
+}
+
+export async function markNotificationAsRead(notificationId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(notifications)
+    .set({ isRead: true })
+    .where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId)));
+}
+
+export async function markAllNotificationsAsRead(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(notifications)
+    .set({ isRead: true })
+    .where(eq(notifications.userId, userId));
+}
+
+export async function deleteNotification(notificationId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(notifications)
+    .where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId)));
+}
+

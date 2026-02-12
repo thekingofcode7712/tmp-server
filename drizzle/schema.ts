@@ -239,3 +239,60 @@ export const backups = mysqlTable("backups", {
 
 export type Backup = typeof backups.$inferSelect;
 export type InsertBackup = typeof backups.$inferInsert;
+
+/**
+ * User alert preferences
+ */
+export const alertPreferences = mysqlTable("alertPreferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  
+  // Storage alerts
+  storageAlertsEnabled: boolean("storageAlertsEnabled").default(true).notNull(),
+  storageAlertThreshold80: int("storageAlertThreshold80").default(80).notNull(),
+  storageAlertThreshold95: int("storageAlertThreshold95").default(95).notNull(),
+  
+  // AI credits alerts
+  aiCreditsAlertsEnabled: boolean("aiCreditsAlertsEnabled").default(true).notNull(),
+  aiCreditsThreshold: int("aiCreditsThreshold").default(10).notNull(),
+  
+  // Notification channels
+  emailNotifications: boolean("emailNotifications").default(true).notNull(),
+  inAppNotifications: boolean("inAppNotifications").default(true).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AlertPreference = typeof alertPreferences.$inferSelect;
+export type InsertAlertPreference = typeof alertPreferences.$inferInsert;
+
+/**
+ * Alert history for tracking when alerts were sent
+ */
+export const alertHistory = mysqlTable("alertHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  alertType: mysqlEnum("alertType", ["storage_80", "storage_95", "ai_credits_low"]).notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  metadata: json("metadata"),
+});
+
+export type AlertHistory = typeof alertHistory.$inferSelect;
+export type InsertAlertHistory = typeof alertHistory.$inferInsert;
+
+/**
+ * In-app notifications
+ */
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", ["storage_warning", "credits_low", "subscription_resumed", "info"]).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("isRead").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;

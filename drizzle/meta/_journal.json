@@ -29,6 +29,13 @@
       "when": 1770880589403,
       "tag": "0003_cynical_eternals",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1770881329367,
+      "tag": "0004_solid_sumo",
+      "breakpoints": true
     }
   ]
 }

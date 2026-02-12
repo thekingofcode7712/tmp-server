@@ -96,11 +96,28 @@ export async function checkUsageAlerts() {
         // Skip if no email
         if (!user.email) continue;
 
+        // Get user alert preferences
+        const prefs = await db.getAlertPreferences(user.id);
+        const storageAlertsEnabled = prefs?.storageAlertsEnabled ?? true;
+        const aiCreditsAlertsEnabled = prefs?.aiCreditsAlertsEnabled ?? true;
+        const emailNotifications = prefs?.emailNotifications ?? true;
+        const inAppNotifications = prefs?.inAppNotifications ?? true;
+        const threshold80 = prefs?.storageAlertThreshold80 ?? 80;
+        const threshold95 = prefs?.storageAlertThreshold95 ?? 95;
+        const aiThreshold = prefs?.aiCreditsThreshold ?? 10;
+
         const storagePercent = (user.storageUsed / user.storageLimit) * 100;
-        const aiCreditsPercent = user.aiCredits <= 0 ? 0 : (user.aiCredits / 1000) * 100; // Assuming 1000 is typical amount
+
+        // Check cooldown period (7 days for storage alerts)
+        const COOLDOWN_DAYS = 7;
+        const cooldownMs = COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
 
         // Storage alerts
-        if (storagePercent >= 95 && storagePercent < 100) {
+        if (storageAlertsEnabled && storagePercent >= threshold95 && storagePercent < 100) {
+          const lastAlert = await db.getLastAlert(user.id, 'storage_95');
+          const canSendAlert = !lastAlert || (Date.now() - new Date(lastAlert.sentAt).getTime() > cooldownMs);
+          
+          if (canSendAlert) {
           await sendEmail({
             from: `TMP Server <noreply@tmpserver.manus.space>`,
             to: user.email,
@@ -108,8 +125,27 @@ export async function checkUsageAlerts() {
             body: `Hello ${user.name || 'there'},\n\nYour TMP Server storage is 95% full (${(user.storageUsed / 1024 / 1024 / 1024).toFixed(2)}GB of ${(user.storageLimit / 1024 / 1024 / 1024).toFixed(0)}GB used).\n\nPlease delete some files or upgrade your plan to avoid running out of space.\n\nUpgrade at: https://tmpserver.manus.space/subscription\n\nBest regards,\nTMP Server Team`,
             html: `<p>Hello ${user.name || 'there'},</p><p>Your TMP Server storage is <strong>95% full</strong> (${(user.storageUsed / 1024 / 1024 / 1024).toFixed(2)}GB of ${(user.storageLimit / 1024 / 1024 / 1024).toFixed(0)}GB used).</p><p>Please delete some files or upgrade your plan to avoid running out of space.</p><p><a href="https://tmpserver.manus.space/subscription">Upgrade your plan</a></p><p>Best regards,<br>TMP Server Team</p>`,
           });
-          console.log(`[Scheduled Job] Sent 95% storage alert to user ${user.id}`);
-        } else if (storagePercent >= 80 && storagePercent < 95) {
+            
+            // Record alert history
+            await db.recordAlert(user.id, 'storage_95', { storagePercent, storageUsed: user.storageUsed });
+            
+            // Create in-app notification
+            if (inAppNotifications) {
+              await db.createNotification({
+                userId: user.id,
+                type: 'storage_warning',
+                title: 'Storage Almost Full',
+                message: `Your storage is ${storagePercent.toFixed(0)}% full. Please delete files or upgrade your plan.`,
+              });
+            }
+            
+            console.log(`[Scheduled Job] Sent 95% storage alert to user ${user.id}`);
+          }
+        } else if (storageAlertsEnabled && storagePercent >= threshold80 && storagePercent < threshold95) {
+          const lastAlert = await db.getLastAlert(user.id, 'storage_80');
+          const canSendAlert = !lastAlert || (Date.now() - new Date(lastAlert.sentAt).getTime() > cooldownMs);
+          
+          if (canSendAlert && emailNotifications) {
           await sendEmail({
             from: `TMP Server <noreply@tmpserver.manus.space>`,
             to: user.email,
@@ -117,11 +153,30 @@ export async function checkUsageAlerts() {
             body: `Hello ${user.name || 'there'},\n\nYour TMP Server storage is 80% full (${(user.storageUsed / 1024 / 1024 / 1024).toFixed(2)}GB of ${(user.storageLimit / 1024 / 1024 / 1024).toFixed(0)}GB used).\n\nConsider deleting unused files or upgrading your plan.\n\nUpgrade at: https://tmpserver.manus.space/subscription\n\nBest regards,\nTMP Server Team`,
             html: `<p>Hello ${user.name || 'there'},</p><p>Your TMP Server storage is <strong>80% full</strong> (${(user.storageUsed / 1024 / 1024 / 1024).toFixed(2)}GB of ${(user.storageLimit / 1024 / 1024 / 1024).toFixed(0)}GB used).</p><p>Consider deleting unused files or upgrading your plan.</p><p><a href="https://tmpserver.manus.space/subscription">Upgrade your plan</a></p><p>Best regards,<br>TMP Server Team</p>`,
           });
-          console.log(`[Scheduled Job] Sent 80% storage alert to user ${user.id}`);
+            
+            // Record alert history
+            await db.recordAlert(user.id, 'storage_80', { storagePercent, storageUsed: user.storageUsed });
+            
+            // Create in-app notification
+            if (inAppNotifications) {
+              await db.createNotification({
+                userId: user.id,
+                type: 'storage_warning',
+                title: 'Storage Warning',
+                message: `Your storage is ${storagePercent.toFixed(0)}% full. Consider upgrading your plan.`,
+              });
+            }
+            
+            console.log(`[Scheduled Job] Sent 80% storage alert to user ${user.id}`);
+          }
         }
 
-        // AI credits alert (below 10% of initial 100 credits)
-        if (user.aiCredits > 0 && user.aiCredits <= 10) {
+        // AI credits alert
+        if (aiCreditsAlertsEnabled && user.aiCredits > 0 && user.aiCredits <= aiThreshold) {
+          const lastAlert = await db.getLastAlert(user.id, 'ai_credits_low');
+          const canSendAlert = !lastAlert || (Date.now() - new Date(lastAlert.sentAt).getTime() > cooldownMs);
+          
+          if (canSendAlert && emailNotifications) {
           await sendEmail({
             from: `TMP Server <noreply@tmpserver.manus.space>`,
             to: user.email,
@@ -129,7 +184,22 @@ export async function checkUsageAlerts() {
             body: `Hello ${user.name || 'there'},\n\nYou have only ${user.aiCredits} AI credits remaining.\n\nPurchase more credits or upgrade your plan to continue using AI features.\n\nBuy credits at: https://tmpserver.manus.space/buy-credits\n\nBest regards,\nTMP Server Team`,
             html: `<p>Hello ${user.name || 'there'},</p><p>You have only <strong>${user.aiCredits} AI credits</strong> remaining.</p><p>Purchase more credits or upgrade your plan to continue using AI features.</p><p><a href="https://tmpserver.manus.space/buy-credits">Buy more credits</a></p><p>Best regards,<br>TMP Server Team</p>`,
           });
-          console.log(`[Scheduled Job] Sent low AI credits alert to user ${user.id}`);
+            
+            // Record alert history
+            await db.recordAlert(user.id, 'ai_credits_low', { aiCredits: user.aiCredits });
+            
+            // Create in-app notification
+            if (inAppNotifications) {
+              await db.createNotification({
+                userId: user.id,
+                type: 'credits_low',
+                title: 'AI Credits Running Low',
+                message: `You have only ${user.aiCredits} AI credits remaining. Purchase more to continue using AI features.`,
+              });
+            }
+            
+            console.log(`[Scheduled Job] Sent low AI credits alert to user ${user.id}`);
+          }
         }
       } catch (error) {
         console.error(`[Scheduled Job] Error sending alert to user ${user.id}:`, error);

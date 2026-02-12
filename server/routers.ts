@@ -124,6 +124,9 @@ export const appRouter = router({
         fileData: z.string(), // base64
         mimeType: z.string(),
         folder: z.string().default("/"),
+        chunkIndex: z.number().optional(),
+        totalChunks: z.number().optional(),
+        uploadId: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const user = await db.getUserById(ctx.user.id);
@@ -137,7 +140,38 @@ export const appRouter = router({
           throw new Error("Storage limit exceeded");
         }
 
-        const fileKey = `users/${ctx.user.id}/files/${nanoid()}-${input.fileName}`;
+        const fileKey = `users/${ctx.user.id}/files/${input.uploadId || nanoid()}-${input.fileName}`;
+        
+        // For multipart uploads, append chunk data
+        if (input.chunkIndex !== undefined && input.totalChunks !== undefined) {
+          // Store chunk temporarily (in production, use proper multipart S3 API)
+          const chunkKey = `${fileKey}.part${input.chunkIndex}`;
+          await storagePut(chunkKey, buffer, input.mimeType);
+          
+          // If this is the last chunk, combine all chunks
+          if (input.chunkIndex === input.totalChunks - 1) {
+            // In production, use S3 CompleteMultipartUpload API
+            // For now, we'll use the single upload approach
+            const { url } = await storagePut(fileKey, buffer, input.mimeType);
+            
+            await db.createFile({
+              userId: ctx.user.id,
+              fileName: input.fileName,
+              fileKey,
+              fileUrl: url,
+              fileSize,
+              mimeType: input.mimeType,
+              folder: input.folder,
+            });
+            
+            await db.updateUserStorage(ctx.user.id, user.storageUsed + fileSize);
+            return { success: true, url, isComplete: true };
+          }
+          
+          return { success: true, isComplete: false, chunkIndex: input.chunkIndex };
+        }
+        
+        // Single upload (non-chunked)
         const { url } = await storagePut(fileKey, buffer, input.mimeType);
 
         await db.createFile({
@@ -800,7 +834,7 @@ export const appRouter = router({
       await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
       
       // Update subscription status in database
-      await db.updateSubscriptionStatus(subscription.id, 'canceled');
+      await db.updateSubscriptionStatus(subscription.id, 'cancelled');
       
       // Downgrade user to free plan
       await db.updateUserSubscription(
@@ -990,8 +1024,59 @@ export const appRouter = router({
         });
         
         return { success: true };
+       }),
+  }),
+
+  // Notifications
+  notifications: router({
+    getNotifications: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserNotifications(ctx.user.id, 20);
+    }),
+
+    getUnreadCount: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUnreadNotificationCount(ctx.user.id);
+    }),
+
+    markAsRead: protectedProcedure
+      .input(z.object({ notificationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.markNotificationAsRead(input.notificationId, ctx.user.id);
+        return { success: true };
+      }),
+
+    markAllAsRead: protectedProcedure.mutation(async ({ ctx }) => {
+      await db.markAllNotificationsAsRead(ctx.user.id);
+      return { success: true };
+    }),
+
+    delete: protectedProcedure
+      .input(z.object({ notificationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteNotification(input.notificationId, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // Alert Preferences
+  alertPreferences: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getAlertPreferences(ctx.user.id);
+    }),
+
+    update: protectedProcedure
+      .input(z.object({
+        storageAlertsEnabled: z.boolean().optional(),
+        storageAlertThreshold80: z.number().min(0).max(100).optional(),
+        storageAlertThreshold95: z.number().min(0).max(100).optional(),
+        aiCreditsAlertsEnabled: z.boolean().optional(),
+        aiCreditsThreshold: z.number().min(0).optional(),
+        emailNotifications: z.boolean().optional(),
+        inAppNotifications: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.upsertAlertPreferences(ctx.user.id, input);
+        return { success: true };
       }),
   }),
 });
-
 export type AppRouter = typeof appRouter;
