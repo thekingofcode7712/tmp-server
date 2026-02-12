@@ -2,6 +2,9 @@
 
 ## Current Sprint - Major Feature Additions
 
+### Bugs to Fix
+- [x] Fix infinite loading spinner in Email Settings tab
+
 ### Email Storage Plans Upgrade UI
 - [x] Create email storage plan selection UI in Email Settings
 - [x] Display current plan and usage
@@ -74,11 +77,11 @@
 - [ ] Display API usage statistics
 
 ### Custom Branded Login Screen
-- [ ] Create custom login page component with TMP Server branding
-- [ ] Add logo and custom styling
-- [ ] Keep all OAuth login options (Google, GitHub, etc.)
-- [ ] Add branded colors and design elements
-- [ ] Ensure responsive design for mobile
+- [x] Create custom login page component with TMP Server branding
+- [x] Add logo and custom styling
+- [x] Keep all OAuth login options (Google, GitHub, etc.)
+- [x] Add branded colors and design elements
+- [x] Ensure responsive design for mobile
 
 ## Completed Features
 - [x] 23-theme marketplace with £3 individual / £34.99 bundle pricing

@@ -29,11 +29,13 @@ import WordProcessor from "./pages/WordProcessor";
 import ServerStatus from "./pages/ServerStatus";
 import Addons from "./pages/Addons";
 import { Themes } from "./pages/Themes";
+import Login from "./pages/Login";
 import { useApplyPurchasedTheme } from "./hooks/useApplyPurchasedTheme";
 
 function Router() {
   return (
     <Switch>
+      <Route path={"/login"} component={Login} />
       <Route path={"/"} component={Dashboard} />
       <Route path={"/storage"} component={CloudStorage} />
       <Route path={"/video-downloader"} component={VideoDownloader} />

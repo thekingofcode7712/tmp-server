@@ -29,24 +29,8 @@ export default function Dashboard() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md mx-4">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold">TMP Server</CardTitle>
-            <CardDescription>Your complete cloud platform</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-center text-muted-foreground">
-              Access cloud storage, email, games, AI chat, and more
-            </p>
-            <Button asChild className="w-full" size="lg">
-              <a href={getLoginUrl()}>Sign In to Continue</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    window.location.href = '/login';
+    return null;
   }
 
   const storagePercent = stats ? (stats.storageUsed / stats.storageLimit) * 100 : 0;

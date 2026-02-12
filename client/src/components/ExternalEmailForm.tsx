@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,7 @@ export function ExternalEmailForm() {
   });
 
   // Update form when credential loads
-  useState(() => {
+  useEffect(() => {
     if (credential) {
       setFormData({
         emailAddress: credential.emailAddress,
@@ -39,7 +39,7 @@ export function ExternalEmailForm() {
         smtpPassword: credential.smtpPassword,
       });
     }
-  });
+  }, [credential]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
