@@ -67,6 +67,20 @@ export function Themes() {
     }
   };
 
+  const handleResetTheme = async () => {
+    try {
+      setActivating(true);
+      // Set theme to 'default' to reset
+      await setActiveTheme.mutateAsync({ themeId: 0 }); // 0 or null means default
+      toast.success('Reset to default theme! Refreshing...');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to reset theme');
+    } finally {
+      setActivating(false);
+    }
+  };
+
   if (themesLoading || userThemesLoading) {
     return (
       <DashboardLayout>
@@ -84,14 +98,25 @@ export function Themes() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Palette className="h-8 w-8" />
-            Theme Marketplace
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Customize your experience with premium color schemes
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Palette className="h-8 w-8" />
+              Theme Marketplace
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Customize your experience with premium color schemes
+            </p>
+          </div>
+          {activeThemeId && activeThemeId !== 0 && (
+            <Button
+              variant="outline"
+              onClick={handleResetTheme}
+              disabled={activating}
+            >
+              Reset to Default Theme
+            </Button>
+          )}
         </div>
 
         {/* Stats & Bundle Offer */}

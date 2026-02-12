@@ -1356,6 +1356,15 @@ export const appRouter = router({
     setActiveTheme: protectedProcedure
       .input(z.object({ themeId: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        // If themeId is 0, reset to default theme
+        if (input.themeId === 0) {
+          await db.updateUserCustomization(ctx.user.id, {
+            hasCustomization: false,
+            customTheme: 'default',
+          });
+          return { success: true };
+        }
+        
         // Verify user owns this theme
         const hasPurchased = await db.hasUserPurchasedTheme(ctx.user.id, input.themeId);
         if (!hasPurchased) {

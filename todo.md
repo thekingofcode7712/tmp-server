@@ -58,6 +58,15 @@
 - [x] Remove Recent Activity widget from dashboard (user prefers no preview)
 
 ### Checkout Flow Improvements
+- [x] Fix theme purchase Stripe checkout not opening (working correctly)
+- [x] Debug checkout URL generation in theme endpoints (working correctly)
+- [x] Ensure window.location.href properly redirects to Stripe (working correctly)
+
+### Theme Application Issues
+- [x] Fix purchased themes not applying their actual colors
+- [x] Ensure theme CSS variables are properly injected
+- [x] Test all theme color schemes display correctly
+- [x] Add "Reset to Default Theme" button to revert to default theme
 - [ ] Add automatic data refresh after Stripe checkout return
 - [ ] Invalidate queries when user returns from successful purchase
 - [ ] Show success message and updated data without manual refresh
