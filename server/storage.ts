@@ -101,36 +101,5 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
   };
 }
 
-export async function getPresignedUploadUrl(
-  relKey: string,
-  contentType: string = "application/octet-stream"
-): Promise<{ key: string; uploadUrl: string; publicUrl: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
-  
-  const presignApiUrl = new URL(
-    "v1/storage/presignedUploadUrl",
-    ensureTrailingSlash(baseUrl)
-  );
-  presignApiUrl.searchParams.set("path", key);
-  presignApiUrl.searchParams.set("contentType", contentType);
-  
-  const response = await fetch(presignApiUrl, {
-    method: "GET",
-    headers: buildAuthHeaders(apiKey),
-  });
-  
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Failed to get presigned URL (${response.status} ${response.statusText}): ${message}`
-    );
-  }
-  
-  const data = await response.json();
-  return {
-    key,
-    uploadUrl: data.uploadUrl,
-    publicUrl: data.publicUrl,
-  };
-}
+// Note: Manus Forge API doesn't have presignedUploadUrl endpoint
+// Use direct upload via storagePut instead

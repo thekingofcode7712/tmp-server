@@ -203,9 +203,6 @@ export default function CloudStorage() {
     return mimeType.startsWith('image/') || mimeType === 'application/pdf' || mimeType.startsWith('video/');
   };
 
-  const getPresignedUrlMutation = trpc.storage.getPresignedUploadUrl.useMutation();
-  const registerFileMutation = trpc.storage.registerFileAfterUpload.useMutation();
-
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -218,48 +215,35 @@ export default function CloudStorage() {
       // Detect MIME type with fallback
       const mimeType = getMimeType(file.name, file.type);
 
-      // Get presigned URL from backend
-      const { uploadUrl, publicUrl, fileKey } = await getPresignedUrlMutation.mutateAsync({
-        fileName: file.name,
-        mimeType,
-        fileSize: file.size,
-        folder: selectedFolder,
-      });
-
-      // Upload directly to S3 with progress tracking
-      const xhr = new XMLHttpRequest();
-      
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          const progress = (e.loaded / e.total) * 100;
-          setUploadProgress(progress);
-        }
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        xhr.addEventListener('load', () => {
-          if (xhr.status === 200) {
-            resolve();
-          } else {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
+      // Read file as base64
+      const reader = new FileReader();
+      const fileData = await new Promise<string>((resolve, reject) => {
+        reader.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const progress = (e.loaded / e.total) * 50;
+            setUploadProgress(progress);
           }
-        });
-        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
-        xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('Content-Type', mimeType);
-        xhr.send(file);
+        };
+        reader.onload = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          setUploadProgress(60);
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
-
-      // Register file in database after successful upload
-      await registerFileMutation.mutateAsync({
+      
+      setUploadProgress(70);
+      
+      // Upload via tRPC
+      await uploadMutation.mutateAsync({
         fileName: file.name,
-        fileKey,
-        fileUrl: publicUrl,
+        fileData,
         mimeType,
-        fileSize: file.size,
         folder: selectedFolder,
       });
-
+      
+      setUploadProgress(100);
       toast.success("Upload complete!");
       utils.storage.getFiles.invalidate();
       utils.dashboard.stats.invalidate();

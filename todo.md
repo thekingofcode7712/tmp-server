@@ -76,7 +76,10 @@
 - [x] Fix all remaining themes showing white colors instead of actual theme colors
 - [x] Updated all 23 themes with complete color sets including foreground variants
 - [x] Fixed theme application hook to wrap HSL values with hsl() function for Tailwind CSS 4
-- [ ] Fix storage upload 404 error - presigned URL endpoint not responding
+- [x] Fix storage upload 404 error - presigned URL endpoint not responding
+- [x] Removed non-existent getPresignedUploadUrl endpoint
+- [x] Replaced with direct tRPC upload using uploadFile mutation
+- [x] Updated CloudStorage.tsx to use base64 upload flow
 
 ### Theme Bundles
 - [ ] Create theme bundle database table
