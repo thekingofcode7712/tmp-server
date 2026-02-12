@@ -1,71 +1,93 @@
 # TMP Server TODO
 
-## Project Overview
-Cloud storage platform with email, games, AI features, and premium themes.
+## Current Sprint - Major Feature Additions
 
-### Current Priority - Theme Marketplace & Email Storage
-- [x] Seed 15 additional premium themes (total 23)
-- [x] Create theme marketplace page UI
-- [x] Add theme database functions (getThemes, getUserThemes, purchaseTheme)
-- [x] Create theme tRPC endpoints
-- [x] Add £3 individual theme purchase
-- [x] Add £34.99 all themes bundle purchase
-- [x] Update Stripe webhook for theme purchases
-- [x] Show locked/unlocked themes in marketplace
-- [ ] Apply purchased theme colors to CSS
-- [ ] Add emailStorageLimit to users table (15GB default)
-- [ ] Add emailStorageUsed to users table
-- [ ] Track email storage on send/receive
-- [ ] Show email storage in Dashboard
-- [ ] Add external email connection UI in Settings
-- [ ] Implement IMAP email sync
-- [ ] Implement SMTP email sending
+### Email Storage Plans Upgrade UI
+- [x] Create email storage plan selection UI in Email Settings
+- [x] Display current plan and usage
+- [x] Add upgrade buttons for each plan tier
+- [x] Implement Stripe checkout for email storage plans
+- [ ] Update webhook to handle email storage plan purchases
+- [ ] Apply storage limit increases on purchase
 
-### Current Priority - Theme Activation & Email Features
-- [x] Add selectedThemeId field to users table (using customTheme)
-- [x] Create endpoint to set active theme
-- [x] Update Themes page with activate buttons
-- [x] Apply active theme colors dynamically to CSS variables
-- [ ] Add emailStorageLimit field to users table (default 15GB)
-- [ ] Add emailStorageUsed field to users table
-- [ ] Track email size on send/receive
-- [ ] Show email storage usage in Dashboard
-- [ ] Add IMAP/SMTP connection form in Email settings
-- [ ] Store encrypted email credentials
-- [ ] Implement IMAP inbox sync
-- [ ] Implement SMTP sending through external account
+### Email Attachments
+- [ ] Add file upload button to email composer
+- [ ] Implement drag-and-drop file upload
+- [ ] Validate attachment sizes against email storage quota
+- [ ] Upload attachments to S3 using storagePut
+- [ ] Store attachment metadata in database
+- [ ] Display attachments in email viewer with download buttons
+- [ ] Track attachment sizes in emailStorageUsed
 
-### Current Priority - Email Storage Display & Tracking
-- [x] Add email storage to dashboard stats query
-- [x] Display email storage meter in Dashboard
-- [x] Calculate email size on send (content + attachments)
-- [x] Update emailStorageUsed when sending emails
-- [x] Calculate email size on receive
-- [x] Update emailStorageUsed when receiving emails
-- [ ] Add external email account form in Email settings
-- [ ] Store encrypted IMAP/SMTP credentials
-- [ ] Implement IMAP inbox sync
-- [ ] Implement SMTP sending via external account
-
-### Quick Fix - Remove Premium Themes from Addons
-- [ ] Remove Premium Themes add-on from addons table (has its own marketplace now)
-
-### Current Priority - External Email, Attachments, Folders
-- [x] Create external email connection form in Email settings
-- [x] Add fields for IMAP server, port, username, password
-- [x] Add fields for SMTP server, port, username, password
-- [x] Store encrypted email credentials in database (schema + encryption utility)
-- [x] Add tRPC endpoints for external email credentials
-- [ ] Implement IMAP inbox sync endpoint
-- [ ] Implement SMTP sending via external account
-- [ ] Add file attachment support to email composer
-- [ ] Validate attachment sizes against storage quota
-- [ ] Store attachments in S3 and track in database
-- [ ] Display attachments in email viewer
-- [ ] Add custom folder creation UI
+### Custom Email Folders
+- [ ] Create emailFolders table in schema
+- [ ] Add folder creation UI in Email page
 - [ ] Implement folder CRUD endpoints
-- [ ] Add drag-and-drop email to folder functionality
+- [ ] Add folder list to Email sidebar
+- [ ] Implement drag-and-drop email to folder
 - [ ] Add folder-based email filtering
-- [x] Add premium email storage plans (25GB, 50GB, 100GB, Unlimited)
-- [x] Create email plan products in Stripe
-- [ ] Add email plan upgrade UI in Email settings
+- [ ] Add default folders (Inbox, Sent, Archive, Trash)
+
+### File Sharing with Temporary Links
+- [ ] Create fileShares table in schema
+- [ ] Add "Share" button to Cloud Storage files
+- [ ] Create share link generation UI with expiration options (24h/7d/30d)
+- [ ] Implement share link generation endpoint
+- [ ] Create public file access route
+- [ ] Add share link management (view/revoke)
+- [ ] Track share link usage
+
+### Game Achievements System
+- [ ] Create achievements table in schema
+- [ ] Create userAchievements table
+- [ ] Define achievement types (first win, high score, 10 games, etc.)
+- [ ] Seed achievement definitions
+- [ ] Track game completion and scores
+- [ ] Award achievements on milestones
+- [ ] Display achievement badges in user profile
+- [ ] Show achievement progress
+
+### Two-Factor Authentication
+- [ ] Add twoFactorEnabled and twoFactorSecret to users table
+- [ ] Install speakeasy library for TOTP
+- [ ] Create 2FA setup UI in Settings Security tab
+- [ ] Generate QR code for authenticator apps
+- [ ] Implement 2FA verification on login
+- [ ] Add backup codes generation
+- [ ] Add 2FA disable option
+
+### Activity Logs / Audit Trail
+- [ ] Create activityLogs table in schema
+- [ ] Log user actions (login, file upload, email send, etc.)
+- [ ] Create activity log viewer in Settings
+- [ ] Add filtering by action type and date
+- [ ] Display IP address and user agent
+- [ ] Add export activity logs feature
+
+### API Access for Developers
+- [ ] Create apiKeys table in schema
+- [ ] Add API key generation UI in Settings Developer tab
+- [ ] Implement API key authentication middleware
+- [ ] Create REST API endpoints for files, emails, storage
+- [ ] Generate API documentation
+- [ ] Add rate limiting per API key
+- [ ] Display API usage statistics
+
+### Custom Branded Login Screen
+- [ ] Create custom login page component with TMP Server branding
+- [ ] Add logo and custom styling
+- [ ] Keep all OAuth login options (Google, GitHub, etc.)
+- [ ] Add branded colors and design elements
+- [ ] Ensure responsive design for mobile
+
+## Completed Features
+- [x] 23-theme marketplace with £3 individual / £34.99 bundle pricing
+- [x] Email storage tracking (15GB free)
+- [x] Email starring with star icons
+- [x] File sorting (Name/Date/Size)
+- [x] File preview (images/videos/PDFs)
+- [x] Optimized uploads (10MB chunks, parallel processing)
+- [x] External email connection form (IMAP/SMTP)
+- [x] Premium email storage plans created (25GB/50GB/100GB/Unlimited)
+- [x] Email storage display in Dashboard
+- [x] Removed Premium Themes from add-ons marketplace

@@ -15,7 +15,8 @@ import {
   addons, InsertAddon, userAddons, InsertUserAddon,
   themes, InsertTheme, userThemes, InsertUserTheme,
   externalEmailCredentials, InsertExternalEmailCredential,
-  emailFolders, InsertEmailFolder, emailAttachments, InsertEmailAttachment
+  emailFolders, InsertEmailFolder, emailAttachments, InsertEmailAttachment,
+  emailStoragePlans, InsertEmailStoragePlan
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -315,6 +316,28 @@ export async function deleteExternalEmailCredential(userId: number) {
   const db = await getDb();
   if (!db) return;
   await db.delete(externalEmailCredentials).where(eq(externalEmailCredentials.userId, userId));
+}
+
+// ===== EMAIL STORAGE PLANS =====
+
+export async function getEmailStoragePlan(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(emailStoragePlans).where(eq(emailStoragePlans.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function createEmailStoragePlan(plan: InsertEmailStoragePlan) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(emailStoragePlans).values(plan);
+  return result;
+}
+
+export async function updateEmailStoragePlan(userId: number, updates: Partial<InsertEmailStoragePlan>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(emailStoragePlans).set(updates).where(eq(emailStoragePlans.userId, userId));
 }
 
 // ===== GAME OPERATIONS =====

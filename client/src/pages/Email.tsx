@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExternalEmailForm } from "@/components/ExternalEmailForm";
+import { EmailStoragePlans } from "@/components/EmailStoragePlans";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { ArrowLeft, Mail, Send, Trash2, RefreshCw, Star } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Mail, Send, Trash2, RefreshCw, Star, Paperclip, X } from "lucide-react";
+import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { parseEmailContent } from "@/lib/emailParser";
@@ -18,6 +19,8 @@ export default function Email() {
   const [to, setTo] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
   const { data: account } = trpc.email.getAccount.useQuery();
@@ -32,6 +35,7 @@ export default function Email() {
       setTo("");
       setSubject("");
       setBody("");
+      setAttachments([]);
     },
     onError: (error) => {
       toast.error(error.message);
@@ -65,12 +69,29 @@ export default function Email() {
     },
   });
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!to || !subject) {
       toast.error("Please fill in all fields");
       return;
     }
-    sendEmailMutation.mutate({ to, subject, body });
+    
+    // Calculate total attachment size
+    const totalSize = attachments.reduce((sum, file) => sum + file.size, 0);
+    if (totalSize > 25 * 1024 * 1024) { // 25MB limit
+      toast.error("Total attachment size cannot exceed 25MB");
+      return;
+    }
+    
+    sendEmailMutation.mutate({ to, subject, body, attachments });
+  };
+  
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setAttachments(prev => [...prev, ...files]);
+  };
+  
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -127,6 +148,52 @@ export default function Email() {
                     rows={10}
                     className="email-editor"
                   />
+                  
+                  {/* Attachments */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Paperclip className="h-4 w-4 mr-2" />
+                        Attach Files
+                      </Button>
+                      {attachments.length > 0 && (
+                        <span className="text-sm text-muted-foreground">
+                          {attachments.length} file(s) - {(attachments.reduce((sum, f) => sum + f.size, 0) / (1024 * 1024)).toFixed(2)}MB
+                        </span>
+                      )}
+                    </div>
+                    
+                    {attachments.length > 0 && (
+                      <div className="space-y-1">
+                        {attachments.map((file, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
+                            <span className="truncate flex-1">{file.name} ({(file.size / 1024).toFixed(1)}KB)</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => removeAttachment(idx)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setComposing(false)}>
                       Cancel
@@ -267,7 +334,10 @@ export default function Email() {
           </TabsContent>
 
           <TabsContent value="settings">
-            <ExternalEmailForm />
+            <div className="space-y-6">
+              <EmailStoragePlans />
+              <ExternalEmailForm />
+            </div>
           </TabsContent>
         </Tabs>
       </div>

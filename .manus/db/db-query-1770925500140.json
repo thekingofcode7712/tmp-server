@@ -1,0 +1,9 @@
+{
+  "query": "SHOW TABLES LIKE '%Share%'; SHOW TABLES LIKE '%achievement%'; SHOW TABLES LIKE '%twoFactor%'; SHOW TABLES LIKE '%activity%'; SHOW TABLES LIKE '%apiKey%'; SHOW TABLES LIKE '%emailStorage%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute SHOW TABLES LIKE '%Share%'; SHOW TABLES LIKE '%achievement%'; SHOW TABLES LIKE '%twoFactor%'; SHOW TABLES LIKE '%activity%'; SHOW TABLES LIKE '%apiKey%'; SHOW TABLES LIKE '%emailStorage%';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 69
+}

@@ -441,6 +441,7 @@ export const appRouter = router({
         body: z.string(),
         cc: z.string().optional(),
         bcc: z.string().optional(),
+        attachments: z.array(z.any()).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const account = await db.getEmailAccountByUserId(ctx.user.id);
@@ -592,6 +593,33 @@ export const appRouter = router({
       await db.deleteExternalEmailCredential(ctx.user.id);
       return { success: true };
     }),
+    
+    // Email Storage Plans
+    getStoragePlan: protectedProcedure.query(async ({ ctx }) => {
+      const plan = await db.getEmailStoragePlan(ctx.user.id);
+      return plan || { tier: 'free', status: 'active' };
+    }),
+    
+    createStorageCheckout: protectedProcedure
+      .input(z.object({ priceId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const Stripe = (await import('stripe')).default;
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+          apiVersion: '2026-01-28.clover',
+        });
+        const session = await stripe.checkout.sessions.create({
+          customer_email: ctx.user.email || undefined,
+          line_items: [{ price: input.priceId, quantity: 1 }],
+          mode: 'subscription',
+          success_url: `${process.env.VITE_APP_URL || 'http://localhost:3000'}/email?success=true`,
+          cancel_url: `${process.env.VITE_APP_URL || 'http://localhost:3000'}/email`,
+          metadata: {
+            userId: ctx.user.id.toString(),
+            type: 'email_storage',
+          },
+        });
+        return { url: session.url! };
+      }),
   }),
 
   // Games

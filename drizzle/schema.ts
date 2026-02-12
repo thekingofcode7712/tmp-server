@@ -545,3 +545,120 @@ export const emailAttachments = mysqlTable("emailAttachments", {
 });
 export type EmailAttachment = typeof emailAttachments.$inferSelect;
 export type InsertEmailAttachment = typeof emailAttachments.$inferInsert;
+
+/**
+ * File sharing with temporary public links
+ */
+export const fileShares = mysqlTable("fileShares", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  fileId: int("fileId").notNull(),
+  shareToken: varchar("shareToken", { length: 100 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt"),
+  accessCount: int("accessCount").default(0).notNull(),
+  maxAccessCount: int("maxAccessCount"), // null = unlimited
+  password: varchar("password", { length: 255 }), // Optional password protection
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastAccessedAt: timestamp("lastAccessedAt"),
+});
+export type FileShare = typeof fileShares.$inferSelect;
+export type InsertFileShare = typeof fileShares.$inferInsert;
+
+/**
+ * Game achievements definitions
+ */
+export const achievements = mysqlTable("achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  icon: varchar("icon", { length: 100 }),
+  category: mysqlEnum("category", ["game", "storage", "email", "social", "milestone"]).notNull(),
+  condition: json("condition").notNull(), // { type: "score", game: "snake", value: 1000 }
+  points: int("points").default(10).notNull(),
+  isSecret: boolean("isSecret").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = typeof achievements.$inferInsert;
+
+/**
+ * User earned achievements
+ */
+export const userAchievements = mysqlTable("userAchievements", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  achievementId: int("achievementId").notNull(),
+  earnedAt: timestamp("earnedAt").defaultNow().notNull(),
+  progress: int("progress").default(100).notNull(), // Percentage
+});
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = typeof userAchievements.$inferInsert;
+
+/**
+ * Two-factor authentication
+ */
+export const twoFactorAuth = mysqlTable("twoFactorAuth", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  secret: varchar("secret", { length: 255 }).notNull(), // TOTP secret
+  backupCodes: json("backupCodes").notNull(), // Array of backup codes
+  isEnabled: boolean("isEnabled").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastUsedAt: timestamp("lastUsedAt"),
+});
+export type TwoFactorAuth = typeof twoFactorAuth.$inferSelect;
+export type InsertTwoFactorAuth = typeof twoFactorAuth.$inferInsert;
+
+/**
+ * Activity logs / Audit trail
+ */
+export const activityLogs = mysqlTable("activityLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  action: varchar("action", { length: 100 }).notNull(),
+  category: mysqlEnum("category", ["auth", "file", "email", "game", "payment", "settings", "api"]).notNull(),
+  description: text("description"),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ActivityLog = typeof activityLogs.$inferSelect;
+export type InsertActivityLog = typeof activityLogs.$inferInsert;
+
+/**
+ * API keys for developer access
+ */
+export const apiKeys = mysqlTable("apiKeys", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  keyHash: varchar("keyHash", { length: 255 }).notNull().unique(),
+  keyPrefix: varchar("keyPrefix", { length: 20 }).notNull(), // First 8 chars for display
+  permissions: json("permissions").notNull(), // ["files.read", "files.write", "email.read"]
+  rateLimit: int("rateLimit").default(1000).notNull(), // Requests per hour
+  requestCount: int("requestCount").default(0).notNull(),
+  lastUsedAt: timestamp("lastUsedAt"),
+  expiresAt: timestamp("expiresAt"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type InsertApiKey = typeof apiKeys.$inferInsert;
+
+/**
+ * Email storage subscription plans
+ */
+export const emailStoragePlans = mysqlTable("emailStoragePlans", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tier: mysqlEnum("tier", ["free", "25gb", "50gb", "100gb", "unlimited"]).default("free").notNull(),
+  status: mysqlEnum("status", ["active", "cancelled", "expired"]).default("active").notNull(),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EmailStoragePlan = typeof emailStoragePlans.$inferSelect;
+export type InsertEmailStoragePlan = typeof emailStoragePlans.$inferInsert;
