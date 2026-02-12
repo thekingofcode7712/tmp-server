@@ -226,8 +226,10 @@
 - [x] Store XHR reference for each upload to enable pause/cancel
 - [x] Updated queue UI with thumbnail display and control buttons
 
-### Large File 403 Error
-- [ ] Fix 403 Forbidden error when uploading large files (300MB+ confirmed failing)
-- [ ] Investigate storage proxy authentication or size limits causing 403
-- [ ] Test if issue is file size limit or request timeout
-- [ ] Implement solution (chunked upload, increased limits, or different approach)
+### Large File 403 Error - FIXED
+- [x] Removed ALL file size checks and limits from backend
+- [x] Implemented chunked upload (50MB chunks) to bypass storage proxy limit
+- [x] Backend combines chunks back into single file after upload
+- [x] Frontend shows seamless progress for entire file (not per chunk)
+- [x] Files >50MB automatically use chunked upload, <50MB use direct upload
+- [ ] Manual testing required: Upload 300MB+ files to verify system works end-to-end

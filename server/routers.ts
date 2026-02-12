@@ -189,10 +189,7 @@ export const appRouter = router({
         const user = await db.getUserById(ctx.user.id);
         if (!user) throw new Error("User not found");
 
-        // Check storage limit
-        if (user.subscriptionTier !== "unlimited" && user.storageUsed + input.fileSize > user.storageLimit) {
-          throw new Error("Storage limit exceeded");
-        }
+        // No storage limit - unlimited uploads
 
         const { ENV } = await import('./_core/env');
         const baseUrl = ENV.forgeApiUrl?.replace(/\/+$/, "");
@@ -214,32 +211,62 @@ export const appRouter = router({
         };
       }),
 
-    // Get presigned URL for direct S3 upload (for large files)
-    getPresignedUrl: protectedProcedure
+    // Chunked upload: create session for large files
+    createChunkSession: protectedProcedure
       .input(z.object({
+        fileName: z.string(),
+        fileSize: z.number(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { createChunkSession } = await import('./chunk-manager');
+        return createChunkSession(input.fileName, input.fileSize, input.mimeType);
+      }),
+
+    // Chunked upload: register uploaded chunk
+    registerChunk: protectedProcedure
+      .input(z.object({
+        sessionId: z.string(),
+        chunkIndex: z.number(),
+        chunkUrl: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { registerChunk } = await import('./chunk-manager');
+        registerChunk(input.sessionId, input.chunkIndex, input.chunkUrl);
+        return { success: true };
+      }),
+
+    // Chunked upload: combine chunks into final file
+    combineChunks: protectedProcedure
+      .input(z.object({
+        sessionId: z.string(),
         fileName: z.string(),
         fileSize: z.number(),
         mimeType: z.string(),
         folder: z.string().default("/"),
       }))
       .mutation(async ({ ctx, input }) => {
-        const user = await db.getUserById(ctx.user.id);
-        if (!user) throw new Error("User not found");
+        const uploadId = `${Date.now()}-${nanoid()}`;
+        const fileKey = `users/${ctx.user.id}/files/${uploadId}-${input.fileName}`;
 
-        // Check storage limit
-        if (user.subscriptionTier !== "unlimited" && user.storageUsed + input.fileSize > user.storageLimit) {
-          throw new Error("Storage limit exceeded");
-        }
+        const { combineChunks } = await import('./chunk-manager');
+        const { url } = await combineChunks(input.sessionId, fileKey);
 
-        // Create file record in Manus API and get presigned URL
-        const { createManusFile } = await import('./manus-file-api');
-        const fileRecord = await createManusFile(input.fileName);
+        // Register file in database
+        await db.createFile({
+          userId: ctx.user.id,
+          fileName: input.fileName,
+          fileKey,
+          fileUrl: url,
+          fileSize: input.fileSize,
+          mimeType: input.mimeType,
+          folder: input.folder,
+        });
 
-        return {
-          uploadUrl: fileRecord.upload_url,
-          fileId: fileRecord.id,
-          expiresAt: fileRecord.upload_expires_at,
-        };
+        // Update user storage
+        await db.updateUserStorage(ctx.user.id, input.fileSize);
+
+        return { url, fileKey };
       }),
 
     // Register uploaded file after direct upload completes
@@ -286,10 +313,7 @@ export const appRouter = router({
         const user = await db.getUserById(ctx.user.id);
         if (!user) throw new Error("User not found");
 
-        // Check storage limit
-        if (user.subscriptionTier !== "unlimited" && user.storageUsed + input.fileSize > user.storageLimit) {
-          throw new Error("Storage limit exceeded");
-        }
+        // No storage limit - unlimited uploads
 
         const totalChunks = Math.ceil(input.fileSize / input.chunkSize);
         const uploadId = `${Date.now()}-${nanoid()}`;

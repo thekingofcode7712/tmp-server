@@ -214,81 +214,161 @@ export default function CloudStorage() {
 
   const getUploadCredsMutation = trpc.storage.getUploadCredentials.useMutation();
   const registerUploadMutation = trpc.storage.registerDirectUpload.useMutation();
+  const createChunkSessionMutation = trpc.storage.createChunkSession.useMutation();
+  const registerChunkMutation = trpc.storage.registerChunk.useMutation();
+  const combineChunksMutation = trpc.storage.combineChunks.useMutation();
 
   const uploadFile = async (queueItem: { id: string; file: File }) => {
     try {
       const mimeType = getMimeType(queueItem.file.name, queueItem.file.type);
+      const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB chunks
+      const isLargeFile = queueItem.file.size > CHUNK_SIZE;
 
       // Update status to uploading
       setUploadQueue(prev => prev.map(item => 
         item.id === queueItem.id ? { ...item, status: 'uploading' as const } : item
       ));
 
-      // Step 1: Get upload credentials
-      const { uploadUrl, authToken, fileKey } = await getUploadCredsMutation.mutateAsync({
-        fileName: queueItem.file.name,
-        fileSize: queueItem.file.size,
-        mimeType,
-        folder: selectedFolder,
-      });
+      if (isLargeFile) {
+        // Chunked upload for large files
+        const totalChunks = Math.ceil(queueItem.file.size / CHUNK_SIZE);
+        
+        // Create chunk session
+        const { sessionId } = await createChunkSessionMutation.mutateAsync({
+          fileName: queueItem.file.name,
+          fileSize: queueItem.file.size,
+          mimeType,
+        });
 
-      // Step 2: Upload file directly to storage proxy
-      const formData = new FormData();
-      formData.append('file', queueItem.file, queueItem.file.name);
+        // Upload each chunk
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+          const start = chunkIndex * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, queueItem.file.size);
+          const chunk = queueItem.file.slice(start, end);
 
-      const xhr = new XMLHttpRequest();
-      
-      // Store XHR reference for pause/cancel
-      setUploadQueue(prev => prev.map(item => 
-        item.id === queueItem.id ? { ...item, xhr } : item
-      ));
+          // Get upload credentials for this chunk
+          const { uploadUrl, authToken } = await getUploadCredsMutation.mutateAsync({
+            fileName: `${queueItem.file.name}.chunk${chunkIndex}`,
+            fileSize: chunk.size,
+            mimeType: 'application/octet-stream',
+            folder: selectedFolder,
+          });
 
-      const uploadPromise = new Promise<string>((resolve, reject) => {
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const progress = (e.loaded / e.total) * 90;
-            setUploadQueue(prev => prev.map(item => 
-              item.id === queueItem.id ? { ...item, progress } : item
-            ));
-          }
-        };
+          // Upload chunk
+          const formData = new FormData();
+          formData.append('file', chunk, `chunk${chunkIndex}`);
 
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              resolve(response.url);
-            } catch {
-              reject(new Error('Invalid response from storage'));
+          const chunkUrl = await new Promise<string>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                const chunkProgress = (e.loaded / e.total);
+                const overallProgress = ((chunkIndex + chunkProgress) / totalChunks) * 90;
+                setUploadQueue(prev => prev.map(item => 
+                  item.id === queueItem.id ? { ...item, progress: overallProgress } : item
+                ));
+              }
+            };
+
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const response = JSON.parse(xhr.responseText);
+                  resolve(response.url);
+                } catch {
+                  reject(new Error('Invalid response'));
+                }
+              } else {
+                reject(new Error(`Chunk ${chunkIndex} failed: ${xhr.status}`));
+              }
+            };
+
+            xhr.onerror = () => reject(new Error(`Chunk ${chunkIndex} network error`));
+            xhr.open('POST', uploadUrl);
+            xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+            xhr.send(formData);
+          });
+
+          // Register chunk
+          await registerChunkMutation.mutateAsync({
+            sessionId,
+            chunkIndex,
+            chunkUrl,
+          });
+        }
+
+        // Combine chunks
+        setUploadQueue(prev => prev.map(item => 
+          item.id === queueItem.id ? { ...item, progress: 95 } : item
+        ));
+
+        await combineChunksMutation.mutateAsync({
+          sessionId,
+          fileName: queueItem.file.name,
+          fileSize: queueItem.file.size,
+          mimeType,
+          folder: selectedFolder,
+        });
+      } else {
+        // Direct upload for small files
+        const { uploadUrl, authToken, fileKey } = await getUploadCredsMutation.mutateAsync({
+          fileName: queueItem.file.name,
+          fileSize: queueItem.file.size,
+          mimeType,
+          folder: selectedFolder,
+        });
+
+        const formData = new FormData();
+        formData.append('file', queueItem.file, queueItem.file.name);
+
+        const xhr = new XMLHttpRequest();
+        setUploadQueue(prev => prev.map(item => 
+          item.id === queueItem.id ? { ...item, xhr } : item
+        ));
+
+        const fileUrl = await new Promise<string>((resolve, reject) => {
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const progress = (e.loaded / e.total) * 90;
+              setUploadQueue(prev => prev.map(item => 
+                item.id === queueItem.id ? { ...item, progress } : item
+              ));
             }
-          } else {
-            reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
-          }
-        };
+          };
 
-        xhr.onerror = () => reject(new Error('Network error'));
-        xhr.ontimeout = () => reject(new Error('Upload timed out'));
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const response = JSON.parse(xhr.responseText);
+                resolve(response.url);
+              } catch {
+                reject(new Error('Invalid response'));
+              }
+            } else {
+              reject(new Error(`Upload failed: ${xhr.status}`));
+            }
+          };
 
-        xhr.open('POST', uploadUrl);
-        xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
-        xhr.send(formData);
-      });
+          xhr.onerror = () => reject(new Error('Network error'));
+          xhr.open('POST', uploadUrl);
+          xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+          xhr.send(formData);
+        });
 
-      const fileUrl = await uploadPromise;
-      
-      setUploadQueue(prev => prev.map(item => 
-        item.id === queueItem.id ? { ...item, progress: 95 } : item
-      ));
+        setUploadQueue(prev => prev.map(item => 
+          item.id === queueItem.id ? { ...item, progress: 95 } : item
+        ));
 
-      // Step 3: Register in database
-      await registerUploadMutation.mutateAsync({
-        fileKey,
-        fileName: queueItem.file.name,
-        fileSize: queueItem.file.size,
-        mimeType,
-        folder: selectedFolder,
-        fileUrl,
-      });
+        await registerUploadMutation.mutateAsync({
+          fileKey,
+          fileName: queueItem.file.name,
+          fileSize: queueItem.file.size,
+          mimeType,
+          folder: selectedFolder,
+          fileUrl,
+        });
+      }
 
       // Mark as completed
       setUploadQueue(prev => prev.map(item => 
@@ -299,7 +379,6 @@ export default function CloudStorage() {
       utils.storage.getFiles.invalidate();
       utils.dashboard.stats.invalidate();
 
-      // Remove from queue after 2 seconds
       setTimeout(() => {
         setUploadQueue(prev => prev.filter(item => item.id !== queueItem.id));
       }, 2000);
