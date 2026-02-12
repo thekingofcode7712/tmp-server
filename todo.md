@@ -51,6 +51,17 @@
 - [x] Marketplace checkout buttons use same tab
 - [x] Subscription upgrade buttons use same tab
 
+### Activity Page
+- [x] Create dedicated /activity page with full history
+- [x] Add filtering by activity type (upload/delete/share/move)
+- [x] Implement pagination for activity history
+- [x] Remove Recent Activity widget from dashboard (user prefers no preview)
+
+### Checkout Flow Improvements
+- [ ] Add automatic data refresh after Stripe checkout return
+- [ ] Invalidate queries when user returns from successful purchase
+- [ ] Show success message and updated data without manual refresh
+
 ### Email Storage Plans Upgrade UI
 - [x] Create email storage plan selection UI in Email Settings
 - [x] Display current plan and usage

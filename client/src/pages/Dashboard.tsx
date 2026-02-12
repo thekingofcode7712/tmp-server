@@ -150,41 +150,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Recent Activity Timeline */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Your latest file operations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {stats?.recentActivity && stats.recentActivity.length > 0 ? (
-                stats.recentActivity.map((activity: any, index: number) => (
-                  <div key={index} className="flex items-start gap-3 pb-3 border-b last:border-0">
-                    <div className="mt-1">
-                      {activity.type === 'upload' && <HardDrive className="h-4 w-4 text-green-500" />}
-                      {activity.type === 'delete' && <Database className="h-4 w-4 text-red-500" />}
-                      {activity.type === 'share' && <LinkIcon className="h-4 w-4 text-blue-500" />}
-                      {activity.type === 'move' && <Download className="h-4 w-4 text-yellow-500" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(activity.timestamp).toLocaleString()}</p>
-                    </div>
-                    {activity.fileId && (
-                      <Link href="/storage">
-                        <Button variant="ghost" size="sm">View</Button>
-                      </Link>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card>

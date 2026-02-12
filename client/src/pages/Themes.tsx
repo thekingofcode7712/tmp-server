@@ -29,7 +29,7 @@ export function Themes() {
       const result = await purchaseTheme.mutateAsync({ themeId });
       if (result.checkoutUrl) {
         toast.info(`Redirecting to checkout for ${themeName}...`);
-        window.open(result.checkoutUrl, '_blank');
+        window.location.href = result.checkoutUrl;
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to start checkout');
@@ -44,7 +44,7 @@ export function Themes() {
       const result = await purchaseAllThemes.mutateAsync();
       if (result.checkoutUrl) {
         toast.info('Redirecting to checkout for All Themes Bundle...');
-        window.open(result.checkoutUrl, '_blank');
+        window.location.href = result.checkoutUrl;
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to start checkout');

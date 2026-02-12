@@ -31,6 +31,7 @@ import Addons from "./pages/Addons";
 import { Themes } from "./pages/Themes";
 import Login from "./pages/Login";
 import SharedFile from "./pages/SharedFile";
+import Activity from "./pages/Activity";
 import { useApplyPurchasedTheme } from "./hooks/useApplyPurchasedTheme";
 
 function Router() {
@@ -39,6 +40,7 @@ function Router() {
       <Route path={"/login"} component={Login} />
       <Route path={"/share/:token"} component={SharedFile} />
       <Route path={"/"} component={Dashboard} />
+      <Route path={"/activity"} component={Activity} />
       <Route path={"/storage"} component={CloudStorage} />
       <Route path={"/video-downloader"} component={VideoDownloader} />
       <Route path={"/links"} component={LinkUploader} />
