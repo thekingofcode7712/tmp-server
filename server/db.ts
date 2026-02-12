@@ -13,7 +13,9 @@ import {
   adFilterLists, InsertAdFilterList, proxyCredentials, InsertProxyCredential,
   filterRulesCache, InsertFilterRulesCache, documents, InsertDocument,
   addons, InsertAddon, userAddons, InsertUserAddon,
-  themes, InsertTheme, userThemes, InsertUserTheme
+  themes, InsertTheme, userThemes, InsertUserTheme,
+  externalEmailCredentials, InsertExternalEmailCredential,
+  emailFolders, InsertEmailFolder, emailAttachments, InsertEmailAttachment
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -285,6 +287,34 @@ export async function deleteEmail(emailId: number) {
   const db = await getDb();
   if (!db) return;
   await db.delete(emails).where(eq(emails.id, emailId));
+}
+
+// ===== EXTERNAL EMAIL CREDENTIALS =====
+
+export async function createExternalEmailCredential(credential: InsertExternalEmailCredential) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(externalEmailCredentials).values(credential);
+  return result;
+}
+
+export async function getExternalEmailCredential(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(externalEmailCredentials).where(eq(externalEmailCredentials.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateExternalEmailCredential(userId: number, updates: Partial<InsertExternalEmailCredential>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(externalEmailCredentials).set(updates).where(eq(externalEmailCredentials.userId, userId));
+}
+
+export async function deleteExternalEmailCredential(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(externalEmailCredentials).where(eq(externalEmailCredentials.userId, userId));
 }
 
 // ===== GAME OPERATIONS =====

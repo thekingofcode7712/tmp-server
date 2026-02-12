@@ -536,6 +536,62 @@ export const appRouter = router({
         await db.updateEmail(input.emailId, { isStarred: input.isStarred });
         return { success: true };
       }),
+    
+    // External Email Account Connection
+    getExternalCredential: protectedProcedure.query(async ({ ctx }) => {
+      const credential = await db.getExternalEmailCredential(ctx.user.id);
+      if (!credential) return null;
+      // Decrypt passwords before sending to client
+      const { decrypt } = await import('./encryption');
+      return {
+        ...credential,
+        imapPassword: decrypt(credential.imapPassword),
+        smtpPassword: decrypt(credential.smtpPassword),
+      };
+    }),
+    
+    saveExternalCredential: protectedProcedure
+      .input(z.object({
+        emailAddress: z.string().email(),
+        imapServer: z.string(),
+        imapPort: z.number(),
+        imapUsername: z.string(),
+        imapPassword: z.string(),
+        smtpServer: z.string(),
+        smtpPort: z.number(),
+        smtpUsername: z.string(),
+        smtpPassword: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { encrypt } = await import('./encryption');
+        const existing = await db.getExternalEmailCredential(ctx.user.id);
+        
+        const credentialData = {
+          userId: ctx.user.id,
+          emailAddress: input.emailAddress,
+          imapServer: input.imapServer,
+          imapPort: input.imapPort,
+          imapUsername: input.imapUsername,
+          imapPassword: encrypt(input.imapPassword),
+          smtpServer: input.smtpServer,
+          smtpPort: input.smtpPort,
+          smtpUsername: input.smtpUsername,
+          smtpPassword: encrypt(input.smtpPassword),
+        };
+        
+        if (existing) {
+          await db.updateExternalEmailCredential(ctx.user.id, credentialData);
+        } else {
+          await db.createExternalEmailCredential(credentialData);
+        }
+        
+        return { success: true };
+      }),
+    
+    deleteExternalCredential: protectedProcedure.mutation(async ({ ctx }) => {
+      await db.deleteExternalEmailCredential(ctx.user.id);
+      return { success: true };
+    }),
   }),
 
   // Games

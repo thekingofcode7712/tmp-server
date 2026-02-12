@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ExternalEmailForm } from "@/components/ExternalEmailForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import { ArrowLeft, Mail, Send, Trash2, RefreshCw, Star } from "lucide-react";
@@ -148,6 +149,7 @@ export default function Email() {
           <TabsList>
             <TabsTrigger value="inbox">Inbox ({inbox?.length || 0})</TabsTrigger>
             <TabsTrigger value="sent">Sent ({sent?.length || 0})</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="inbox">
@@ -262,6 +264,10 @@ export default function Email() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <ExternalEmailForm />
           </TabsContent>
         </Tabs>
       </div>

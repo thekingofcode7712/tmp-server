@@ -51,10 +51,11 @@ Cloud storage platform with email, games, AI features, and premium themes.
 - [ ] Remove Premium Themes add-on from addons table (has its own marketplace now)
 
 ### Current Priority - External Email, Attachments, Folders
-- [ ] Create external email connection form in Email settings
-- [ ] Add fields for IMAP server, port, username, password
-- [ ] Add fields for SMTP server, port, username, password
+- [x] Create external email connection form in Email settings
+- [x] Add fields for IMAP server, port, username, password
+- [x] Add fields for SMTP server, port, username, password
 - [x] Store encrypted email credentials in database (schema + encryption utility)
+- [x] Add tRPC endpoints for external email credentials
 - [ ] Implement IMAP inbox sync endpoint
 - [ ] Implement SMTP sending via external account
 - [ ] Add file attachment support to email composer
