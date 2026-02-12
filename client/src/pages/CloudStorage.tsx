@@ -24,8 +24,10 @@ export default function CloudStorage() {
     id: string;
     file: File;
     progress: number;
-    status: 'pending' | 'uploading' | 'completed' | 'error';
+    status: 'pending' | 'uploading' | 'paused' | 'completed' | 'error';
     error?: string;
+    thumbnail?: string;
+    xhr?: XMLHttpRequest;
   }>>([]);
   const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "date-asc" | "date-desc" | "size-asc" | "size-desc">("date-desc");
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
@@ -235,6 +237,12 @@ export default function CloudStorage() {
       formData.append('file', queueItem.file, queueItem.file.name);
 
       const xhr = new XMLHttpRequest();
+      
+      // Store XHR reference for pause/cancel
+      setUploadQueue(prev => prev.map(item => 
+        item.id === queueItem.id ? { ...item, xhr } : item
+      ));
+
       const uploadPromise = new Promise<string>((resolve, reject) => {
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
@@ -308,17 +316,75 @@ export default function CloudStorage() {
     }
   };
 
+  const handlePauseUpload = (id: string) => {
+    setUploadQueue(prev => prev.map(item => {
+      if (item.id === id && item.xhr) {
+        item.xhr.abort();
+        return { ...item, status: 'paused' as const };
+      }
+      return item;
+    }));
+    toast.info('Upload paused');
+  };
+
+  const handleResumeUpload = (id: string) => {
+    const item = uploadQueue.find(i => i.id === id);
+    if (item) {
+      uploadFile(item);
+    }
+  };
+
+  const handleCancelUpload = (id: string) => {
+    setUploadQueue(prev => prev.map(item => {
+      if (item.id === id && item.xhr) {
+        item.xhr.abort();
+      }
+      return item;
+    }).filter(item => item.id !== id));
+    toast.info('Upload cancelled');
+  };
+
+  const generateThumbnail = (file: File): Promise<string | undefined> => {
+    return new Promise((resolve) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = () => resolve(undefined);
+        reader.readAsDataURL(file);
+      } else if (file.type.startsWith('video/')) {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          video.currentTime = 1; // Seek to 1 second for thumbnail
+        };
+        video.onseeked = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.getContext('2d')?.drawImage(video, 0, 0);
+          resolve(canvas.toDataURL());
+          URL.revokeObjectURL(video.src);
+        };
+        video.onerror = () => resolve(undefined);
+        video.src = URL.createObjectURL(file);
+      } else {
+        resolve(undefined);
+      }
+    });
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // Add all files to queue
-    const newQueueItems = files.map(file => ({
+    // Add all files to queue with thumbnails
+    const newQueueItems = await Promise.all(files.map(async (file) => ({
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       file,
       progress: 0,
       status: 'pending' as const,
-    }));
+      thumbnail: await generateThumbnail(file),
+    })));
 
     setUploadQueue(prev => [...prev, ...newQueueItems]);
     toast.info(`Added ${files.length} file(s) to upload queue`);
@@ -635,32 +701,93 @@ export default function CloudStorage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {uploadQueue.map(item => (
-                <div key={item.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      {item.status === 'completed' && <Check className="h-4 w-4 text-green-500 flex-shrink-0" />}
-                      {item.status === 'error' && <X className="h-4 w-4 text-red-500 flex-shrink-0" />}
-                      {item.status === 'uploading' && (
-                        <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                      )}
-                      <span className="text-sm font-medium truncate">{item.file.name}</span>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {(item.file.size / 1024 / 1024).toFixed(2)} MB
-                      </span>
+                <div key={item.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                  {/* Thumbnail */}
+                  {item.thumbnail ? (
+                    <img 
+                      src={item.thumbnail} 
+                      alt={item.file.name}
+                      className="w-16 h-16 object-cover rounded flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                      <Upload className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      {item.status === 'completed' && 'Done'}
-                      {item.status === 'error' && 'Failed'}
-                      {item.status === 'uploading' && `${Math.round(item.progress)}%`}
-                      {item.status === 'pending' && 'Waiting...'}
-                    </span>
+                  )}
+
+                  {/* File info and progress */}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {item.status === 'completed' && <Check className="h-4 w-4 text-green-500 flex-shrink-0" />}
+                          {item.status === 'error' && <X className="h-4 w-4 text-red-500 flex-shrink-0" />}
+                          {item.status === 'uploading' && (
+                            <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                          )}
+                          <span className="text-sm font-medium truncate">{item.file.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-muted-foreground">
+                            {(item.file.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {item.status === 'completed' && '• Done'}
+                            {item.status === 'error' && '• Failed'}
+                            {item.status === 'uploading' && `• ${Math.round(item.progress)}%`}
+                            {item.status === 'pending' && '• Waiting...'}
+                            {item.status === 'paused' && '• Paused'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Control buttons */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {item.status === 'uploading' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={() => handlePauseUpload(item.id)}
+                          >
+                            <span className="sr-only">Pause</span>
+                            ⏸
+                          </Button>
+                        )}
+                        {item.status === 'paused' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={() => handleResumeUpload(item.id)}
+                          >
+                            <span className="sr-only">Resume</span>
+                            ▶
+                          </Button>
+                        )}
+                        {(item.status === 'uploading' || item.status === 'paused' || item.status === 'pending') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-red-500 hover:text-red-600"
+                            onClick={() => handleCancelUpload(item.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    {item.status !== 'pending' && item.status !== 'paused' && (
+                      <Progress value={item.progress} className="h-1" />
+                    )}
+
+                    {/* Error message */}
+                    {item.error && (
+                      <p className="text-xs text-red-500">{item.error}</p>
+                    )}
                   </div>
-                  {item.status !== 'pending' && (
-                    <Progress value={item.progress} className="h-1" />
-                  )}
-                  {item.error && (
-                    <p className="text-xs text-red-500">{item.error}</p>
-                  )}
                 </div>
               ))}
             </CardContent>

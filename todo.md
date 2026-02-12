@@ -216,3 +216,18 @@
 - [x] Support simultaneous uploads with proper progress tracking (up to 3 concurrent)
 - [x] Tested with 5 files - all uploaded successfully
 - [ ] Add pause/resume/cancel buttons for each upload (future enhancement)
+
+### Upload Queue Enhancements
+- [x] Add thumbnail preview for images in upload queue
+- [x] Add video preview/poster frame for videos in upload queue
+- [x] Implement pause button for each upload
+- [x] Implement resume button for paused uploads
+- [x] Implement cancel button to abort uploads
+- [x] Store XHR reference for each upload to enable pause/cancel
+- [x] Updated queue UI with thumbnail display and control buttons
+
+### Large File 403 Error
+- [ ] Fix 403 Forbidden error when uploading large files (300MB+ confirmed failing)
+- [ ] Investigate storage proxy authentication or size limits causing 403
+- [ ] Test if issue is file size limit or request timeout
+- [ ] Implement solution (chunked upload, increased limits, or different approach)
