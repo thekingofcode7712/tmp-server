@@ -20,6 +20,13 @@ export default function CloudStorage() {
   const [selectedFolder, setSelectedFolder] = useState("/");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadQueue, setUploadQueue] = useState<Array<{
+    id: string;
+    file: File;
+    progress: number;
+    status: 'pending' | 'uploading' | 'completed' | 'error';
+    error?: string;
+  }>>([]);
   const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "date-asc" | "date-desc" | "size-asc" | "size-desc">("date-desc");
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
   const [previewFile, setPreviewFile] = useState<any>(null);
@@ -206,35 +213,35 @@ export default function CloudStorage() {
   const getUploadCredsMutation = trpc.storage.getUploadCredentials.useMutation();
   const registerUploadMutation = trpc.storage.registerDirectUpload.useMutation();
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    setUploadProgress(0);
-    toast.info(`Uploading ${file.name}...`);
-
+  const uploadFile = async (queueItem: { id: string; file: File }) => {
     try {
-      const mimeType = getMimeType(file.name, file.type);
+      const mimeType = getMimeType(queueItem.file.name, queueItem.file.type);
 
-      // Step 1: Get upload credentials (instant)
+      // Update status to uploading
+      setUploadQueue(prev => prev.map(item => 
+        item.id === queueItem.id ? { ...item, status: 'uploading' as const } : item
+      ));
+
+      // Step 1: Get upload credentials
       const { uploadUrl, authToken, fileKey } = await getUploadCredsMutation.mutateAsync({
-        fileName: file.name,
-        fileSize: file.size,
+        fileName: queueItem.file.name,
+        fileSize: queueItem.file.size,
         mimeType,
         folder: selectedFolder,
       });
 
-      // Step 2: Upload file directly to storage proxy with progress tracking
+      // Step 2: Upload file directly to storage proxy
       const formData = new FormData();
-      formData.append('file', file, file.name);
+      formData.append('file', queueItem.file, queueItem.file.name);
 
       const xhr = new XMLHttpRequest();
       const uploadPromise = new Promise<string>((resolve, reject) => {
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
-            const progress = (e.loaded / e.total) * 90; // 0-90%
-            setUploadProgress(progress);
+            const progress = (e.loaded / e.total) * 90;
+            setUploadQueue(prev => prev.map(item => 
+              item.id === queueItem.id ? { ...item, progress } : item
+            ));
           }
         };
 
@@ -251,7 +258,7 @@ export default function CloudStorage() {
           }
         };
 
-        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.onerror = () => reject(new Error('Network error'));
         xhr.ontimeout = () => reject(new Error('Upload timed out'));
 
         xhr.open('POST', uploadUrl);
@@ -260,31 +267,74 @@ export default function CloudStorage() {
       });
 
       const fileUrl = await uploadPromise;
-      setUploadProgress(95);
+      
+      setUploadQueue(prev => prev.map(item => 
+        item.id === queueItem.id ? { ...item, progress: 95 } : item
+      ));
 
-      // Step 3: Register the file in our database
+      // Step 3: Register in database
       await registerUploadMutation.mutateAsync({
         fileKey,
-        fileName: file.name,
-        fileSize: file.size,
+        fileName: queueItem.file.name,
+        fileSize: queueItem.file.size,
         mimeType,
         folder: selectedFolder,
         fileUrl,
       });
 
-      setUploadProgress(100);
-      toast.success(`${file.name} uploaded successfully!`);
+      // Mark as completed
+      setUploadQueue(prev => prev.map(item => 
+        item.id === queueItem.id ? { ...item, progress: 100, status: 'completed' as const } : item
+      ));
+
+      toast.success(`${queueItem.file.name} uploaded successfully!`);
       utils.storage.getFiles.invalidate();
       utils.dashboard.stats.invalidate();
+
+      // Remove from queue after 2 seconds
+      setTimeout(() => {
+        setUploadQueue(prev => prev.filter(item => item.id !== queueItem.id));
+      }, 2000);
     } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error(error.message || "Upload failed");
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      setUploadQueue(prev => prev.map(item => 
+        item.id === queueItem.id ? { 
+          ...item, 
+          status: 'error' as const, 
+          error: error.message || 'Upload failed' 
+        } : item
+      ));
+      toast.error(`${queueItem.file.name}: ${error.message || 'Upload failed'}`);
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Add all files to queue
+    const newQueueItems = files.map(file => ({
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      file,
+      progress: 0,
+      status: 'pending' as const,
+    }));
+
+    setUploadQueue(prev => [...prev, ...newQueueItems]);
+    toast.info(`Added ${files.length} file(s) to upload queue`);
+
+    // Start uploading files (up to 3 simultaneous)
+    const uploadPromises = newQueueItems.slice(0, 3).map(item => uploadFile(item));
+    
+    // Upload remaining files as previous ones complete
+    for (let i = 3; i < newQueueItems.length; i++) {
+      await Promise.race(uploadPromises);
+      uploadPromises.push(uploadFile(newQueueItems[i]));
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -563,15 +613,59 @@ export default function CloudStorage() {
             <input
               ref={fileInputRef}
               type="file"
+              multiple
               className="hidden"
               onChange={handleFileSelect}
             />
-            <Button onClick={() => fileInputRef.current?.click()} disabled={uploadMutation.isPending}>
+            <Button onClick={() => fileInputRef.current?.click()} disabled={uploadQueue.some(item => item.status === 'uploading')}>
               <Upload className="h-4 w-4 mr-2" />
-              {uploadMutation.isPending ? "Uploading..." : "Upload File"}
+              {uploadQueue.some(item => item.status === 'uploading') ? "Uploading..." : "Upload File"}
             </Button>
           </div>
         </div>
+
+        {/* Upload Queue */}
+        {uploadQueue.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg">Upload Queue</CardTitle>
+              <CardDescription>
+                {uploadQueue.filter(item => item.status === 'completed').length} of {uploadQueue.length} files uploaded
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {uploadQueue.map(item => (
+                <div key={item.id} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {item.status === 'completed' && <Check className="h-4 w-4 text-green-500 flex-shrink-0" />}
+                      {item.status === 'error' && <X className="h-4 w-4 text-red-500 flex-shrink-0" />}
+                      {item.status === 'uploading' && (
+                        <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                      )}
+                      <span className="text-sm font-medium truncate">{item.file.name}</span>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {(item.file.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {item.status === 'completed' && 'Done'}
+                      {item.status === 'error' && 'Failed'}
+                      {item.status === 'uploading' && `${Math.round(item.progress)}%`}
+                      {item.status === 'pending' && 'Waiting...'}
+                    </span>
+                  </div>
+                  {item.status !== 'pending' && (
+                    <Progress value={item.progress} className="h-1" />
+                  )}
+                  {item.error && (
+                    <p className="text-xs text-red-500">{item.error}</p>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex justify-between items-center mb-4">
           {files && files.length > 0 && (
