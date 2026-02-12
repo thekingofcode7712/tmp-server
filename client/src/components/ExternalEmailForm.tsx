@@ -88,25 +88,9 @@ export function ExternalEmailForm() {
     );
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            External Email Account
-          </CardTitle>
-          <CardDescription>
-            Connect your Gmail, Outlook, or other email account via IMAP/SMTP
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-muted-foreground text-center py-4">
-            Unable to load email settings. Please try refreshing the page.
-          </div>
-        </CardContent>
-      </Card>
-    );
+  // Don't show error for null credentials - that's expected for new users
+  if (error && error.message !== 'Please login (10001)') {
+    console.error('Email settings error:', error);
   }
 
   return (

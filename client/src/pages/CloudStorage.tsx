@@ -26,14 +26,50 @@ export default function CloudStorage() {
   );
 
   const uploadMutation = trpc.storage.uploadFile.useMutation({
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await utils.storage.getFiles.cancel();
+      
+      // Snapshot previous value
+      const previousFiles = utils.storage.getFiles.getData({ folder: selectedFolder });
+      
+      // Optimistically update with new file
+      const optimisticFile = {
+        id: Date.now(), // Temporary numeric ID
+        fileName: variables.fileName,
+        fileSize: 0, // Will be updated on success
+        mimeType: variables.mimeType || null,
+        folder: variables.folder || '/',
+        userId: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        fileUrl: '', // Placeholder
+        fileKey: '',
+        isDeleted: false,
+      };
+      
+      utils.storage.getFiles.setData(
+        { folder: selectedFolder },
+        (old) => old ? [optimisticFile, ...old] : [optimisticFile]
+      );
+      
+      // Show instant success feedback
+      toast.success("Uploading...", { duration: 1000 });
+      
+      return { previousFiles };
+    },
     onSuccess: () => {
-      toast.success("File uploaded successfully");
+      toast.success("Upload complete!");
       utils.storage.getFiles.invalidate();
       utils.dashboard.stats.invalidate();
       setIsUploading(false);
       setUploadProgress(0);
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousFiles) {
+        utils.storage.getFiles.setData({ folder: selectedFolder }, context.previousFiles);
+      }
       toast.error(error.message);
       setIsUploading(false);
       setUploadProgress(0);
@@ -55,7 +91,7 @@ export default function CloudStorage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
+    // Don't show uploading state - optimistic update handles UI
     setUploadProgress(0);
 
     // Detect MIME type with fallback

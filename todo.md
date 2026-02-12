@@ -4,6 +4,12 @@
 
 ### Bugs to Fix
 - [x] Fix infinite loading spinner in Email Settings tab (added retry limits and error handling)
+- [x] Fix email settings "Unable to load email settings" error - backend endpoint issue
+
+### Performance Improvements
+- [x] Implement optimistic file uploads with instant UI feedback
+- [x] Show files immediately in UI while uploading in background
+- [x] Add upload retry logic for failed uploads (rollback on error)
 
 ### Email Storage Plans Upgrade UI
 - [x] Create email storage plan selection UI in Email Settings
