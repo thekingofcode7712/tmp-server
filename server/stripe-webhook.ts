@@ -83,6 +83,48 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   const userIdNum = parseInt(userId);
   
+  // Check if this is a theme purchase
+  if (metadata.type === 'theme_purchase') {
+    const themeId = parseInt(metadata.theme_id as string);
+    if (!themeId) {
+      console.error("[Webhook] No theme ID in checkout session");
+      return;
+    }
+    
+    // Record payment
+    await db.createPayment({
+      userId: userIdNum,
+      stripePaymentIntentId: session.payment_intent as string,
+      amount: 300, // £3
+      currency: 'gbp',
+      status: 'succeeded',
+      description: `Theme purchase`,
+    });
+    
+    // Grant theme to user
+    await db.purchaseTheme(userIdNum, themeId, session.payment_intent as string);
+    console.log(`[Webhook] Theme ${themeId} granted to user ${userIdNum}`);
+    return;
+  }
+  
+  // Check if this is an all themes bundle purchase
+  if (metadata.type === 'all_themes_purchase') {
+    // Record payment
+    await db.createPayment({
+      userId: userIdNum,
+      stripePaymentIntentId: session.payment_intent as string,
+      amount: 3499, // £34.99
+      currency: 'gbp',
+      status: 'succeeded',
+      description: `All Themes Bundle`,
+    });
+    
+    // Grant all themes to user
+    await db.purchaseAllThemes(userIdNum, session.payment_intent as string);
+    console.log(`[Webhook] All themes granted to user ${userIdNum}`);
+    return;
+  }
+  
   // Check if this is an addon purchase
   if (metadata.type === 'addon_purchase') {
     const addonId = metadata.addon_id;

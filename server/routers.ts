@@ -1657,5 +1657,94 @@ export const appRouter = router({
         return { checkoutUrl: session.url };
       }),
   }),
+
+  themes: router({
+    getAll: publicProcedure.query(async () => {
+      return await db.getAllThemes();
+    }),
+
+    getUserThemes: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserThemes(ctx.user.id);
+    }),
+
+    purchaseTheme: protectedProcedure
+      .input(z.object({ themeId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Check if user already owns this theme
+        const hasPurchased = await db.hasUserPurchasedTheme(ctx.user.id, input.themeId);
+        if (hasPurchased) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'You already own this theme' });
+        }
+
+        // Create Stripe checkout for £3
+        const stripe = (await import('stripe')).default;
+        const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY!);
+
+        const theme = await db.getThemeById(input.themeId);
+        if (!theme) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Theme not found' });
+        }
+
+        const session = await stripeClient.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'gbp',
+                product_data: {
+                  name: theme.name,
+                  description: theme.description || undefined,
+                },
+                unit_amount: 300, // £3
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: `${ctx.req.headers.origin}/themes?success=true`,
+          cancel_url: `${ctx.req.headers.origin}/themes?canceled=true`,
+          client_reference_id: ctx.user.id.toString(),
+          metadata: {
+            theme_id: input.themeId.toString(),
+            type: 'theme_purchase',
+          },
+        });
+
+        return { checkoutUrl: session.url };
+      }),
+
+    purchaseAllThemes: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        // Create Stripe checkout for £34.99
+        const stripe = (await import('stripe')).default;
+        const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY!);
+
+        const session = await stripeClient.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'gbp',
+                product_data: {
+                  name: 'All Themes Bundle',
+                  description: 'Unlock all 23 premium themes',
+                },
+                unit_amount: 3499, // £34.99
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: `${ctx.req.headers.origin}/themes?success=true`,
+          cancel_url: `${ctx.req.headers.origin}/themes?canceled=true`,
+          client_reference_id: ctx.user.id.toString(),
+          metadata: {
+            type: 'all_themes_purchase',
+          },
+        });
+
+        return { checkoutUrl: session.url };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

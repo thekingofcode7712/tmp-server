@@ -12,7 +12,8 @@ import {
   vpnConnections, InsertVpnConnection, vpnSpeedTests, InsertVpnSpeedTest,
   adFilterLists, InsertAdFilterList, proxyCredentials, InsertProxyCredential,
   filterRulesCache, InsertFilterRulesCache, documents, InsertDocument,
-  addons, InsertAddon, userAddons, InsertUserAddon
+  addons, InsertAddon, userAddons, InsertUserAddon,
+  themes, InsertTheme, userThemes, InsertUserTheme
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -953,3 +954,72 @@ export async function hasUserPurchasedAddon(userId: number, addonId: number) {
 }
 
 // ==================== Backups ====================
+
+// ==================== Themes ====================
+export async function getAllThemes() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(themes).orderBy(themes.name);
+}
+
+export async function getThemeById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(themes).where(eq(themes.id, id)).limit(1);
+  return result[0] || null;
+}
+
+export async function getUserThemes(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    theme: themes,
+    purchasedAt: userThemes.purchasedAt,
+  })
+  .from(userThemes)
+  .innerJoin(themes, eq(userThemes.themeId, themes.id))
+  .where(eq(userThemes.userId, userId));
+}
+
+export async function purchaseTheme(userId: number, themeId: number, paymentIntentId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(userThemes).values({
+    userId,
+    themeId,
+    stripePaymentIntentId: paymentIntentId,
+  });
+  const insertId = (result as any).insertId || (result as any)[0]?.insertId || 0;
+  return { id: Number(insertId), userId, themeId };
+}
+
+export async function hasUserPurchasedTheme(userId: number, themeId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select().from(userThemes)
+    .where(and(eq(userThemes.userId, userId), eq(userThemes.themeId, themeId)))
+    .limit(1);
+  return result.length > 0;
+}
+
+export async function purchaseAllThemes(userId: number, paymentIntentId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Get all theme IDs
+  const allThemes = await getAllThemes();
+  
+  // Insert all themes for the user
+  for (const theme of allThemes) {
+    const alreadyPurchased = await hasUserPurchasedTheme(userId, theme.id);
+    if (!alreadyPurchased) {
+      await db.insert(userThemes).values({
+        userId,
+        themeId: theme.id,
+        stripePaymentIntentId: paymentIntentId,
+      });
+    }
+  }
+  
+  return { success: true, count: allThemes.length };
+}

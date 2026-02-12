@@ -28,6 +28,7 @@ import Status from "./pages/Status";
 import WordProcessor from "./pages/WordProcessor";
 import ServerStatus from "./pages/ServerStatus";
 import Addons from "./pages/Addons";
+import { Themes } from "./pages/Themes";
 
 function Router() {
   return (
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/word-processor" component={WordProcessor} />
       <Route path="/server-status" component={ServerStatus} />
       <Route path="/addons" component={Addons} />
+      <Route path="/themes" component={Themes} />
       <Route path={"/checkout-success"} component={CheckoutSuccess} />
       <Route path={"/terms"} component={TermsOfService} />
       <Route path={"/privacy"} component={PrivacyPolicy} />

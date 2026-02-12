@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Link } from "wouter";
 import { 
   HardDrive, Mail, Gamepad2, Terminal, Bot, Link as LinkIcon, 
-  Download, Settings, CreditCard, Database, LogOut, Shield, ShieldOff, ShoppingCart 
+  Download, Settings, CreditCard, Database, LogOut, Shield, ShieldOff, ShoppingCart, Palette 
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -285,6 +285,16 @@ export default function Dashboard() {
                 <ShoppingCart className="h-8 w-8 text-primary mb-2" />
                 <CardTitle>Add-ons Marketplace</CardTitle>
                 <CardDescription>Premium features for only £3 each</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/themes">
+            <Card className="card-hover cursor-pointer border-primary/50">
+              <CardHeader>
+                <Palette className="h-8 w-8 text-primary mb-2" />
+                <CardTitle>Theme Marketplace</CardTitle>
+                <CardDescription>23 premium themes - £3 each or £34.99 for all</CardDescription>
               </CardHeader>
             </Card>
           </Link>
