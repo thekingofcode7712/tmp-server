@@ -495,3 +495,53 @@ export const userThemes = mysqlTable("userThemes", {
 });
 export type UserTheme = typeof userThemes.$inferSelect;
 export type InsertUserTheme = typeof userThemes.$inferInsert;
+
+/**
+ * External email account credentials (IMAP/SMTP)
+ */
+export const externalEmailCredentials = mysqlTable("externalEmailCredentials", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  emailAddress: varchar("emailAddress", { length: 320 }).notNull(),
+  imapServer: varchar("imapServer", { length: 255 }).notNull(),
+  imapPort: int("imapPort").notNull(),
+  imapUsername: varchar("imapUsername", { length: 320 }).notNull(),
+  imapPassword: text("imapPassword").notNull(), // Encrypted
+  smtpServer: varchar("smtpServer", { length: 255 }).notNull(),
+  smtpPort: int("smtpPort").notNull(),
+  smtpUsername: varchar("smtpUsername", { length: 320 }).notNull(),
+  smtpPassword: text("smtpPassword").notNull(), // Encrypted
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastSyncedAt: timestamp("lastSyncedAt"),
+});
+export type ExternalEmailCredential = typeof externalEmailCredentials.$inferSelect;
+export type InsertExternalEmailCredential = typeof externalEmailCredentials.$inferInsert;
+
+/**
+ * Email folders for organization
+ */
+export const emailFolders = mysqlTable("emailFolders", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  icon: varchar("icon", { length: 50 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EmailFolder = typeof emailFolders.$inferSelect;
+export type InsertEmailFolder = typeof emailFolders.$inferInsert;
+
+/**
+ * Email attachments
+ */
+export const emailAttachments = mysqlTable("emailAttachments", {
+  id: int("id").autoincrement().primaryKey(),
+  emailId: int("emailId").notNull(),
+  fileName: varchar("fileName", { length: 500 }).notNull(),
+  fileSize: bigint("fileSize", { mode: "number" }).notNull(),
+  mimeType: varchar("mimeType", { length: 100 }),
+  s3Key: varchar("s3Key", { length: 500 }).notNull(),
+  s3Url: text("s3Url").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EmailAttachment = typeof emailAttachments.$inferSelect;
+export type InsertEmailAttachment = typeof emailAttachments.$inferInsert;

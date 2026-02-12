@@ -49,3 +49,22 @@ Cloud storage platform with email, games, AI features, and premium themes.
 
 ### Quick Fix - Remove Premium Themes from Addons
 - [ ] Remove Premium Themes add-on from addons table (has its own marketplace now)
+
+### Current Priority - External Email, Attachments, Folders
+- [ ] Create external email connection form in Email settings
+- [ ] Add fields for IMAP server, port, username, password
+- [ ] Add fields for SMTP server, port, username, password
+- [x] Store encrypted email credentials in database (schema + encryption utility)
+- [ ] Implement IMAP inbox sync endpoint
+- [ ] Implement SMTP sending via external account
+- [ ] Add file attachment support to email composer
+- [ ] Validate attachment sizes against storage quota
+- [ ] Store attachments in S3 and track in database
+- [ ] Display attachments in email viewer
+- [ ] Add custom folder creation UI
+- [ ] Implement folder CRUD endpoints
+- [ ] Add drag-and-drop email to folder functionality
+- [ ] Add folder-based email filtering
+- [x] Add premium email storage plans (25GB, 50GB, 100GB, Unlimited)
+- [x] Create email plan products in Stripe
+- [ ] Add email plan upgrade UI in Email settings

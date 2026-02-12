@@ -67,6 +67,36 @@ export const PRODUCTS = {
     interval: null, // One-time payment
   },
 
+  // Email Storage Plans
+  "email_25gb": {
+    name: "25GB Email Storage",
+    price: 199, // £1.99/month
+    currency: "gbp",
+    interval: "month",
+    emailStorage: 26843545600, // 25GB in bytes
+  },
+  "email_50gb": {
+    name: "50GB Email Storage",
+    price: 349, // £3.49/month
+    currency: "gbp",
+    interval: "month",
+    emailStorage: 53687091200, // 50GB in bytes
+  },
+  "email_100gb": {
+    name: "100GB Email Storage",
+    price: 599, // £5.99/month
+    currency: "gbp",
+    interval: "month",
+    emailStorage: 107374182400, // 100GB in bytes
+  },
+  "email_unlimited": {
+    name: "Unlimited Email Storage",
+    price: 999, // £9.99/month
+    currency: "gbp",
+    interval: "month",
+    emailStorage: Number.MAX_SAFE_INTEGER, // Unlimited
+  },
+
   // AI Credit Packs
   "credits_1000": {
     name: "1000 AI Credits",
