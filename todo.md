@@ -81,6 +81,12 @@
 - [ ] Add "All Themes Bundle" (20+ themes for £25)
 - [ ] Implement bundle purchase flow with Stripe
 - [ ] Show bundle savings percentage on cards
+
+### Theme Preview & Auto-Switching
+- [ ] Add hover preview showing live colors on theme cards
+- [ ] Implement theme auto-switching by time (light/dark schedule)
+- [ ] Add system preference sync (follow OS dark mode)
+- [ ] Create theme schedule settings UI
 - [ ] Add automatic data refresh after Stripe checkout return
 - [ ] Invalidate queries when user returns from successful purchase
 - [ ] Show success message and updated data without manual refresh

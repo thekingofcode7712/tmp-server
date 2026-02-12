@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `themeBundles` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`name` varchar(100) NOT NULL,\n\t`description` text,\n\t`themeIds` json NOT NULL,\n\t`price` int NOT NULL,\n\t`savings` int NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `themeBundles_id` PRIMARY KEY(`id`)\n);\n\nCREATE TABLE IF NOT EXISTS `userThemeBundles` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`bundleId` int NOT NULL,\n\t`purchasedAt` timestamp NOT NULL DEFAULT (now()),\n\t`stripePaymentIntentId` varchar(255),\n\tCONSTRAINT `userThemeBundles_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute CREATE TABLE IF NOT EXISTS `themeBundles` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`name` varchar(100) NOT NULL,\n\t`description` text,\n\t`themeIds` json NOT NULL,\n\t`price` int NOT NULL,\n\t`savings` int NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `themeBundles_id` PRIMARY KEY(`id`)\n);\n\nCREATE TABLE IF NOT EXISTS `userThemeBundles` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`bundleId` int NOT NULL,\n\t`purchasedAt` timestamp NOT NULL DEFAULT (now()),\n\t`stripePaymentIntentId` varchar(255),\n\tCONSTRAINT `userThemeBundles_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 577
+}

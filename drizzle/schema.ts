@@ -533,6 +533,34 @@ export type UserTheme = typeof userThemes.$inferSelect;
 export type InsertUserTheme = typeof userThemes.$inferInsert;
 
 /**
+ * Theme Bundles (discounted packages)
+ */
+export const themeBundles = mysqlTable("themeBundles", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  themeIds: json("themeIds").notNull(), // Array of theme IDs included
+  price: int("price").notNull(), // Price in pence
+  savings: int("savings").notNull(), // Savings in pence vs individual purchase
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ThemeBundle = typeof themeBundles.$inferSelect;
+export type InsertThemeBundle = typeof themeBundles.$inferInsert;
+
+/**
+ * User purchased theme bundles
+ */
+export const userThemeBundles = mysqlTable("userThemeBundles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  bundleId: int("bundleId").notNull(),
+  purchasedAt: timestamp("purchasedAt").defaultNow().notNull(),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+});
+export type UserThemeBundle = typeof userThemeBundles.$inferSelect;
+export type InsertUserThemeBundle = typeof userThemeBundles.$inferInsert;
+
+/**
  * External email account credentials (IMAP/SMTP)
  */
 export const externalEmailCredentials = mysqlTable("externalEmailCredentials", {
