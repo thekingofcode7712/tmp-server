@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Shield, ShieldCheck, Globe, Lock } from "lucide-react";
+import { ArrowLeft, Shield, ShieldCheck, Globe, Lock, Key, RefreshCw, History, Copy } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -28,6 +28,16 @@ export default function VPN() {
   const [connectionId, setConnectionId] = useState<number | null>(null);
 
   const isPaidUser = user?.subscriptionTier && user.subscriptionTier !== "free";
+  
+  const { data: proxyCredentials } = trpc.vpn.getProxyCredentials.useQuery(undefined, {
+    enabled: isPaidUser,
+  });
+  
+  const regenerateMutation = trpc.vpn.regenerateProxyCredentials.useMutation({
+    onSuccess: () => {
+      toast.success("Credentials regenerated successfully");
+    },
+  });
   
   const { data: settings } = trpc.vpn.getSettings.useQuery(undefined, {
     enabled: !!user,
@@ -244,6 +254,80 @@ export default function VPN() {
               server={selectedServer || 'us-east'}
               serverName={vpnServers.find(s => s.id === (selectedServer || 'us-east'))?.name || 'US East'}
             />
+
+            <Card className="mt-6">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Key className="h-5 w-5" />
+                      Proxy Credentials
+                    </CardTitle>
+                    <CardDescription>Use these credentials for proxy authentication</CardDescription>
+                  </div>
+                  <Link href="/vpn/logs">
+                    <Button variant="outline" size="sm">
+                      <History className="h-4 w-4 mr-2" />
+                      View Logs
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {proxyCredentials ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Username</label>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 p-2 bg-muted rounded text-sm">
+                            {proxyCredentials.username}
+                          </code>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              navigator.clipboard.writeText(proxyCredentials.username);
+                              toast.success("Username copied");
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Password</label>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 p-2 bg-muted rounded text-sm">
+                            {proxyCredentials.password}
+                          </code>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              navigator.clipboard.writeText(proxyCredentials.password);
+                              toast.success("Password copied");
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => regenerateMutation.mutate()}
+                      disabled={regenerateMutation.isPending}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${regenerateMutation.isPending ? 'animate-spin' : ''}`} />
+                      Regenerate Credentials
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-sm text-muted-foreground">Loading credentials...</div>
+                )}
+              </CardContent>
+            </Card>
 
             <Card className="mt-6">
               <CardHeader>

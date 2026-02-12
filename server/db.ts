@@ -10,7 +10,8 @@ import {
   alertHistory, InsertAlertHistory, notifications, InsertNotification,
   adBlockerSettings, InsertAdBlockerSettings, vpnSettings, InsertVpnSettings,
   vpnConnections, InsertVpnConnection, vpnSpeedTests, InsertVpnSpeedTest,
-  adFilterLists, InsertAdFilterList
+  adFilterLists, InsertAdFilterList, proxyCredentials, InsertProxyCredential,
+  filterRulesCache, InsertFilterRulesCache
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -782,4 +783,74 @@ export async function getVpnBandwidthUsage(userId: number, period: 'daily' | 'mo
     downloaded: Number(result[0]?.downloaded || 0),
     total: Number(result[0]?.total || 0),
   };
+}
+
+
+// ===== Proxy Credentials =====
+export async function getProxyCredentials(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(proxyCredentials)
+    .where(eq(proxyCredentials.userId, userId))
+    .limit(1);
+  return result[0] || null;
+}
+
+export async function createProxyCredentials(creds: InsertProxyCredential) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(proxyCredentials).values(creds);
+  return result;
+}
+
+export async function updateProxyCredentialsLastUsed(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(proxyCredentials)
+    .set({ lastUsed: new Date() })
+    .where(eq(proxyCredentials.userId, userId));
+}
+
+export async function deleteProxyCredentials(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(proxyCredentials).where(eq(proxyCredentials.userId, userId));
+}
+
+// ===== Filter Rules Cache =====
+export async function getFilterRulesCache(listUrl: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(filterRulesCache)
+    .where(eq(filterRulesCache.listUrl, listUrl))
+    .limit(1);
+  
+  const cache = result[0];
+  if (!cache) return null;
+  
+  // Check if expired
+  if (new Date() > new Date(cache.expiresAt)) {
+    return null;
+  }
+  
+  return cache;
+}
+
+export async function createFilterRulesCache(cache: InsertFilterRulesCache) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Delete existing cache for this URL
+  await db.delete(filterRulesCache).where(eq(filterRulesCache.listUrl, cache.listUrl));
+  
+  // Insert new cache
+  const result = await db.insert(filterRulesCache).values(cache);
+  return result;
+}
+
+export async function deleteExpiredFilterCache() {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(filterRulesCache)
+    .where(sql`${filterRulesCache.expiresAt} < NOW()`);
 }

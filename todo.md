@@ -608,3 +608,28 @@
 - [x] Implement CSS selector-based element hiding
 - [x] Add real-time blocking counter
 - [x] Test actual ad blocking on popular websites
+
+
+### Proxy Authentication
+- [x] Add proxy credentials table to database
+- [x] Generate unique username/password for each user
+- [x] Store credentials securely with hashing
+- [x] Add authentication to proxy service
+- [x] Display credentials in VPN settings page
+- [x] Add credential regeneration option
+
+### Filter List Caching
+- [x] Add filter rules cache table to database
+- [x] Fetch and parse filter lists on first use
+- [x] Store parsed rules in database
+- [x] Add cache expiration (24 hours)
+- [x] Implement cache refresh mechanism
+- [x] Use cached rules for ad blocking checks
+
+### VPN Connection Logs Page
+- [x] Create connection logs page component
+- [x] Display connection history with timestamps
+- [x] Show data transferred per session
+- [x] Add server location and duration
+- [x] Implement pagination for logs
+- [x] Add export logs functionality

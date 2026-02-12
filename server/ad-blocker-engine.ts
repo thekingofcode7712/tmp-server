@@ -54,12 +54,34 @@ export function parseFilterList(filterText: string): FilterRule[] {
 }
 
 /**
- * Fetch and parse filter list from URL
+ * Fetch and parse filter list from URL (with caching)
  */
 export async function fetchFilterList(url: string): Promise<FilterRule[]> {
+  const { getFilterRulesCache, createFilterRulesCache } = await import('./db');
+  
+  // Check cache first
+  const cached = await getFilterRulesCache(url);
+  if (cached) {
+    return JSON.parse(cached.rules);
+  }
+  
+  // Fetch from URL
   try {
     const response = await axios.get(url, { timeout: 30000 });
-    return parseFilterList(response.data);
+    const rules = parseFilterList(response.data);
+    
+    // Cache the results (expires in 24 hours)
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+    
+    await createFilterRulesCache({
+      listUrl: url,
+      rules: JSON.stringify(rules),
+      ruleCount: rules.length,
+      expiresAt,
+    });
+    
+    return rules;
   } catch (error: any) {
     throw new Error(`Failed to fetch filter list: ${error.message}`);
   }

@@ -20,6 +20,7 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import BuyCredits from "./pages/BuyCredits";
 import ManageSubscription from "./pages/ManageSubscription";
 import VPN from "./pages/VPN";
+import VpnLogs from "./pages/VpnLogs";
 import AdBlocker from "./pages/AdBlocker";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -43,6 +44,7 @@ function Router() {
       <Route path={"/buy-credits"} component={BuyCredits} />
       <Route path={"/manage-subscription"} component={ManageSubscription} />
       <Route path={"/vpn"} component={VPN} />
+      <Route path={"/vpn/logs"} component={VpnLogs} />
       <Route path={"/adblocker"} component={AdBlocker} />
       <Route path={"/checkout-success"} component={CheckoutSuccess} />
       <Route path={"/terms"} component={TermsOfService} />

@@ -388,3 +388,33 @@ export const adFilterLists = mysqlTable("adFilterLists", {
 
 export type AdFilterList = typeof adFilterLists.$inferSelect;
 export type InsertAdFilterList = typeof adFilterLists.$inferInsert;
+
+/**
+ * Proxy authentication credentials
+ */
+export const proxyCredentials = mysqlTable("proxyCredentials", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  username: varchar("username", { length: 100 }).notNull().unique(),
+  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastUsed: timestamp("lastUsed"),
+});
+
+export type ProxyCredential = typeof proxyCredentials.$inferSelect;
+export type InsertProxyCredential = typeof proxyCredentials.$inferInsert;
+
+/**
+ * Cached filter rules for ad blocking
+ */
+export const filterRulesCache = mysqlTable("filterRulesCache", {
+  id: int("id").autoincrement().primaryKey(),
+  listUrl: varchar("listUrl", { length: 500 }).notNull().unique(),
+  rules: text("rules").notNull(), // JSON array of parsed rules
+  ruleCount: int("ruleCount").notNull(),
+  lastFetched: timestamp("lastFetched").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+});
+
+export type FilterRulesCache = typeof filterRulesCache.$inferSelect;
+export type InsertFilterRulesCache = typeof filterRulesCache.$inferInsert;

@@ -17,6 +17,7 @@ import AdmZip from 'adm-zip';
 import axios from 'axios';
 import { routeThroughProxy, getProxyConfig } from './proxy-service';
 import { fetchFilterList, shouldBlockUrl, isKnownAdDomain, COMMON_AD_DOMAINS } from './ad-blocker-engine';
+import { getOrCreateProxyCredentials, regenerateProxyCredentials } from './proxy-auth';
 
 export const appRouter = router({
   system: router({
@@ -1325,6 +1326,38 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Proxy requires paid subscription' });
         }
         return getProxyConfig(input.server);
+      }),
+
+    getProxyCredentials: protectedProcedure.query(async ({ ctx }) => {
+      const user = await db.getUserById(ctx.user.id);
+      if (user?.subscriptionTier === 'free') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Proxy requires paid subscription' });
+      }
+      return await getOrCreateProxyCredentials(ctx.user.id);
+    }),
+
+    regenerateProxyCredentials: protectedProcedure.mutation(async ({ ctx }) => {
+      const user = await db.getUserById(ctx.user.id);
+      if (user?.subscriptionTier === 'free') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Proxy requires paid subscription' });
+      }
+      return await regenerateProxyCredentials(ctx.user.id);
+    }),
+
+    getConnectionLogs: protectedProcedure
+      .input(z.object({ limit: z.number().default(50), offset: z.number().default(0) }))
+      .query(async ({ ctx, input }) => {
+        const db_instance = await db.getDb();
+        if (!db_instance) return [];
+        
+        const { vpnConnections } = await import('../drizzle/schema');
+        const { eq, desc } = await import('drizzle-orm');
+        
+        return await db_instance.select().from(vpnConnections)
+          .where(eq(vpnConnections.userId, ctx.user.id))
+          .orderBy(desc(vpnConnections.connectedAt))
+          .limit(input.limit)
+          .offset(input.offset);
       }),
   }),
 });
