@@ -8,6 +8,7 @@ import { ArrowLeft, Upload, Trash2, Download, FolderOpen } from "lucide-react";
 import { useState, useRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { getMimeType } from "@/lib/mimeTypes";
 
 export default function CloudStorage() {
   const { isAuthenticated } = useAuth();
@@ -55,6 +56,9 @@ export default function CloudStorage() {
     setIsUploading(true);
     setUploadProgress(0);
 
+    // Detect MIME type with fallback
+    const mimeType = getMimeType(file.name, file.type);
+
     const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
     const shouldChunk = file.size > CHUNK_SIZE;
     
@@ -78,7 +82,7 @@ export default function CloudStorage() {
               await uploadMutation.mutateAsync({
                 fileName: file.name,
                 fileData: base64Data,
-                mimeType: file.type,
+                mimeType,
                 folder: selectedFolder,
                 chunkIndex,
                 totalChunks,
@@ -119,7 +123,7 @@ export default function CloudStorage() {
         uploadMutation.mutate({
           fileName: file.name,
           fileData: base64Data,
-          mimeType: file.type,
+          mimeType,
           folder: selectedFolder,
         });
         setUploadProgress(100);

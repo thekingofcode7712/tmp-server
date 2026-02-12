@@ -643,3 +643,27 @@
 - [x] Show IP after VPN connection (through proxy)
 - [x] Display location details (country, city, ISP)
 - [x] Add visual indicator for VPN status
+
+
+### VPN Kill Switch
+- [x] Add kill switch enabled field to VPN settings
+- [x] Implement connection monitoring to detect drops
+- [x] Block internet traffic when VPN disconnects
+- [x] Add kill switch toggle in VPN settings UI
+- [x] Show kill switch status indicator
+- [x] Log kill switch activation events
+- [x] Restore traffic when VPN reconnects
+
+
+### File Storage Enhancements
+- [x] Remove all file size restrictions
+- [x] Add MIME type detection for code files and unknown types
+- [x] Use application/octet-stream as fallback for unknown types
+- [ ] Implement file versioning system
+- [ ] Add automatic scheduled backups
+- [ ] Add file integrity checks (checksums)
+- [ ] Add file preview for images, videos, audio
+- [ ] Add document preview for PDFs, Word, Excel
+- [ ] Add code file syntax highlighting preview
+- [ ] Add backup restore functionality
+- [ ] Add file download history tracking

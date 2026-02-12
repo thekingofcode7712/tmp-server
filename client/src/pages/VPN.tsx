@@ -337,6 +337,49 @@ export default function VPN() {
 
             <Card className="mt-6">
               <CardHeader>
+                <CardTitle>VPN Settings</CardTitle>
+                <CardDescription>Configure VPN behavior and security features</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="text-sm font-medium">Kill Switch</div>
+                    <div className="text-xs text-muted-foreground">
+                      Block all internet traffic if VPN connection drops
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings?.killSwitch || false}
+                      onChange={(e) => updateSettingsMutation.mutate({ killSwitch: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="text-sm font-medium">Auto Connect</div>
+                    <div className="text-xs text-muted-foreground">
+                      Automatically connect to VPN on startup
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings?.autoConnect || false}
+                      onChange={(e) => updateSettingsMutation.mutate({ autoConnect: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-6">
+              <CardHeader>
                 <CardTitle>VPN Configuration</CardTitle>
                 <CardDescription>Generate configuration files for WireGuard or OpenVPN</CardDescription>
               </CardHeader>

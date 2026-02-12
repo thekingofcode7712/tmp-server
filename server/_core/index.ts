@@ -37,9 +37,9 @@ async function startServer() {
     await handleStripeWebhook(req, res);
   });
   
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "500mb" }));
-  app.use(express.urlencoded({ limit: "500mb", extended: true }));
+  // Configure body parser with no size limit for file uploads
+  app.use(express.json({ limit: "Infinity" }));
+  app.use(express.urlencoded({ limit: "Infinity", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API
@@ -70,13 +70,19 @@ async function startServer() {
 
   // Initialize scheduled jobs
   const { autoResumeSubscriptions, checkUsageAlerts } = await import('../scheduled-jobs');
+  const { monitorConnections } = await import('../kill-switch');
+  
   // Run immediately on startup
   autoResumeSubscriptions();
   checkUsageAlerts();
+  monitorConnections();
+  
   // Run auto-resume daily
   setInterval(autoResumeSubscriptions, 24 * 60 * 60 * 1000);
   // Run usage alerts every 6 hours
   setInterval(checkUsageAlerts, 6 * 60 * 60 * 1000);
+  // Monitor VPN connections every 5 seconds
+  setInterval(monitorConnections, 5000);
 }
 
 startServer().catch(console.error);

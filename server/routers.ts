@@ -1396,6 +1396,18 @@ export const appRouter = router({
       }
     }),
 
+    getKillSwitchStatus: protectedProcedure.query(async ({ ctx }) => {
+      const { getKillSwitchState, isTrafficBlocked } = await import('./kill-switch');
+      const state = getKillSwitchState(ctx.user.id);
+      const blocked = isTrafficBlocked(ctx.user.id);
+      
+      return {
+        blocked,
+        blockedAt: state?.blockedAt?.toISOString() || null,
+        lastConnectionId: state?.lastConnectionId || null,
+      };
+    }),
+
     getProxyIp: protectedProcedure
       .input(z.object({ server: z.string() }))
       .query(async ({ ctx, input }) => {
