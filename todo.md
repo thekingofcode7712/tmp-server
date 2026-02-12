@@ -801,3 +801,12 @@
 - [x] Add email filter dropdown (All/Read/Unread)
 - [x] Implement search logic in frontend
 - [x] Add UI for search bar and filters in Email page
+
+### Current Priority - Email Readability Improvements
+- [ ] Create email content parser to extract plain text from HTML/MIME
+- [ ] Strip MIME headers and raw HTML markup from email body
+- [ ] Create utility to clean and format email content
+- [ ] Redesign email detail view with clean header section
+- [ ] Improve typography and spacing in email display
+- [ ] Add proper handling for quoted text in replies
+- [ ] Create sanitized HTML renderer for email content
