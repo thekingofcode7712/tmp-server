@@ -30,6 +30,21 @@
 - [x] Implement drag-and-drop file moving between folders
 - [x] Add folder creation and deletion UI
 
+### File Management Enhancements
+- [x] Add file version history viewer dialog with timestamps and sizes
+- [x] Implement one-click restore from version history
+- [x] Add batch "Move to folder" dropdown in bulk operations toolbar
+- [x] Create file activity timeline dashboard widget
+- [x] Track and display recent uploads, moves, deletes, and shares
+- [x] Add quick access links from activity timeline
+
+### Performance Optimizations
+- [x] Implement direct-to-S3 uploads using presigned URLs
+- [x] Generate presigned PUT URLs on backend
+- [x] Upload files directly from browser to S3
+- [x] Register file metadata after successful upload
+- [x] Add upload progress tracking for direct uploads
+
 ### Email Storage Plans Upgrade UI
 - [x] Create email storage plan selection UI in Email Settings
 - [x] Display current plan and usage

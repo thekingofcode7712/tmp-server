@@ -34,6 +34,9 @@ export default function CloudStorage() {
   const [newFolderName, setNewFolderName] = useState('');
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [draggedFileId, setDraggedFileId] = useState<number | null>(null);
+  const [versionHistoryFileId, setVersionHistoryFileId] = useState<number | null>(null);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [moveToFolder, setMoveToFolder] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
@@ -66,6 +69,25 @@ export default function CloudStorage() {
   const moveFileMutation = trpc.storage.moveFile.useMutation({
     onSuccess: () => {
       toast.success("File moved!");
+      utils.storage.getFiles.invalidate();
+    },
+  });
+
+  const { data: fileVersions } = trpc.storage.getFileVersions.useQuery(
+    { fileId: versionHistoryFileId! },
+    { enabled: versionHistoryFileId !== null }
+  );
+
+  const restoreVersionMutation = trpc.storage.restoreFileVersion.useMutation({
+    onSuccess: () => {
+      toast.success("Version restored!");
+      utils.storage.getFiles.invalidate();
+      setShowVersionHistory(false);
+    },
+  });
+
+  const batchMoveMutation = trpc.storage.moveFile.useMutation({
+    onSuccess: () => {
       utils.storage.getFiles.invalidate();
     },
   });
@@ -181,7 +203,78 @@ export default function CloudStorage() {
     return mimeType.startsWith('image/') || mimeType === 'application/pdf' || mimeType.startsWith('video/');
   };
 
+  const getPresignedUrlMutation = trpc.storage.getPresignedUploadUrl.useMutation();
+  const registerFileMutation = trpc.storage.registerFileAfterUpload.useMutation();
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    toast.info("Uploading...");
+
+    try {
+      // Detect MIME type with fallback
+      const mimeType = getMimeType(file.name, file.type);
+
+      // Get presigned URL from backend
+      const { uploadUrl, publicUrl, fileKey } = await getPresignedUrlMutation.mutateAsync({
+        fileName: file.name,
+        mimeType,
+        fileSize: file.size,
+        folder: selectedFolder,
+      });
+
+      // Upload directly to S3 with progress tracking
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const progress = (e.loaded / e.total) * 100;
+          setUploadProgress(progress);
+        }
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            resolve();
+          } else {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        });
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+        xhr.open('PUT', uploadUrl);
+        xhr.setRequestHeader('Content-Type', mimeType);
+        xhr.send(file);
+      });
+
+      // Register file in database after successful upload
+      await registerFileMutation.mutateAsync({
+        fileName: file.name,
+        fileKey,
+        fileUrl: publicUrl,
+        mimeType,
+        fileSize: file.size,
+        folder: selectedFolder,
+      });
+
+      toast.success("Upload complete!");
+      utils.storage.getFiles.invalidate();
+      utils.dashboard.stats.invalidate();
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleFileSelectOld = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -422,10 +515,36 @@ export default function CloudStorage() {
               </div>
               <div className="flex items-center gap-2">
             {selectedFiles.length > 0 && (
-              <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete ({selectedFiles.length})
-              </Button>
+              <>
+                <Select value={moveToFolder} onValueChange={(value) => {
+                  setMoveToFolder(value);
+                  if (value) {
+                    Promise.all(selectedFiles.map(fileId => 
+                      batchMoveMutation.mutateAsync({ fileId, newFolder: value })
+                    )).then(() => {
+                      toast.success(`Moved ${selectedFiles.length} files to ${value}`);
+                      setSelectedFiles([]);
+                      setMoveToFolder('');
+                    });
+                  }
+                }}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Move to folder..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="/">All Files</SelectItem>
+                    {folders?.map((folder) => (
+                      <SelectItem key={folder.id} value={folder.folderPath}>
+                        {folder.folderName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete ({selectedFiles.length})
+                </Button>
+              </>
             )}
             <input
               ref={fileInputRef}
@@ -530,6 +649,13 @@ export default function CloudStorage() {
                     <Share2 className="h-4 w-4 mr-2" />
                     Share
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setVersionHistoryFileId(file.id);
+                    setShowVersionHistory(true);
+                  }}>
+                    <ArrowUpDown className="h-4 w-4 mr-2" />
+                    Versions
+                  </Button>
                   <Button variant="outline" size="sm" asChild>
                     <a href={file.fileUrl} target="_blank" rel="noopener noreferrer">
                       <Download className="h-4 w-4 mr-2" />
@@ -621,6 +747,46 @@ export default function CloudStorage() {
               >
                 {createShareLinkMutation.isPending ? "Creating..." : "Create Share Link"}
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Version History Dialog */}
+        <Dialog open={showVersionHistory} onOpenChange={setShowVersionHistory}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Version History</DialogTitle>
+              <DialogDescription>
+                View and restore previous versions of this file
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4 max-h-[400px] overflow-y-auto">
+              {fileVersions && fileVersions.length > 0 ? (
+                fileVersions.map((version) => (
+                  <Card key={version.id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-sm">{version.fileName}</CardTitle>
+                          <CardDescription>
+                            Version {version.versionNumber} • {((version.fileSize || 0) / 1024).toFixed(2)} KB • {new Date(version.createdAt).toLocaleString()}
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => restoreVersionMutation.mutate({ fileId: versionHistoryFileId!, versionNumber: version.versionNumber })}
+                          disabled={restoreVersionMutation.isPending}
+                        >
+                          {restoreVersionMutation.isPending ? "Restoring..." : "Restore"}
+                        </Button>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-8">No version history available</p>
+              )}
             </div>
           </DialogContent>
         </Dialog>
