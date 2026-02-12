@@ -100,38 +100,3 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
     url: await buildDownloadUrl(baseUrl, key, apiKey),
   };
 }
-
-export async function getPresignedUploadUrl(
-  relKey: string,
-  contentType: string = "application/octet-stream"
-): Promise<{ uploadUrl: string; key: string; fileUrl: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
-  
-  // Get presigned upload URL from Manus storage API
-  const presignedApiUrl = new URL(
-    "v1/storage/presignedUploadUrl",
-    ensureTrailingSlash(baseUrl)
-  );
-  presignedApiUrl.searchParams.set("path", key);
-  presignedApiUrl.searchParams.set("contentType", contentType);
-  
-  const response = await fetch(presignedApiUrl, {
-    method: "GET",
-    headers: buildAuthHeaders(apiKey),
-  });
-  
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Failed to get presigned URL (${response.status}): ${message}`
-    );
-  }
-  
-  const data = await response.json();
-  return {
-    uploadUrl: data.uploadUrl,
-    key,
-    fileUrl: data.fileUrl || data.url,
-  };
-}
