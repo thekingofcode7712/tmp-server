@@ -5,9 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { ArrowLeft, Mail, Send, Trash2, RefreshCw, Search, Filter, Clock, User } from "lucide-react";
+import { ArrowLeft, Mail, Send, Trash2, RefreshCw, Search, Filter } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { parseEmailContent, formatEmailForDisplay } from "@/lib/emailParser";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -306,33 +305,26 @@ export default function Email() {
               <DialogHeader>
                 <DialogTitle>{selectedEmail.subject}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-6">
-                <div className="bg-card rounded-lg p-6 border border-border space-y-4">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">From</p>
-                    <p className="text-base font-semibold text-foreground">{selectedEmail.fromAddress}</p>
+              <div className="space-y-4">
+                <div className="border-b pb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-sm text-muted-foreground">From:</p>
+                      <p className="font-semibold">{selectedEmail.fromAddress}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(selectedEmail.createdAt).toLocaleString()}
+                    </p>
                   </div>
                   {selectedEmail.toAddress && (
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">To</p>
-                      <p className="text-base font-semibold text-foreground">{selectedEmail.toAddress}</p>
+                    <div className="mt-2">
+                      <p className="text-sm text-muted-foreground">To:</p>
+                      <p className="font-semibold">{selectedEmail.toAddress}</p>
                     </div>
                   )}
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Date</p>
-                    <p className="text-sm text-muted-foreground">{new Date(selectedEmail.createdAt).toLocaleString()}</p>
-                  </div>
                 </div>
-                <div className="bg-background rounded-lg p-6 min-h-[300px]">
-                  {(() => {
-                    const { plainText } = parseEmailContent(selectedEmail.body);
-                    const formatted = formatEmailForDisplay(plainText);
-                    return (
-                      <div className="text-base leading-relaxed text-foreground whitespace-pre-wrap break-words">
-                        {formatted || 'No content'}
-                      </div>
-                    );
-                  })()}
+                <div className="whitespace-pre-wrap">
+                  {selectedEmail.body}
                 </div>
                 <div className="flex gap-2 pt-4 border-t">
                   <Button

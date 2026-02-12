@@ -19,17 +19,8 @@ export function useApplyTheme() {
     }
     if (!theme) return;
 
-    // Apply light/dark class to document element
-    const root = document.documentElement;
-    if (mode === 'light') {
-      root.classList.remove('dark');
-      root.classList.add('light');
-    } else {
-      root.classList.remove('light');
-      root.classList.add('dark');
-    }
-
     // Apply theme colors to CSS variables
+    const root = document.documentElement;
     Object.entries(theme.colors).forEach(([key, value]) => {
       // Convert camelCase to kebab-case
       const cssVar = key.replace(/([A-Z])/g, '-$1').toLowerCase();
