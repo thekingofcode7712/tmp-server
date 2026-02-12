@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, User, CreditCard, Palette, Bell, Settings as SettingsIcon } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -65,12 +65,27 @@ export default function Settings() {
 
       <div className="container py-8 max-w-5xl">
         <Tabs defaultValue="account" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 h-auto p-1">
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="subscription">Subscription</TabsTrigger>
-            <TabsTrigger value="customization">Customization</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 h-auto p-1.5 gap-1">
+            <TabsTrigger value="account" className="flex items-center gap-2 py-3">
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">Account</span>
+            </TabsTrigger>
+            <TabsTrigger value="subscription" className="flex items-center gap-2 py-3">
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden sm:inline">Subscription</span>
+            </TabsTrigger>
+            <TabsTrigger value="customization" className="flex items-center gap-2 py-3">
+              <Palette className="h-4 w-4" />
+              <span className="hidden sm:inline">Customization</span>
+            </TabsTrigger>
+            <TabsTrigger value="alerts" className="flex items-center gap-2 py-3">
+              <Bell className="h-4 w-4" />
+              <span className="hidden sm:inline">Alerts</span>
+            </TabsTrigger>
+            <TabsTrigger value="preferences" className="flex items-center gap-2 py-3">
+              <SettingsIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Preferences</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="account">
@@ -79,35 +94,51 @@ export default function Settings() {
                 <CardTitle>Account Information</CardTitle>
                 <CardDescription>Your account details</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <Label>Name</Label>
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Your name"
-                  />
+              <CardContent className="space-y-8">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Personal Information</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium">Name</Label>
+                      <Input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Your name"
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Email</Label>
+                      <Input
+                        value={editEmail}
+                        onChange={(e) => setEditEmail(e.target.value)}
+                        placeholder="your.email@example.com"
+                        type="email"
+                        className="mt-1.5"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label>Email</Label>
-                  <Input
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
-                    placeholder="your.email@example.com"
-                    type="email"
-                  />
+                
+                <div className="border-t pt-6 space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Account Details</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium">Login Method</Label>
+                      <Input value={user?.loginMethod || ""} disabled className="mt-1.5" />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Member Since</Label>
+                      <Input value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : ""} disabled className="mt-1.5" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label>Login Method</Label>
-                  <Input value={user?.loginMethod || ""} disabled />
+                
+                <div className="border-t pt-6">
+                  <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="w-full">
+                    {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
                 </div>
-                <div>
-                  <Label>Member Since</Label>
-                  <Input value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : ""} disabled />
-                </div>
-                <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="w-full">
-                  {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
-                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -118,25 +149,40 @@ export default function Settings() {
                 <CardTitle>Subscription</CardTitle>
                 <CardDescription>Manage your subscription plan</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <Label>Current Plan</Label>
-                  <Input value={user?.subscriptionTier || "free"} disabled className="capitalize" />
+              <CardContent className="space-y-8">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Plan Details</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium">Current Plan</Label>
+                      <Input value={user?.subscriptionTier || "free"} disabled className="capitalize mt-1.5" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label>Storage Used</Label>
-                  <Input
-                    value={`${((user?.storageUsed || 0) / (1024 ** 3)).toFixed(2)} GB / ${((user?.storageLimit || 5368709120) / (1024 ** 3)).toFixed(2)} GB`}
-                    disabled
-                  />
+                
+                <div className="border-t pt-6 space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Usage Statistics</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium">Storage Used</Label>
+                      <Input
+                        value={`${((user?.storageUsed || 0) / (1024 ** 3)).toFixed(2)} GB / ${((user?.storageLimit || 5368709120) / (1024 ** 3)).toFixed(2)} GB`}
+                        disabled
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">AI Credits</Label>
+                      <Input value={user?.aiCredits || 0} disabled className="mt-1.5" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label>AI Credits</Label>
-                  <Input value={user?.aiCredits || 0} disabled />
+                
+                <div className="border-t pt-6">
+                  <Link href="/subscription">
+                    <Button className="w-full">Manage Subscription</Button>
+                  </Link>
                 </div>
-                <Link href="/subscription">
-                  <Button className="w-full">Manage Subscription</Button>
-                </Link>
               </CardContent>
             </Card>
           </TabsContent>

@@ -767,3 +767,13 @@
 - [x] Display locked games with "Unlock for £3" button
 - [x] Redirect locked games to marketplace page
 - [ ] Implement other add-on features (Premium Themes, Extra Storage, AI Credits Boost)
+
+### Current Priority - User Requested Features
+- [ ] Implement Premium Themes add-on functionality (apply themes when purchased)
+- [x] Implement Extra Storage add-on functionality (add 50GB to user's storage limit)
+- [x] Implement AI Credits Boost add-on functionality (add 1000 credits to user's AI credits)
+- [x] Add email reading functionality with clickable email list
+- [x] Create email detail view showing full content, sender, subject, timestamp
+- [x] Add reply/forward/delete actions to email reader
+- [x] Improve Settings UI with better tab design, spacing, and icons
+- [x] Add visual hierarchy and section dividers to Settings tabs

@@ -115,6 +115,21 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     // Grant addon to user
     await db.purchaseAddon(userIdNum, addon.id, session.payment_intent as string);
     
+    // Apply addon benefits based on type
+    const user = await db.getUserById(userIdNum);
+    if (user) {
+      if (addonName === 'Extra Storage') {
+        // Add 50GB to storage limit
+        const extraStorage = 50 * 1024 * 1024 * 1024; // 50GB in bytes
+        await db.updateUserStorageLimit(userIdNum, user.storageLimit + extraStorage);
+        console.log(`[Webhook] Added 50GB storage to user ${userIdNum}`);
+      } else if (addonName === 'Ai Credits Boost') {
+        // Add 1000 AI credits
+        await db.updateUserAICredits(userIdNum, user.aiCredits + 1000);
+        console.log(`[Webhook] Added 1000 AI credits to user ${userIdNum}`);
+      }
+    }
+    
     console.log(`[Webhook] Addon ${addonName} granted to user ${userIdNum}`);
     return;
   }

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 export default function Email() {
   const [composing, setComposing] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<any>(null);
   const [to, setTo] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -150,7 +151,8 @@ export default function Email() {
                     {inbox.map((email) => (
                       <div
                         key={email.id}
-                        className={`p-4 rounded border border-border ${!email.isRead ? "bg-muted" : ""}`}
+                        className={`p-4 rounded border border-border cursor-pointer hover:bg-accent/50 transition-colors ${!email.isRead ? "bg-muted" : ""}`}
+                        onClick={() => setSelectedEmail(email)}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
@@ -171,7 +173,10 @@ export default function Email() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => deleteEmailMutation.mutate({ emailId: email.id })}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteEmailMutation.mutate({ emailId: email.id });
+                            }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -230,6 +235,78 @@ export default function Email() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Email Detail Dialog */}
+      <Dialog open={!!selectedEmail} onOpenChange={() => setSelectedEmail(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          {selectedEmail && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedEmail.subject}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="border-b pb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-sm text-muted-foreground">From:</p>
+                      <p className="font-semibold">{selectedEmail.fromAddress}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(selectedEmail.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  {selectedEmail.toAddress && (
+                    <div className="mt-2">
+                      <p className="text-sm text-muted-foreground">To:</p>
+                      <p className="font-semibold">{selectedEmail.toAddress}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="whitespace-pre-wrap">
+                  {selectedEmail.body}
+                </div>
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setTo(selectedEmail.fromAddress);
+                      setSubject(`Re: ${selectedEmail.subject}`);
+                      setBody(`\n\n---\nOn ${new Date(selectedEmail.createdAt).toLocaleString()}, ${selectedEmail.fromAddress} wrote:\n${selectedEmail.body}`);
+                      setSelectedEmail(null);
+                      setComposing(true);
+                    }}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Reply
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setTo('');
+                      setSubject(`Fwd: ${selectedEmail.subject}`);
+                      setBody(`\n\n---\nForwarded message from ${selectedEmail.fromAddress}:\n${selectedEmail.body}`);
+                      setSelectedEmail(null);
+                      setComposing(true);
+                    }}
+                  >
+                    Forward
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      deleteEmailMutation.mutate({ emailId: selectedEmail.id });
+                      setSelectedEmail(null);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -115,6 +115,12 @@ export async function updateUserStorage(userId: number, storageUsed: number) {
   await db.update(users).set({ storageUsed }).where(eq(users.id, userId));
 }
 
+export async function updateUserStorageLimit(userId: number, storageLimit: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ storageLimit }).where(eq(users.id, userId));
+}
+
 export async function updateUserSubscription(userId: number, tier: string, storageLimit: number, expiresAt: Date) {
   const db = await getDb();
   if (!db) return;
