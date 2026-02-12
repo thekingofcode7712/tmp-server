@@ -15,6 +15,8 @@ export const users = mysqlTable("users", {
   subscriptionTier: mysqlEnum("subscriptionTier", ["free", "50gb", "100gb", "200gb", "500gb", "1tb", "2tb", "unlimited"]).default("free").notNull(),
   storageLimit: bigint("storageLimit", { mode: "number" }).default(5368709120).notNull(), // 5GB in bytes
   storageUsed: bigint("storageUsed", { mode: "number" }).default(0).notNull(),
+  emailStorageLimit: bigint("emailStorageLimit", { mode: "number" }).default(16106127360).notNull(), // 15GB in bytes
+  emailStorageUsed: bigint("emailStorageUsed", { mode: "number" }).default(0).notNull(),
   subscriptionExpiresAt: timestamp("subscriptionExpiresAt"),
   
   // AI Credits

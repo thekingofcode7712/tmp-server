@@ -11,8 +11,13 @@ export function Themes() {
   const { data: userThemes, isLoading: userThemesLoading } = trpc.themes.getUserThemes.useQuery();
   const purchaseTheme = trpc.themes.purchaseTheme.useMutation();
   const purchaseAllThemes = trpc.themes.purchaseAllThemes.useMutation();
+  const setActiveTheme = trpc.user.setActiveTheme.useMutation();
+  const { data: user } = trpc.auth.me.useQuery();
 
   const [purchasing, setPurchasing] = useState(false);
+  const [activating, setActivating] = useState(false);
+
+  const activeThemeId = user?.customTheme ? parseInt(user.customTheme) : null;
 
   const hasTheme = (themeId: number) => {
     return userThemes?.some(ut => ut.theme.id === themeId) || false;
@@ -45,6 +50,20 @@ export function Themes() {
       toast.error(error.message || 'Failed to start checkout');
     } finally {
       setPurchasing(false);
+    }
+  };
+
+  const handleActivateTheme = async (themeId: number, themeName: string) => {
+    try {
+      setActivating(true);
+      await setActiveTheme.mutateAsync({ themeId });
+      toast.success(`${themeName} activated! Refreshing...`);
+      // Reload page to apply new theme
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to activate theme');
+    } finally {
+      setActivating(false);
     }
   };
 
@@ -165,12 +184,22 @@ export function Themes() {
                     />
                   </div>
 
-                  {/* Purchase Button */}
+                  {/* Purchase/Activate Button */}
                   {owned ? (
-                    <Button variant="outline" className="w-full" disabled>
-                      <Check className="h-4 w-4 mr-2" />
-                      Owned
-                    </Button>
+                    activeThemeId === theme.id ? (
+                      <Button variant="outline" className="w-full" disabled>
+                        <Check className="h-4 w-4 mr-2" />
+                        Active
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => handleActivateTheme(theme.id, theme.name)}
+                        disabled={activating}
+                        className="w-full"
+                      >
+                        Activate Theme
+                      </Button>
+                    )
                   ) : (
                     <Button
                       onClick={() => handlePurchaseTheme(theme.id, theme.name)}

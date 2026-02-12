@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE users ADD COLUMN emailStorageLimit BIGINT NOT NULL DEFAULT 16106127360;\nALTER TABLE users ADD COLUMN emailStorageUsed BIGINT NOT NULL DEFAULT 0;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute ALTER TABLE users ADD COLUMN emailStorageLimit BIGINT NOT NULL DEFAULT 16106127360;\nALTER TABLE users ADD COLUMN emailStorageUsed BIGINT NOT NULL DEFAULT 0;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1886
+}

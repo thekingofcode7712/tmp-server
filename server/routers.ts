@@ -995,6 +995,22 @@ export const appRouter = router({
         });
         return { success: true };
       }),
+    
+    setActiveTheme: protectedProcedure
+      .input(z.object({ themeId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user owns this theme
+        const hasPurchased = await db.hasUserPurchasedTheme(ctx.user.id, input.themeId);
+        if (!hasPurchased) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not own this theme' });
+        }
+        
+        await db.updateUserCustomization(ctx.user.id, {
+          hasCustomization: true,
+          customTheme: input.themeId.toString(),
+        });
+        return { success: true };
+      }),
   }),
 
   // Customization

@@ -29,6 +29,7 @@ import WordProcessor from "./pages/WordProcessor";
 import ServerStatus from "./pages/ServerStatus";
 import Addons from "./pages/Addons";
 import { Themes } from "./pages/Themes";
+import { useApplyPurchasedTheme } from "./hooks/useApplyPurchasedTheme";
 
 function Router() {
   return (
@@ -65,6 +66,8 @@ function Router() {
 }
 
 function App() {
+  useApplyPurchasedTheme();
+  
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
