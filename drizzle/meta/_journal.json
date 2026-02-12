@@ -57,6 +57,13 @@
       "when": 1770884143711,
       "tag": "0007_useful_hellfire_club",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1770914397095,
+      "tag": "0008_brave_catseye",
+      "breakpoints": true
     }
   ]
 }

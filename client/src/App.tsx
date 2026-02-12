@@ -25,6 +25,9 @@ import AdBlocker from "./pages/AdBlocker";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Status from "./pages/Status";
+import WordProcessor from "./pages/WordProcessor";
+import ServerStatus from "./pages/ServerStatus";
+import Addons from "./pages/Addons";
 
 function Router() {
   return (
@@ -46,6 +49,9 @@ function Router() {
       <Route path={"/vpn"} component={VPN} />
       <Route path={"/vpn/logs"} component={VpnLogs} />
       <Route path={"/adblocker"} component={AdBlocker} />
+      <Route path="/word-processor" component={WordProcessor} />
+      <Route path="/server-status" component={ServerStatus} />
+      <Route path="/addons" component={Addons} />
       <Route path={"/checkout-success"} component={CheckoutSuccess} />
       <Route path={"/terms"} component={TermsOfService} />
       <Route path={"/privacy"} component={PrivacyPolicy} />

@@ -82,6 +82,43 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   const userIdNum = parseInt(userId);
+  
+  // Check if this is an addon purchase
+  if (metadata.type === 'addon_purchase') {
+    const addonId = metadata.addon_id;
+    if (!addonId) {
+      console.error("[Webhook] No addon ID in checkout session");
+      return;
+    }
+    
+    // Get addon from database by name
+    const addonName = addonId.split('_').map((word: string) => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+    
+    const addon = await db.getAddonByName(addonName);
+    if (!addon) {
+      console.error("[Webhook] Addon not found:", addonName);
+      return;
+    }
+    
+    // Record payment
+    await db.createPayment({
+      userId: userIdNum,
+      stripePaymentIntentId: session.payment_intent as string,
+      amount: 300, // £3
+      currency: 'gbp',
+      status: 'succeeded',
+      description: `Addon: ${addonName}`,
+    });
+    
+    // Grant addon to user
+    await db.purchaseAddon(userIdNum, addon.id, session.payment_intent as string);
+    
+    console.log(`[Webhook] Addon ${addonName} granted to user ${userIdNum}`);
+    return;
+  }
+  
   const planId = metadata.plan_id as keyof typeof PRODUCTS;
 
   if (!planId || !PRODUCTS[planId]) {

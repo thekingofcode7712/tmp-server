@@ -418,3 +418,49 @@ export const filterRulesCache = mysqlTable("filterRulesCache", {
 
 export type FilterRulesCache = typeof filterRulesCache.$inferSelect;
 export type InsertFilterRulesCache = typeof filterRulesCache.$inferInsert;
+
+
+/**
+ * Word processor documents
+ */
+export const documents = mysqlTable("documents", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  content: text("content").notNull(), // HTML content
+  wordCount: int("wordCount").default(0).notNull(),
+  lastSaved: timestamp("lastSaved").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Document = typeof documents.$inferSelect;
+export type InsertDocument = typeof documents.$inferInsert;
+
+/**
+ * Add-ons marketplace
+ */
+export const addons = mysqlTable("addons", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  category: mysqlEnum("category", ["game", "theme", "storage", "feature"]).notNull(),
+  price: int("price").notNull(), // Price in pence (£3 = 300)
+  icon: varchar("icon", { length: 500 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Addon = typeof addons.$inferSelect;
+export type InsertAddon = typeof addons.$inferInsert;
+
+/**
+ * User purchased add-ons
+ */
+export const userAddons = mysqlTable("userAddons", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  addonId: int("addonId").notNull(),
+  purchasedAt: timestamp("purchasedAt").defaultNow().notNull(),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+});
+export type UserAddon = typeof userAddons.$inferSelect;
+export type InsertUserAddon = typeof userAddons.$inferInsert;

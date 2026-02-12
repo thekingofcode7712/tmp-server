@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Link } from "wouter";
 import { 
   HardDrive, Mail, Gamepad2, Terminal, Bot, Link as LinkIcon, 
-  Download, Settings, CreditCard, Database, LogOut, Shield, ShieldOff 
+  Download, Settings, CreditCard, Database, LogOut, Shield, ShieldOff, ShoppingCart 
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -275,6 +275,16 @@ export default function Dashboard() {
                 <ShieldOff className="h-8 w-8 text-primary mb-2" />
                 <CardTitle>Ad Blocker</CardTitle>
                 <CardDescription>Block ads and trackers</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/addons">
+            <Card className="card-hover cursor-pointer border-primary/50">
+              <CardHeader>
+                <ShoppingCart className="h-8 w-8 text-primary mb-2" />
+                <CardTitle>Add-ons Marketplace</CardTitle>
+                <CardDescription>Premium features for only £3 each</CardDescription>
               </CardHeader>
             </Card>
           </Link>

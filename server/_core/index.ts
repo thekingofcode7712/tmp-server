@@ -69,18 +69,21 @@ async function startServer() {
   });
 
   // Initialize scheduled jobs
-  const { autoResumeSubscriptions, checkUsageAlerts } = await import('../scheduled-jobs');
+  const { autoResumeSubscriptions, checkUsageAlerts, createDailyBackups } = await import('../scheduled-jobs');
   const { monitorConnections } = await import('../kill-switch');
   
   // Run immediately on startup
   autoResumeSubscriptions();
   checkUsageAlerts();
+  createDailyBackups();
   monitorConnections();
   
-  // Run auto-resume daily
-  setInterval(autoResumeSubscriptions, 24 * 60 * 60 * 1000);
-  // Run usage alerts every 6 hours
+  // Schedule recurring jobs
+  setInterval(autoResumeSubscriptions, 24 * 60 * 60 * 1000); // Daily
+  // Check usage alerts every 6 hours
   setInterval(checkUsageAlerts, 6 * 60 * 60 * 1000);
+  // Create daily backups at midnight (24 hours)
+  setInterval(createDailyBackups, 24 * 60 * 60 * 1000);
   // Monitor VPN connections every 5 seconds
   setInterval(monitorConnections, 5000);
 }

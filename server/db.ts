@@ -11,7 +11,8 @@ import {
   adBlockerSettings, InsertAdBlockerSettings, vpnSettings, InsertVpnSettings,
   vpnConnections, InsertVpnConnection, vpnSpeedTests, InsertVpnSpeedTest,
   adFilterLists, InsertAdFilterList, proxyCredentials, InsertProxyCredential,
-  filterRulesCache, InsertFilterRulesCache
+  filterRulesCache, InsertFilterRulesCache, documents, InsertDocument,
+  addons, InsertAddon, userAddons, InsertUserAddon
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -854,3 +855,95 @@ export async function deleteExpiredFilterCache() {
   await db.delete(filterRulesCache)
     .where(sql`${filterRulesCache.expiresAt} < NOW()`);
 }
+
+
+// ==================== Documents ====================
+export async function getUserDocuments(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(documents).where(eq(documents.userId, userId)).orderBy(desc(documents.updatedAt));
+}
+
+export async function getDocumentById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(documents).where(eq(documents.id, id)).limit(1);
+  return result[0] || null;
+}
+
+export async function createDocument(doc: InsertDocument) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(documents).values(doc);
+  const insertId = (result as any).insertId || (result as any)[0]?.insertId || 0;
+  return { id: Number(insertId), ...doc };
+}
+
+export async function updateDocument(id: number, updates: Partial<InsertDocument>) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(documents).set(updates).where(eq(documents.id, id));
+  return getDocumentById(id);
+}
+
+export async function deleteDocument(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(documents).where(eq(documents.id, id));
+}
+
+// ==================== Add-ons ====================
+export async function getAllAddons() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(addons).where(eq(addons.isActive, true));
+}
+
+export async function getAddonById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(addons).where(eq(addons.id, id)).limit(1);
+  return result[0] || null;
+}
+
+export async function getAddonByName(name: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(addons).where(eq(addons.name, name)).limit(1);
+  return result[0] || null;
+}
+
+export async function getUserAddons(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    addon: addons,
+    purchasedAt: userAddons.purchasedAt,
+  })
+  .from(userAddons)
+  .innerJoin(addons, eq(userAddons.addonId, addons.id))
+  .where(eq(userAddons.userId, userId));
+}
+
+export async function purchaseAddon(userId: number, addonId: number, paymentIntentId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(userAddons).values({
+    userId,
+    addonId,
+    stripePaymentIntentId: paymentIntentId,
+  });
+  const insertId = (result as any).insertId || (result as any)[0]?.insertId || 0;
+  return { id: Number(insertId), userId, addonId };
+}
+
+export async function hasUserPurchasedAddon(userId: number, addonId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select().from(userAddons)
+    .where(and(eq(userAddons.userId, userId), eq(userAddons.addonId, addonId)))
+    .limit(1);
+  return result.length > 0;
+}
+
+// ==================== Backups ====================

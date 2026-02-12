@@ -80,6 +80,49 @@ export const appRouter = router({
         overall,
       };
     }),
+    
+    getServerStatus: publicProcedure.query(async () => {
+      const os = await import('os');
+      
+      // CPU usage
+      const cpus = os.cpus();
+      const cpuUsage = cpus.reduce((acc, cpu) => {
+        const total = Object.values(cpu.times).reduce((a, b) => a + b, 0);
+        const idle = cpu.times.idle;
+        return acc + ((total - idle) / total) * 100;
+      }, 0) / cpus.length;
+
+      // Memory usage
+      const totalMem = os.totalmem();
+      const freeMem = os.freemem();
+      const usedMem = totalMem - freeMem;
+
+      // Network stats (simplified)
+      const networkInterfaces = os.networkInterfaces();
+      const networkStats = { rx: 0, tx: 0 }; // Placeholder for real network stats
+
+      return {
+        cpu: {
+          usage: cpuUsage,
+          cores: cpus.length,
+        },
+        memory: {
+          total: totalMem,
+          used: usedMem,
+          free: freeMem,
+        },
+        disk: {
+          total: 100 * 1024 * 1024 * 1024, // 100GB placeholder
+          used: 50 * 1024 * 1024 * 1024,   // 50GB placeholder
+        },
+        network: networkStats,
+        connections: {
+          active: 0, // Placeholder
+          total: 0,  // Placeholder
+        },
+        uptime: process.uptime(),
+      };
+    }),
   }),
   
   auth: router({
@@ -1439,6 +1482,172 @@ export const appRouter = router({
         } catch (error: any) {
           throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch proxy IP information' });
         }
+      }),
+  }),
+
+  documents: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUserDocuments(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        content: z.string(),
+        wordCount: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return db.createDocument({
+          userId: ctx.user.id,
+          ...input,
+        });
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        content: z.string().optional(),
+        wordCount: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...updates } = input;
+        const doc = await db.getDocumentById(id);
+        if (!doc || doc.userId !== ctx.user.id) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
+        return db.updateDocument(id, updates);
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const doc = await db.getDocumentById(input.id);
+        if (!doc || doc.userId !== ctx.user.id) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
+        await db.deleteDocument(input.id);
+        return { success: true };
+      }),
+
+    export: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        format: z.enum(['docx', 'pdf']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const doc = await db.getDocumentById(input.id);
+        if (!doc || doc.userId !== ctx.user.id) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
+
+        // For now, return HTML content
+        // In production, use libraries like docx or pdfkit
+        return {
+          content: doc.content,
+          filename: `${doc.title}.${input.format}`,
+          mimeType: input.format === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf',
+          format: input.format,
+        };
+      }),
+
+    saveToCloud: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        format: z.enum(['docx', 'pdf', 'html']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const doc = await db.getDocumentById(input.id);
+        if (!doc || doc.userId !== ctx.user.id) {
+          throw new TRPCError({ code: 'NOT_FOUND' });
+        }
+
+        // Generate file content
+        let content: string;
+        let mimeType: string;
+        let extension: string;
+
+        if (input.format === 'html') {
+          content = doc.content;
+          mimeType = 'text/html';
+          extension = 'html';
+        } else {
+          // For now, save as HTML (in production, use docx/pdf libraries)
+          content = doc.content;
+          mimeType = input.format === 'docx' 
+            ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            : 'application/pdf';
+          extension = input.format;
+        }
+
+        // Upload to cloud storage
+        const filename = `${doc.title.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.${extension}`;
+        const fileKey = `${ctx.user.id}/documents/${filename}`;
+        const { url } = await storagePut(fileKey, Buffer.from(content, 'utf-8'), mimeType);
+
+        // Save file record
+        await db.createFile({
+          userId: ctx.user.id,
+          fileName: filename,
+          fileSize: Buffer.byteLength(content, 'utf-8'),
+          mimeType,
+          fileKey,
+          fileUrl: url,
+        });
+
+        return {
+          filename,
+          url,
+          format: input.format,
+        };
+      }),
+  }),
+
+  // Add-ons Marketplace
+  addons: router({
+    getUserAddons: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserAddons(ctx.user.id);
+    }),
+
+    purchase: protectedProcedure
+      .input(z.object({ addonId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        // Check if user already has this addon
+        const existing = await db.getUserAddons(ctx.user.id);
+        if (existing?.some(a => a.addon.name.toLowerCase().replace(/\s+/g, '_') === input.addonId)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'You already own this add-on' });
+        }
+
+        // Create Stripe checkout session for £3
+        const stripe = (await import('stripe')).default;
+        const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY!);
+
+        const session = await stripeClient.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'gbp',
+                product_data: {
+                  name: `Add-on: ${input.addonId}`,
+                },
+                unit_amount: 300, // £3.00
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: `${ctx.req.headers.origin}/addons?success=true`,
+          cancel_url: `${ctx.req.headers.origin}/addons?canceled=true`,
+          client_reference_id: ctx.user.id.toString(),
+          metadata: {
+            user_id: ctx.user.id.toString(),
+            addon_id: input.addonId,
+            type: 'addon_purchase',
+          },
+        });
+
+        return { checkoutUrl: session.url };
       }),
   }),
 });

@@ -667,3 +667,103 @@
 - [ ] Add code file syntax highlighting preview
 - [ ] Add backup restore functionality
 - [ ] Add file download history tracking
+
+
+### Built-in Word Processor
+- [ ] Create rich text editor page with formatting toolbar
+- [ ] Add text formatting (bold, italic, underline, strikethrough)
+- [ ] Add headings, lists, and alignment options
+- [ ] Add image insertion and management
+- [ ] Add table creation and editing
+- [ ] Implement auto-save functionality
+- [ ] Add export to DOCX format
+- [ ] Add export to PDF format
+- [ ] Add document templates (resume, letter, report)
+- [ ] Add word count and character count
+- [ ] Add spell check integration
+
+### Automatic Daily Backups
+- [ ] Create backup service for all user data
+- [ ] Schedule daily backups at midnight
+- [ ] Backup files from cloud storage
+- [ ] Backup word processor documents
+- [ ] Backup user settings and preferences
+- [ ] Store backups in separate S3 location
+- [ ] Add backup history page
+- [ ] Implement one-click restore functionality
+- [ ] Add backup retention policy (30 days)
+- [ ] Send email notification after successful backup
+
+### Fix Username Update
+- [ ] Debug current username update implementation
+- [ ] Ensure username saves to database
+- [ ] Update session/JWT with new username
+- [ ] Refresh UI after username change
+- [ ] Add validation for username format
+- [ ] Prevent duplicate usernames
+
+### £3 Add-ons Marketplace
+- [ ] Create add-ons database schema
+- [ ] Create marketplace page UI
+- [ ] Add 10 fully working games as add-ons
+- [ ] Add premium themes pack (£3)
+- [ ] Add extra storage pack (£3 for +50GB)
+- [ ] Add advanced analytics dashboard (£3)
+- [ ] Add custom domain support (£3)
+- [ ] Add priority support (£3)
+- [ ] Implement Stripe checkout for add-ons
+- [ ] Track purchased add-ons per user
+- [ ] Enable/disable add-ons based on purchase status
+
+
+### Server Status Analytics Page
+- [ ] Create server status page component
+- [ ] Display real-time CPU usage
+- [ ] Display real-time memory usage
+- [ ] Display disk I/O statistics
+- [ ] Display network traffic (incoming/outgoing)
+- [ ] Show active user connections count
+- [ ] Show server uptime
+- [ ] Add request rate graph (requests per second)
+- [ ] Add response time graph
+- [ ] Show database connection pool status
+- [ ] Add auto-refresh every 5 seconds
+- [ ] Restrict access to admin users only
+
+
+### Settings UI Improvements
+- [ ] Redesign tabs for better readability
+- [ ] Add icons to each tab
+- [ ] Improve tab spacing and sizing
+- [ ] Add visual indicators for active tab
+- [ ] Improve mobile responsiveness of tabs
+
+
+### Full Email Reading
+- [ ] Add email detail view when clicking on email
+- [ ] Display full email body content
+- [ ] Show email headers (from, to, subject, date)
+- [ ] Support HTML email rendering
+- [ ] Add reply and forward buttons
+- [ ] Show attachments list
+- [ ] Add download attachment functionality
+
+
+### Word Processor Save to Cloud
+- [ ] Add "Save to Cloud" button in word processor
+- [ ] Export document as DOCX file to cloud storage
+- [ ] Export document as PDF file to cloud storage
+- [ ] Show success message with cloud file link
+- [ ] Add option to choose file format before saving
+
+### £3 Add-ons Marketplace
+- [x] Create addons database schema (addons and userAddons tables)
+- [x] Add addons tRPC endpoints (getUserAddons, purchase)
+- [x] Implement Stripe checkout for £3 one-time payments
+- [x] Add webhook handling for addon purchases
+- [x] Create marketplace UI page with 4 add-on options
+- [x] Add navigation to marketplace from Dashboard
+- [x] Integrate ownership check in Games page (lock/unlock games)
+- [x] Display locked games with "Unlock for £3" button
+- [x] Redirect locked games to marketplace page
+- [ ] Implement other add-on features (Premium Themes, Extra Storage, AI Credits Boost)

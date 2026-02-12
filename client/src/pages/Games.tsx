@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
-import { ArrowLeft, Trophy } from "lucide-react";
+import { ArrowLeft, Trophy, Lock } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import DashboardLayout from "@/components/DashboardLayout";
 
 const games = [
   { id: "snake", name: "Snake", description: "Classic snake game" },
@@ -27,7 +29,20 @@ const games = [
 ];
 
 export default function Games() {
+  const { data: userAddons, isLoading } = trpc.addons.getUserAddons.useQuery();
+  
+  const hasGamesPack = userAddons?.some((item: any) => 
+    item.addon.name === 'Premium Games Pack'
+  );
+  
+  // First 10 games from the add-ons description
+  const premiumGames = [
+    "snake", "tetris", "2048", "flappy-bird", "pong", 
+    "breakout", "space-invaders", "pacman", "tictactoe", "memory"
+  ];
+  
   return (
+    <DashboardLayout>
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="container py-4">
@@ -47,26 +62,32 @@ export default function Games() {
 
       <div className="container py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {games.map((game) => (
-            <Link key={game.id} href={`/games/${game.id}`}>
-              <Card className="card-hover cursor-pointer h-full">
+          {games.map((game) => {
+            const isPremium = premiumGames.includes(game.id);
+            const isLocked = isPremium && !hasGamesPack;
+            
+            return (
+            <Link key={game.id} href={isLocked ? "/addons" : `/games/${game.id}`}>
+              <Card className={`card-hover cursor-pointer h-full ${isLocked ? 'opacity-75' : ''}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     {game.name}
-                    <Trophy className="h-4 w-4 text-primary" />
+                    {isLocked ? <Lock className="h-4 w-4 text-muted-foreground" /> : <Trophy className="h-4 w-4 text-primary" />}
                   </CardTitle>
                   <CardDescription>{game.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="outline" className="w-full">
-                    Play Now
+                  <Button variant={isLocked ? "secondary" : "outline"} className="w-full">
+                    {isLocked ? "Unlock for £3" : "Play Now"}
                   </Button>
                 </CardContent>
               </Card>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
+    </DashboardLayout>
   );
 }

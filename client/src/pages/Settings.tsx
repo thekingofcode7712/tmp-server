@@ -20,9 +20,14 @@ export default function Settings() {
   const utils = trpc.useUtils();
 
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Profile updated!");
-      utils.auth.me.invalidate();
+      // Force refetch user data
+      await utils.auth.me.invalidate();
+      await utils.auth.me.refetch();
+      // Update local state
+      setEditName(editName);
+      setEditEmail(editEmail);
     },
     onError: (error) => {
       toast.error(error.message);
