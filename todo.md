@@ -20,6 +20,16 @@
 - [x] Implement password protection for shared links
 - [x] Track access/downloads for shared links
 
+### Advanced Cloud Storage Features
+- [x] Add file versioning system with version history tracking
+- [x] Allow restoring previous file versions
+- [x] Display version numbers and modified timestamps
+- [x] Implement file search with filename filtering
+- [x] Add advanced filters (file type, date range, size)
+- [x] Create custom folder organization beyond root
+- [x] Implement drag-and-drop file moving between folders
+- [x] Add folder creation and deletion UI
+
 ### Email Storage Plans Upgrade UI
 - [x] Create email storage plan selection UI in Email Settings
 - [x] Display current plan and usage

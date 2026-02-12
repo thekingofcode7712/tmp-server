@@ -338,6 +338,113 @@ export const appRouter = router({
 
         return { fileUrl: file.fileUrl };
       }),
+
+    getFileVersions: protectedProcedure
+      .input(z.object({ fileId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getFileVersions(input.fileId);
+      }),
+
+    restoreFileVersion: protectedProcedure
+      .input(z.object({ fileId: z.number(), versionNumber: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const versions = await db.getFileVersions(input.fileId);
+        const targetVersion = versions.find(v => v.versionNumber === input.versionNumber);
+        if (!targetVersion) throw new Error("Version not found");
+
+        const currentFile = await db.getFileById(input.fileId);
+        if (!currentFile || currentFile.userId !== ctx.user.id) {
+          throw new Error("File not found or unauthorized");
+        }
+
+        // Create version backup of current file
+        await db.createFileVersion({
+          fileId: input.fileId,
+          versionNumber: currentFile.versionNumber,
+          fileName: currentFile.fileName,
+          fileKey: currentFile.fileKey,
+          fileUrl: currentFile.fileUrl,
+          fileSize: currentFile.fileSize,
+          mimeType: currentFile.mimeType,
+        });
+
+        // Restore from version
+        await db.updateFile(input.fileId, {
+          fileName: targetVersion.fileName,
+          fileKey: targetVersion.fileKey,
+          fileUrl: targetVersion.fileUrl,
+          fileSize: targetVersion.fileSize,
+          mimeType: targetVersion.mimeType,
+          versionNumber: currentFile.versionNumber + 1,
+        });
+
+        return { success: true };
+      }),
+
+    searchFiles: protectedProcedure
+      .input(z.object({
+        searchTerm: z.string(),
+        mimeType: z.string().optional(),
+        minSize: z.number().optional(),
+        maxSize: z.number().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      }))
+      .query(async ({ input, ctx }) => {
+        return await db.searchFiles(ctx.user.id, input.searchTerm, {
+          mimeType: input.mimeType,
+          minSize: input.minSize,
+          maxSize: input.maxSize,
+          startDate: input.startDate,
+          endDate: input.endDate,
+        });
+      }),
+
+    getFolders: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getUserFolders(ctx.user.id);
+      }),
+
+    createFolder: protectedProcedure
+      .input(z.object({
+        folderName: z.string(),
+        parentFolderId: z.number().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const parentPath = input.parentFolderId
+          ? (await db.getUserFolders(ctx.user.id)).find(f => f.id === input.parentFolderId)?.folderPath || '/'
+          : '/';
+        
+        const folderPath = parentPath === '/' 
+          ? `/${input.folderName}`
+          : `${parentPath}/${input.folderName}`;
+
+        await db.createFolder({
+          userId: ctx.user.id,
+          folderName: input.folderName,
+          folderPath,
+          parentFolderId: input.parentFolderId || null,
+        });
+
+        return { success: true };
+      }),
+
+    deleteFolder: protectedProcedure
+      .input(z.object({ folderId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteFolder(input.folderId, ctx.user.id);
+        return { success: true };
+      }),
+
+    moveFile: protectedProcedure
+      .input(z.object({
+        fileId: z.number(),
+        newFolder: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await db.moveFileToFolder(input.fileId, input.newFolder, ctx.user.id);
+        return { success: true };
+      }),
   }),
 
   // Links

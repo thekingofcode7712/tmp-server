@@ -16,7 +16,8 @@ import {
   themes, InsertTheme, userThemes, InsertUserTheme,
   externalEmailCredentials, InsertExternalEmailCredential,
   emailFolders, InsertEmailFolder, emailAttachments, InsertEmailAttachment,
-  emailStoragePlans, InsertEmailStoragePlan, fileShares, InsertFileShare
+  emailStoragePlans, InsertEmailStoragePlan, fileShares, InsertFileShare,
+  fileVersions, InsertFileVersion, folders, InsertFolder
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -196,6 +197,12 @@ export async function deleteFile(fileId: number, userId: number) {
   await db.update(files).set({ isDeleted: true }).where(and(eq(files.id, fileId), eq(files.userId, userId)));
 }
 
+export async function updateFile(fileId: number, updates: Partial<InsertFile>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(files).set(updates).where(eq(files.id, fileId));
+}
+
 export async function getFileById(fileId: number) {
   const db = await getDb();
   if (!db) return null;
@@ -226,6 +233,91 @@ export async function incrementShareAccessCount(shareId: number) {
       lastAccessedAt: new Date()
     })
     .where(eq(fileShares.id, shareId));
+}
+
+export async function createFileVersion(version: InsertFileVersion) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(fileVersions).values(version);
+  return result;
+}
+
+export async function getFileVersions(fileId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(fileVersions)
+    .where(eq(fileVersions.fileId, fileId))
+    .orderBy(desc(fileVersions.versionNumber));
+}
+
+export async function createFolder(folder: InsertFolder) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(folders).values(folder);
+  return result;
+}
+
+export async function getUserFolders(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(folders)
+    .where(eq(folders.userId, userId))
+    .orderBy(folders.folderPath);
+}
+
+export async function deleteFolder(folderId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(folders).where(and(eq(folders.id, folderId), eq(folders.userId, userId)));
+}
+
+export async function moveFileToFolder(fileId: number, newFolder: string, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(files)
+    .set({ folder: newFolder })
+    .where(and(eq(files.id, fileId), eq(files.userId, userId)));
+}
+
+export async function searchFiles(userId: number, searchTerm: string, filters?: {
+  mimeType?: string;
+  minSize?: number;
+  maxSize?: number;
+  startDate?: Date;
+  endDate?: Date;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [eq(files.userId, userId), eq(files.isDeleted, false)];
+  
+  if (searchTerm) {
+    conditions.push(sql`${files.fileName} LIKE ${`%${searchTerm}%`}`);
+  }
+  
+  if (filters?.mimeType) {
+    conditions.push(sql`${files.mimeType} LIKE ${`${filters.mimeType}%`}`);
+  }
+  
+  if (filters?.minSize) {
+    conditions.push(sql`${files.fileSize} >= ${filters.minSize}`);
+  }
+  
+  if (filters?.maxSize) {
+    conditions.push(sql`${files.fileSize} <= ${filters.maxSize}`);
+  }
+  
+  if (filters?.startDate) {
+    conditions.push(sql`${files.createdAt} >= ${filters.startDate}`);
+  }
+  
+  if (filters?.endDate) {
+    conditions.push(sql`${files.createdAt} <= ${filters.endDate}`);
+  }
+  
+  return await db.select().from(files)
+    .where(and(...conditions))
+    .orderBy(desc(files.createdAt));
 }
 
 // ===== LINK OPERATIONS =====

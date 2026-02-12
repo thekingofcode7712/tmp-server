@@ -27,13 +27,48 @@ export default function CloudStorage() {
   const [shareFileId, setShareFileId] = useState<number | null>(null);
   const [shareExpiration, setShareExpiration] = useState<'24h' | '7d' | '30d'>('7d');
   const [sharePassword, setSharePassword] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchActive, setSearchActive] = useState(false);
+  const [filterType, setFilterType] = useState<string>('');
+  const [filterSize, setFilterSize] = useState<string>('');
+  const [newFolderName, setNewFolderName] = useState('');
+  const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
+  const [draggedFileId, setDraggedFileId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
   const { data: files, isLoading } = trpc.storage.getFiles.useQuery(
     { folder: selectedFolder },
-    { enabled: isAuthenticated }
+    { enabled: isAuthenticated && !searchActive }
   );
+
+  const { data: searchResults, isLoading: isSearching } = trpc.storage.searchFiles.useQuery(
+    {
+      searchTerm,
+      mimeType: filterType || undefined,
+      minSize: filterSize === 'small' ? 0 : filterSize === 'medium' ? 1024 * 1024 : filterSize === 'large' ? 10 * 1024 * 1024 : undefined,
+      maxSize: filterSize === 'small' ? 1024 * 1024 : filterSize === 'medium' ? 10 * 1024 * 1024 : undefined,
+    },
+    { enabled: isAuthenticated && searchActive && searchTerm.length > 0 }
+  );
+
+  const { data: folders } = trpc.storage.getFolders.useQuery(undefined, { enabled: isAuthenticated });
+
+  const createFolderMutation = trpc.storage.createFolder.useMutation({
+    onSuccess: () => {
+      toast.success("Folder created!");
+      utils.storage.getFolders.invalidate();
+      setShowNewFolderDialog(false);
+      setNewFolderName('');
+    },
+  });
+
+  const moveFileMutation = trpc.storage.moveFile.useMutation({
+    onSuccess: () => {
+      toast.success("File moved!");
+      utils.storage.getFiles.invalidate();
+    },
+  });
 
   const uploadMutation = trpc.storage.uploadFile.useMutation({
     onMutate: async (variables) => {
@@ -56,6 +91,8 @@ export default function CloudStorage() {
         fileUrl: '', // Placeholder
         fileKey: '',
         isDeleted: false,
+        versionNumber: 1,
+        parentFileId: null,
       };
       
       utils.storage.getFiles.setData(
@@ -281,12 +318,109 @@ export default function CloudStorage() {
           </Card>
         )}
 
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FolderOpen className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">{selectedFolder}</span>
-          </div>
-          <div className="flex items-center gap-2">
+        {/* Search Bar */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Search files..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setSearchActive(e.target.value.length > 0);
+                  }}
+                  className="flex-1"
+                />
+                {searchActive && (
+                  <Button variant="outline" onClick={() => { setSearchTerm(''); setSearchActive(false); }}>
+                    <X className="h-4 w-4 mr-2" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+              {searchActive && (
+                <div className="flex gap-2 flex-wrap">
+                  <Select value={filterType} onValueChange={setFilterType}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="File type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All types</SelectItem>
+                      <SelectItem value="image">Images</SelectItem>
+                      <SelectItem value="video">Videos</SelectItem>
+                      <SelectItem value="application/pdf">PDFs</SelectItem>
+                      <SelectItem value="text">Documents</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterSize} onValueChange={setFilterSize}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="File size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All sizes</SelectItem>
+                      <SelectItem value="small">Small (&lt;1MB)</SelectItem>
+                      <SelectItem value="medium">Medium (1-10MB)</SelectItem>
+                      <SelectItem value="large">Large (&gt;10MB)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Folder Sidebar */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-sm">Folders</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button
+                variant={selectedFolder === '/' ? 'default' : 'ghost'}
+                className="w-full justify-start"
+                onClick={() => setSelectedFolder('/')}
+              >
+                <FolderOpen className="h-4 w-4 mr-2" />
+                All Files
+              </Button>
+              {folders?.map((folder) => (
+                <Button
+                  key={folder.id}
+                  variant={selectedFolder === folder.folderPath ? 'default' : 'ghost'}
+                  className="w-full justify-start"
+                  onClick={() => setSelectedFolder(folder.folderPath)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedFileId) {
+                      moveFileMutation.mutate({ fileId: draggedFileId, newFolder: folder.folderPath });
+                      setDraggedFileId(null);
+                    }
+                  }}
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  {folder.folderName}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowNewFolderDialog(true)}
+              >
+                + New Folder
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="md:col-span-3 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FolderOpen className="h-5 w-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">{selectedFolder}</span>
+              </div>
+              <div className="flex items-center gap-2">
             {selectedFiles.length > 0 && (
               <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -334,13 +468,13 @@ export default function CloudStorage() {
           </Select>
         </div>
 
-        {isLoading ? (
+        {(isLoading || isSearching) ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           </div>
-        ) : files && files.length > 0 ? (
+        ) : (searchActive ? searchResults : files) && (searchActive ? searchResults : files)!.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...files].sort((a, b) => {
+            {[...(searchActive ? searchResults! : files!)].sort((a, b) => {
               switch (sortBy) {
                 case "name-asc":
                   return a.fileName.localeCompare(b.fileName);
@@ -358,7 +492,13 @@ export default function CloudStorage() {
                   return 0;
               }
             }).map((file) => (
-              <Card key={file.id} className={selectedFiles.includes(file.id) ? "ring-2 ring-primary" : ""}>
+              <Card
+                key={file.id}
+                className={selectedFiles.includes(file.id) ? "ring-2 ring-primary" : ""}
+                draggable
+                onDragStart={() => setDraggedFileId(file.id)}
+                onDragEnd={() => setDraggedFileId(null)}
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -484,6 +624,34 @@ export default function CloudStorage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* New Folder Dialog */}
+        <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Folder</DialogTitle>
+              <DialogDescription>
+                Enter a name for your new folder
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <Input
+                placeholder="Folder name"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+              />
+              <Button
+                onClick={() => createFolderMutation.mutate({ folderName: newFolderName })}
+                disabled={!newFolderName || createFolderMutation.isPending}
+                className="w-full"
+              >
+                {createFolderMutation.isPending ? "Creating..." : "Create Folder"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+          </div>
+        </div>
       </div>
     </div>
   );

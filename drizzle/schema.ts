@@ -49,12 +49,48 @@ export const files = mysqlTable("files", {
   mimeType: varchar("mimeType", { length: 100 }),
   folder: varchar("folder", { length: 500 }).default("/").notNull(),
   isDeleted: boolean("isDeleted").default(false).notNull(),
+  versionNumber: int("versionNumber").default(1).notNull(),
+  parentFileId: int("parentFileId"), // For tracking file history
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export type File = typeof files.$inferSelect;
 export type InsertFile = typeof files.$inferInsert;
+
+/**
+ * File versions for version history
+ */
+export const fileVersions = mysqlTable("fileVersions", {
+  id: int("id").autoincrement().primaryKey(),
+  fileId: int("fileId").notNull(), // Current file ID
+  versionNumber: int("versionNumber").notNull(),
+  fileName: varchar("fileName", { length: 500 }).notNull(),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileSize: bigint("fileSize", { mode: "number" }).notNull(),
+  mimeType: varchar("mimeType", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FileVersion = typeof fileVersions.$inferSelect;
+export type InsertFileVersion = typeof fileVersions.$inferInsert;
+
+/**
+ * Custom folders for file organization
+ */
+export const folders = mysqlTable("folders", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  folderName: varchar("folderName", { length: 500 }).notNull(),
+  folderPath: varchar("folderPath", { length: 1000 }).notNull(), // Full path like /parent/child
+  parentFolderId: int("parentFolderId"), // For nested folders
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Folder = typeof folders.$inferSelect;
+export type InsertFolder = typeof folders.$inferInsert;
 
 /**
  * Uploaded links (music, video, app links)

@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE files ADD COLUMN versionNumber INT DEFAULT 1 NOT NULL;\nALTER TABLE files ADD COLUMN parentFileId INT;\n\nCREATE TABLE IF NOT EXISTS fileVersions (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  fileId INT NOT NULL,\n  versionNumber INT NOT NULL,\n  fileName VARCHAR(500) NOT NULL,\n  fileKey VARCHAR(500) NOT NULL,\n  fileUrl TEXT NOT NULL,\n  fileSize BIGINT NOT NULL,\n  mimeType VARCHAR(100),\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS folders (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  folderName VARCHAR(500) NOT NULL,\n  folderPath VARCHAR(1000) NOT NULL,\n  parentFolderId INT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute \nALTER TABLE files ADD COLUMN versionNumber INT DEFAULT 1 NOT NULL;\nALTER TABLE files ADD COLUMN parentFileId INT;\n\nCREATE TABLE IF NOT EXISTS fileVersions (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  fileId INT NOT NULL,\n  versionNumber INT NOT NULL,\n  fileName VARCHAR(500) NOT NULL,\n  fileKey VARCHAR(500) NOT NULL,\n  fileUrl TEXT NOT NULL,\n  fileSize BIGINT NOT NULL,\n  mimeType VARCHAR(100),\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS folders (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  folderName VARCHAR(500) NOT NULL,\n  folderPath VARCHAR(1000) NOT NULL,\n  parentFolderId INT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL\n);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3123
+}
