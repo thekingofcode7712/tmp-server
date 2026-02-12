@@ -14,6 +14,7 @@ import {
   filterRulesCache, InsertFilterRulesCache, documents, InsertDocument,
   addons, InsertAddon, userAddons, InsertUserAddon,
   themes, InsertTheme, userThemes, InsertUserTheme,
+  themeBundles, InsertThemeBundle, userThemeBundles, InsertUserThemeBundle,
   externalEmailCredentials, InsertExternalEmailCredential,
   emailFolders, InsertEmailFolder, emailAttachments, InsertEmailAttachment,
   emailStoragePlans, InsertEmailStoragePlan, fileShares, InsertFileShare,
@@ -1205,4 +1206,57 @@ export async function purchaseAllThemes(userId: number, paymentIntentId: string)
   }
   
   return { success: true, count: allThemes.length };
+}
+
+export async function getAllThemeBundles() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(themeBundles).orderBy(themeBundles.price);
+}
+
+export async function getThemeBundleById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(themeBundles).where(eq(themeBundles.id, id)).limit(1);
+  return result[0] || null;
+}
+
+export async function hasUserPurchasedBundle(userId: number, bundleId: number) {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select().from(userThemeBundles)
+    .where(and(eq(userThemeBundles.userId, userId), eq(userThemeBundles.bundleId, bundleId)))
+    .limit(1);
+  return result.length > 0;
+}
+
+export async function purchaseBundle(userId: number, bundleId: number, paymentIntentId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Get bundle details
+  const bundle = await getThemeBundleById(bundleId);
+  if (!bundle) return null;
+  
+  // Record bundle purchase
+  await db.insert(userThemeBundles).values({
+    userId,
+    bundleId,
+    stripePaymentIntentId: paymentIntentId,
+  });
+  
+  // Grant all themes in the bundle
+  const themeIds = bundle.themeIds as number[];
+  for (const themeId of themeIds) {
+    const alreadyPurchased = await hasUserPurchasedTheme(userId, themeId);
+    if (!alreadyPurchased) {
+      await db.insert(userThemes).values({
+        userId,
+        themeId,
+        stripePaymentIntentId: paymentIntentId,
+      });
+    }
+  }
+  
+  return { success: true, themeCount: themeIds.length };
 }

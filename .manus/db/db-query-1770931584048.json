@@ -1,0 +1,30 @@
+{
+  "query": "SELECT id, name FROM themes WHERE name IN ('Sunset Orange', 'Golden Amber', 'Crimson Red', 'Ocean Blue', 'Mint Green', 'Lavender Purple', 'Ocean Teal', 'Mint Fresh', 'Lavender Dream') ORDER BY name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute SELECT id, name FROM themes WHERE name IN ('Sunset Orange', 'Golden Amber', 'Crimson Red', 'Ocean Blue', 'Mint Green', 'Lavender Purple', 'Ocean Teal', 'Mint Fresh', 'Lavender Dream') ORDER BY name;",
+  "rows": [
+    {
+      "id": "5",
+      "name": "Crimson Red"
+    },
+    {
+      "id": "10",
+      "name": "Lavender Dream"
+    },
+    {
+      "id": "15",
+      "name": "Mint Fresh"
+    },
+    {
+      "id": "6",
+      "name": "Ocean Teal"
+    },
+    {
+      "id": "2",
+      "name": "Sunset Orange"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n5\tCrimson Red\n10\tLavender Dream\n15\tMint Fresh\n6\tOcean Teal\n2\tSunset Orange\n",
+  "stderr": "",
+  "execution_time_ms": 101
+}

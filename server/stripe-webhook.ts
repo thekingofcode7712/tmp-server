@@ -107,6 +107,36 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
   
+  // Check if this is a bundle purchase
+  if (metadata.type === 'bundle_purchase') {
+    const bundleId = parseInt(metadata.bundle_id as string);
+    if (!bundleId) {
+      console.error("[Webhook] No bundle ID in checkout session");
+      return;
+    }
+    
+    const bundle = await db.getThemeBundleById(bundleId);
+    if (!bundle) {
+      console.error("[Webhook] Bundle not found:", bundleId);
+      return;
+    }
+    
+    // Record payment
+    await db.createPayment({
+      userId: userIdNum,
+      stripePaymentIntentId: session.payment_intent as string,
+      amount: bundle.price,
+      currency: 'gbp',
+      status: 'succeeded',
+      description: `${bundle.name} purchase`,
+    });
+    
+    // Grant bundle and all its themes to user
+    await db.purchaseBundle(userIdNum, bundleId, session.payment_intent as string);
+    console.log(`[Webhook] Bundle ${bundleId} (${bundle.name}) granted to user ${userIdNum}`);
+    return;
+  }
+  
   // Check if this is an all themes bundle purchase
   if (metadata.type === 'all_themes_purchase') {
     // Record payment

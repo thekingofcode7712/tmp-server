@@ -9,8 +9,10 @@ import { toast } from 'sonner';
 export function Themes() {
   const { data: allThemes, isLoading: themesLoading } = trpc.themes.getAll.useQuery();
   const { data: userThemes, isLoading: userThemesLoading } = trpc.themes.getUserThemes.useQuery();
+  const { data: bundles, isLoading: bundlesLoading } = trpc.themes.getAllBundles.useQuery();
   const purchaseTheme = trpc.themes.purchaseTheme.useMutation();
   const purchaseAllThemes = trpc.themes.purchaseAllThemes.useMutation();
+  const purchaseBundle = trpc.themes.purchaseBundle.useMutation();
   const setActiveTheme = trpc.user.setActiveTheme.useMutation();
   const { data: user } = trpc.auth.me.useQuery();
 
@@ -29,6 +31,21 @@ export function Themes() {
       const result = await purchaseTheme.mutateAsync({ themeId });
       if (result.checkoutUrl) {
         toast.info(`Redirecting to checkout for ${themeName}...`);
+        window.location.href = result.checkoutUrl;
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to start checkout');
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
+  const handlePurchaseBundle = async (bundleId: number, bundleName: string) => {
+    try {
+      setPurchasing(true);
+      const result = await purchaseBundle.mutateAsync({ bundleId });
+      if (result.checkoutUrl) {
+        toast.info(`Redirecting to checkout for ${bundleName}...`);
         window.location.href = result.checkoutUrl;
       }
     } catch (error: any) {
@@ -119,35 +136,77 @@ export function Themes() {
           )}
         </div>
 
-        {/* Stats & Bundle Offer */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="p-6">
-            <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">Your Themes</div>
-              <div className="text-3xl font-bold">{ownedCount} / {totalCount}</div>
-              <div className="text-sm text-muted-foreground">
-                {ownedCount === totalCount ? 'You own all themes!' : `${totalCount - ownedCount} themes remaining`}
-              </div>
+        {/* Stats */}
+        <Card className="p-6">
+          <div className="space-y-2">
+            <div className="text-sm text-muted-foreground">Your Themes</div>
+            <div className="text-3xl font-bold">{ownedCount} / {totalCount}</div>
+            <div className="text-sm text-muted-foreground">
+              {ownedCount === totalCount ? 'You own all themes!' : `${totalCount - ownedCount} themes remaining`}
             </div>
-          </Card>
+          </div>
+        </Card>
 
-          <Card className="p-6 bg-primary/5 border-primary">
-            <div className="space-y-3">
-              <div className="font-semibold text-lg">All Themes Bundle</div>
-              <div className="text-2xl font-bold">£34.99</div>
-              <div className="text-sm text-muted-foreground">
-                Save £34! Get all {totalCount} themes instead of £{totalCount * 3}
-              </div>
-              <Button 
-                onClick={handlePurchaseAll}
-                disabled={purchasing || ownedCount === totalCount}
-                className="w-full"
-              >
-                {ownedCount === totalCount ? 'Already Own All' : 'Buy All Themes'}
-              </Button>
+        {/* Theme Bundles */}
+        {bundles && bundles.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Theme Bundles</h2>
+            <div className="grid gap-4 md:grid-cols-3">
+              {bundles.map((bundle) => {
+                const themeIds = bundle.themeIds as number[];
+                const bundleThemes = allThemes?.filter(t => themeIds.includes(t.id)) || [];
+                const savingsPercent = Math.round((bundle.savings / (bundle.price + bundle.savings)) * 100);
+                
+                return (
+                  <Card key={bundle.id} className="p-6 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-semibold text-lg">{bundle.name}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{bundle.description}</p>
+                      </div>
+                      
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold">£{(bundle.price / 100).toFixed(2)}</span>
+                        <span className="text-sm text-muted-foreground line-through">
+                          £{((bundle.price + bundle.savings) / 100).toFixed(2)}
+                        </span>
+                      </div>
+                      
+                      <div className="inline-block px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-sm font-medium">
+                        Save {savingsPercent}% (£{(bundle.savings / 100).toFixed(2)})
+                      </div>
+                      
+                      <div className="text-sm text-muted-foreground">
+                        Includes {themeIds.length} themes:
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {bundleThemes.slice(0, 3).map(t => (
+                            <span key={t.id} className="px-2 py-1 bg-background/50 rounded text-xs">
+                              {t.name}
+                            </span>
+                          ))}
+                          {themeIds.length > 3 && (
+                            <span className="px-2 py-1 bg-background/50 rounded text-xs">
+                              +{themeIds.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        onClick={() => handlePurchaseBundle(bundle.id, bundle.name)}
+                        disabled={purchasing}
+                        className="w-full"
+                        size="lg"
+                      >
+                        Purchase Bundle
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
-          </Card>
-        </div>
+          </div>
+        )}
 
         {/* Theme Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

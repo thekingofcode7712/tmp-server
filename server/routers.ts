@@ -2073,6 +2073,56 @@ export const appRouter = router({
 
         return { checkoutUrl: session.url };
       }),
+
+    getAllBundles: publicProcedure.query(async () => {
+      return await db.getAllThemeBundles();
+    }),
+
+    purchaseBundle: protectedProcedure
+      .input(z.object({ bundleId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Check if user already owns this bundle
+        const hasPurchased = await db.hasUserPurchasedBundle(ctx.user.id, input.bundleId);
+        if (hasPurchased) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'You already own this bundle' });
+        }
+
+        const bundle = await db.getThemeBundleById(input.bundleId);
+        if (!bundle) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Bundle not found' });
+        }
+
+        // Create Stripe checkout
+        const stripe = (await import('stripe')).default;
+        const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY!);
+
+        const session = await stripeClient.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'gbp',
+                product_data: {
+                  name: bundle.name,
+                  description: bundle.description || undefined,
+                },
+                unit_amount: bundle.price,
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: `${ctx.req.headers.origin}/themes?success=true`,
+          cancel_url: `${ctx.req.headers.origin}/themes?canceled=true`,
+          client_reference_id: ctx.user.id.toString(),
+          metadata: {
+            bundle_id: input.bundleId.toString(),
+            type: 'bundle_purchase',
+          },
+        });
+
+        return { checkoutUrl: session.url };
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

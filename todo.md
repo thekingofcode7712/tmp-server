@@ -80,14 +80,19 @@
 - [x] Removed non-existent getPresignedUploadUrl endpoint
 - [x] Replaced with direct tRPC upload using uploadFile mutation
 - [x] Updated CloudStorage.tsx to use base64 upload flow
+- [x] URGENT: 404 presigned URL error still persists after fix - investigate remaining references
+- [x] Confirmed upload working after server restart
 
 ### Theme Bundles
-- [ ] Create theme bundle database table
-- [ ] Add "Warm Tones Bundle" (3 themes for £7)
-- [ ] Add "Cool Tones Bundle" (3 themes for £7)
-- [ ] Add "All Themes Bundle" (20+ themes for £25)
-- [ ] Implement bundle purchase flow with Stripe
-- [ ] Show bundle savings percentage on cards
+- [x] Create theme bundle database table
+- [x] Add "Warm Tones Bundle" (3 themes for £7) - Copper Rust, Crimson Red, Sunset Orange
+- [x] Add "Cool Tones Bundle" (3 themes for £7) - Lavender Dream, Mint Fresh, Ocean Teal
+- [x] Add "All Themes Bundle" (23 themes for £25)
+- [x] Implement bundle purchase flow with Stripe
+- [x] Show bundle savings percentage on cards
+- [x] Added getAllBundles and purchaseBundle tRPC procedures
+- [x] Updated Stripe webhook to handle bundle purchases
+- [x] Created seed script for theme bundles
 
 ### Theme Preview & Auto-Switching
 - [ ] Add hover preview showing live colors on theme cards
