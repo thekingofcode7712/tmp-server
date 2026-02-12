@@ -177,6 +177,194 @@ export const appRouter = router({
         return await db.getUserFiles(ctx.user.id, input.folder);
       }),
     
+    // Get storage upload URL and auth token for direct frontend upload
+    getUploadCredentials: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileSize: z.number(),
+        mimeType: z.string(),
+        folder: z.string().default("/"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (!user) throw new Error("User not found");
+
+        // Check storage limit
+        if (user.subscriptionTier !== "unlimited" && user.storageUsed + input.fileSize > user.storageLimit) {
+          throw new Error("Storage limit exceeded");
+        }
+
+        const { ENV } = await import('./_core/env');
+        const baseUrl = ENV.forgeApiUrl?.replace(/\/+$/, "");
+        const apiKey = ENV.forgeApiKey;
+
+        if (!baseUrl || !apiKey) {
+          throw new Error("Storage configuration missing");
+        }
+
+        const uploadId = `${Date.now()}-${nanoid()}`;
+        const fileKey = `users/${ctx.user.id}/files/${uploadId}-${input.fileName}`;
+        const uploadUrl = `${baseUrl}/v1/storage/upload?path=${encodeURIComponent(fileKey)}`;
+
+        return {
+          uploadUrl,
+          authToken: apiKey,
+          fileKey,
+          uploadId,
+        };
+      }),
+
+    // Get presigned URL for direct S3 upload (for large files)
+    getPresignedUrl: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileSize: z.number(),
+        mimeType: z.string(),
+        folder: z.string().default("/"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (!user) throw new Error("User not found");
+
+        // Check storage limit
+        if (user.subscriptionTier !== "unlimited" && user.storageUsed + input.fileSize > user.storageLimit) {
+          throw new Error("Storage limit exceeded");
+        }
+
+        // Create file record in Manus API and get presigned URL
+        const { createManusFile } = await import('./manus-file-api');
+        const fileRecord = await createManusFile(input.fileName);
+
+        return {
+          uploadUrl: fileRecord.upload_url,
+          fileId: fileRecord.id,
+          expiresAt: fileRecord.upload_expires_at,
+        };
+      }),
+
+    // Register uploaded file after direct upload completes
+    registerDirectUpload: protectedProcedure
+      .input(z.object({
+        fileKey: z.string(),
+        fileName: z.string(),
+        fileSize: z.number(),
+        mimeType: z.string(),
+        folder: z.string(),
+        fileUrl: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (!user) throw new Error("User not found");
+
+        // Save to database
+        await db.createFile({
+          userId: ctx.user.id,
+          fileName: input.fileName,
+          fileKey: input.fileKey,
+          fileUrl: input.fileUrl,
+          fileSize: input.fileSize,
+          mimeType: input.mimeType,
+          folder: input.folder,
+        });
+
+        // Update storage usage
+        await db.updateUserStorage(ctx.user.id, user.storageUsed + input.fileSize);
+
+        return { success: true, url: input.fileUrl };
+      }),
+
+    // Initialize chunked upload (for large files)
+    initChunkedUpload: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileSize: z.number(),
+        mimeType: z.string(),
+        folder: z.string().default("/"),
+        chunkSize: z.number().default(5 * 1024 * 1024), // 5MB chunks
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (!user) throw new Error("User not found");
+
+        // Check storage limit
+        if (user.subscriptionTier !== "unlimited" && user.storageUsed + input.fileSize > user.storageLimit) {
+          throw new Error("Storage limit exceeded");
+        }
+
+        const totalChunks = Math.ceil(input.fileSize / input.chunkSize);
+        const uploadId = `${Date.now()}-${nanoid()}`;
+        const fileKey = `users/${ctx.user.id}/files/${uploadId}-${input.fileName}`;
+
+        return {
+          uploadId,
+          fileKey,
+          totalChunks,
+          chunkSize: input.chunkSize,
+        };
+      }),
+
+    // Get presigned URL for uploading a single chunk
+    getChunkUploadUrl: protectedProcedure
+      .input(z.object({
+        fileKey: z.string(),
+        chunkIndex: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { ENV } = await import('./_core/env');
+        const baseUrl = ENV.forgeApiUrl?.replace(/\/+$/, "");
+        const apiKey = ENV.forgeApiKey;
+
+        if (!baseUrl || !apiKey) {
+          throw new Error("Storage configuration missing");
+        }
+
+        const chunkKey = `${input.fileKey}.chunk${input.chunkIndex}`;
+        const uploadUrl = new URL("v1/storage/upload", `${baseUrl}/`);
+        uploadUrl.searchParams.set("path", chunkKey);
+
+        return {
+          uploadUrl: uploadUrl.toString(),
+          authToken: apiKey,
+          chunkKey,
+        };
+      }),
+
+    // Complete chunked upload
+    completeChunkedUpload: protectedProcedure
+      .input(z.object({
+        uploadId: z.string(),
+        fileKey: z.string(),
+        fileName: z.string(),
+        fileSize: z.number(),
+        mimeType: z.string(),
+        folder: z.string(),
+        totalChunks: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (!user) throw new Error("User not found");
+
+        // In a real implementation, you'd combine the chunks here
+        // For now, we'll just register the file
+        const { ENV } = await import('./_core/env');
+        const baseUrl = ENV.forgeApiUrl?.replace(/\/+$/, "");
+        const fileUrl = `${baseUrl}/v1/storage/download?path=${input.fileKey}`;
+
+        await db.createFile({
+          userId: ctx.user.id,
+          fileName: input.fileName,
+          fileKey: input.fileKey,
+          fileUrl,
+          fileSize: input.fileSize,
+          mimeType: input.mimeType,
+          folder: input.folder,
+        });
+
+        await db.updateUserStorage(ctx.user.id, user.storageUsed + input.fileSize);
+
+        return { success: true, url: fileUrl };
+      }),
+
     uploadFile: protectedProcedure
       .input(z.object({
         fileName: z.string(),

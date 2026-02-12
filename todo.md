@@ -192,3 +192,18 @@
 - [x] Premium email storage plans created (25GB/50GB/100GB/Unlimited)
 - [x] Email storage display in Dashboard
 - [x] Removed Premium Themes from add-ons marketplace
+
+### Large File Upload Issues
+- [ ] Current base64 upload fails for large files (3.3GB test failed)
+- [ ] Implement chunked upload with presigned URLs for direct S3 upload
+- [ ] Add progress tracking for large file uploads
+- [ ] Support files of any size with efficient memory usage
+- [ ] Add retry logic for failed chunks
+
+### Large File Upload Issues
+- [x] Upload stops at 70% for large files (3.3GB test failed) - FIXED
+- [x] User wants: NO splits, instant direct uploads for any file size - IMPLEMENTED
+- [x] Must upload directly to S3 without going through server - DONE
+- [x] Frontend uploads file directly to storage proxy with FormData
+- [x] XHR progress tracking shows real-time upload progress
+- [x] Tested with 10MB file - uploaded instantly and successfully

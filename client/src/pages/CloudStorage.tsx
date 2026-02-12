@@ -203,51 +203,81 @@ export default function CloudStorage() {
     return mimeType.startsWith('image/') || mimeType === 'application/pdf' || mimeType.startsWith('video/');
   };
 
+  const getUploadCredsMutation = trpc.storage.getUploadCredentials.useMutation();
+  const registerUploadMutation = trpc.storage.registerDirectUpload.useMutation();
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
     setUploadProgress(0);
-    toast.info("Uploading...");
+    toast.info(`Uploading ${file.name}...`);
 
     try {
-      // Detect MIME type with fallback
       const mimeType = getMimeType(file.name, file.type);
 
-      // Read file as base64
-      const reader = new FileReader();
-      const fileData = await new Promise<string>((resolve, reject) => {
-        reader.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const progress = (e.loaded / e.total) * 50;
-            setUploadProgress(progress);
-          }
-        };
-        reader.onload = () => {
-          const base64 = (reader.result as string).split(',')[1];
-          setUploadProgress(60);
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      
-      setUploadProgress(70);
-      
-      // Upload via tRPC
-      await uploadMutation.mutateAsync({
+      // Step 1: Get upload credentials (instant)
+      const { uploadUrl, authToken, fileKey } = await getUploadCredsMutation.mutateAsync({
         fileName: file.name,
-        fileData,
+        fileSize: file.size,
         mimeType,
         folder: selectedFolder,
       });
-      
+
+      // Step 2: Upload file directly to storage proxy with progress tracking
+      const formData = new FormData();
+      formData.append('file', file, file.name);
+
+      const xhr = new XMLHttpRequest();
+      const uploadPromise = new Promise<string>((resolve, reject) => {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const progress = (e.loaded / e.total) * 90; // 0-90%
+            setUploadProgress(progress);
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response.url);
+            } catch {
+              reject(new Error('Invalid response from storage'));
+            }
+          } else {
+            reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.ontimeout = () => reject(new Error('Upload timed out'));
+
+        xhr.open('POST', uploadUrl);
+        xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+        xhr.send(formData);
+      });
+
+      const fileUrl = await uploadPromise;
+      setUploadProgress(95);
+
+      // Step 3: Register the file in our database
+      await registerUploadMutation.mutateAsync({
+        fileKey,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType,
+        folder: selectedFolder,
+        fileUrl,
+      });
+
       setUploadProgress(100);
-      toast.success("Upload complete!");
+      toast.success(`${file.name} uploaded successfully!`);
       utils.storage.getFiles.invalidate();
       utils.dashboard.stats.invalidate();
     } catch (error: any) {
+      console.error('Upload error:', error);
       toast.error(error.message || "Upload failed");
     } finally {
       setIsUploading(false);
