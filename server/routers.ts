@@ -810,6 +810,21 @@ export const appRouter = router({
       
       return { success: true };
     }),
+
+    reactivateSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+      // Get user's last subscription to reactivate same plan
+      const lastSubscription = await db.getUserSubscription(ctx.user.id);
+      
+      if (!lastSubscription) {
+        throw new Error('No previous subscription found');
+      }
+
+      // Redirect to subscription page to choose plan
+      return { 
+        success: true,
+        checkoutUrl: `${ctx.req.protocol}://${ctx.req.headers.host || ctx.req.headers.origin}/subscription`
+      };
+    }),
   }),
 
   // User Profile

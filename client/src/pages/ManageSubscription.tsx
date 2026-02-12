@@ -26,11 +26,23 @@ export default function ManageSubscription() {
 
   const cancelSubscriptionMutation = trpc.payment.cancelSubscription.useMutation({
     onSuccess: () => {
-      toast.success("Subscription cancelled successfully");
+      toast.success("Subscription cancelled and downgraded to free plan");
       utils.payment.getSubscription.invalidate();
       utils.auth.me.invalidate();
+      utils.dashboard.stats.invalidate();
     },
     onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const reactivateSubscriptionMutation = trpc.payment.reactivateSubscription.useMutation({
+    onSuccess: (data: any) => {
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    },
+    onError: (error: any) => {
       toast.error(error.message);
     },
   });
@@ -110,6 +122,15 @@ export default function ManageSubscription() {
               </div>
             </div>
 
+            {subscription?.status === "cancelled" && user?.subscriptionTier === "free" && (
+              <Button 
+                onClick={() => reactivateSubscriptionMutation.mutate()}
+                className="w-full"
+              >
+                Reactivate Previous Plan
+              </Button>
+            )}
+
             {subscription?.status === "active" && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -122,7 +143,7 @@ export default function ManageSubscription() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will cancel your subscription at the end of the current billing period. You'll still have access until {formatDate(subscription.currentPeriodEnd)}.
+                      This will immediately cancel your subscription and downgrade you to the free plan (5GB storage). You can reactivate anytime.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -131,7 +152,7 @@ export default function ManageSubscription() {
                       onClick={() => cancelSubscriptionMutation.mutate()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      Cancel Subscription
+                      Downgrade to Free
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

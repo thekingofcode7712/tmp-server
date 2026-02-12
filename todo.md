@@ -407,3 +407,14 @@
 - [x] Update all hardcoded domain references in code
 - [ ] Update success/cancel URLs for Stripe checkout
 - [ ] Update any documentation or help text with new domain
+
+### Subscription Reactivation
+- [x] Add reactivate endpoint to create new Stripe subscription
+- [x] Show reactivate button for cancelled subscriptions
+- [x] Store previous plan details for easy reactivation
+- [ ] Test reactivation flow
+
+### Fix Cancellation UI
+- [x] Remove "contact support" message from cancellation flow
+- [x] Ensure cancellation works without any support contact requirement
+- [x] Update confirmation dialog text
