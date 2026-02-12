@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { VpnBandwidthUsage } from "@/components/VpnBandwidthUsage";
 import { VpnSpeedTest } from "@/components/VpnSpeedTest";
+import { ProxyBrowser } from "@/components/ProxyBrowser";
 
 const vpnServers = [
   { id: "us-east", name: "United States (East)", location: "New York", flag: "🇺🇸" },
@@ -238,6 +239,11 @@ export default function VPN() {
                 serverName={vpnServers.find(s => s.id === (selectedServer || 'us-east'))?.name || 'US East'}
               />
             </div>
+
+            <ProxyBrowser 
+              server={selectedServer || 'us-east'}
+              serverName={vpnServers.find(s => s.id === (selectedServer || 'us-east'))?.name || 'US East'}
+            />
 
             <Card className="mt-6">
               <CardHeader>

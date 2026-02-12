@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { NotificationBell } from "@/components/NotificationBell";
+import { AdBlockerActive } from "@/components/AdBlockerActive";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -260,6 +261,7 @@ function DashboardLayoutContent({
           </div>
         )}
         <main className="flex-1 p-4">{children}</main>
+        <AdBlockerActive />
       </SidebarInset>
     </>
   );

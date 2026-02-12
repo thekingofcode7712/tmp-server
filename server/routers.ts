@@ -15,6 +15,8 @@ import { sendEmail as sendEmailSMTP, pollUserEmails } from "./email-service";
 import { storageGet } from "./storage";
 import AdmZip from 'adm-zip';
 import axios from 'axios';
+import { routeThroughProxy, getProxyConfig } from './proxy-service';
+import { fetchFilterList, shouldBlockUrl, isKnownAdDomain, COMMON_AD_DOMAINS } from './ad-blocker-engine';
 
 export const appRouter = router({
   system: router({
@@ -1121,6 +1123,41 @@ export const appRouter = router({
         await db.deleteAdFilterList(input.id);
         return { success: true };
       }),
+
+    fetchAndParseFilterList: protectedProcedure
+      .input(z.object({ url: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (user?.subscriptionTier === 'free') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Filter lists require paid subscription' });
+        }
+        
+        const rules = await fetchFilterList(input.url);
+        return { ruleCount: rules.length };
+      }),
+
+    checkUrl: protectedProcedure
+      .input(z.object({ url: z.string() }))
+      .query(async ({ ctx, input }) => {
+        // Quick check against known ad domains
+        const isKnownAd = isKnownAdDomain(input.url);
+        
+        // Get user's filter lists
+        const filterLists = await db.getAdFilterLists(ctx.user.id);
+        const enabledLists = filterLists.filter(list => list.isEnabled);
+        
+        // For now, return quick check result
+        // In production, you'd fetch and cache filter rules
+        return {
+          shouldBlock: isKnownAd,
+          reason: isKnownAd ? 'Known ad domain' : 'Not blocked',
+          matchedList: isKnownAd ? 'Built-in' : null,
+        };
+      }),
+
+    getBlockedDomains: protectedProcedure.query(async () => {
+      return { domains: COMMON_AD_DOMAINS };
+    }),
   }),
 
   // VPN
@@ -1254,6 +1291,40 @@ export const appRouter = router({
       .input(z.object({ server: z.string().optional() }))
       .query(async ({ ctx, input }) => {
         return await db.getVpnSpeedTests(ctx.user.id, input.server, 10);
+      }),
+
+    proxyRequest: protectedProcedure
+      .input(z.object({
+        server: z.string(),
+        url: z.string(),
+        method: z.enum(['GET', 'POST', 'PUT', 'DELETE']),
+        headers: z.record(z.string(), z.string()).optional(),
+        body: z.any().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (user?.subscriptionTier === 'free') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Proxy requires paid subscription' });
+        }
+        
+        const response = await routeThroughProxy(ctx.user.id, input.server, {
+          url: input.url,
+          method: input.method,
+          headers: input.headers as Record<string, string> | undefined,
+          body: input.body,
+        });
+        
+        return response;
+      }),
+
+    getProxyConfig: protectedProcedure
+      .input(z.object({ server: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (user?.subscriptionTier === 'free') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Proxy requires paid subscription' });
+        }
+        return getProxyConfig(input.server);
       }),
   }),
 });
