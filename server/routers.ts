@@ -976,7 +976,8 @@ export const appRouter = router({
   }),
 
   // User Profile
-  user: router({ updateProfile: protectedProcedure
+  user: router({ 
+    updateProfile: protectedProcedure
       .input(z.object({
         name: z.string().optional(),
         email: z.string().email().optional(),
@@ -986,6 +987,36 @@ export const appRouter = router({
           name: input.name,
           email: input.email,
         });
+        return { success: true };
+      }),
+    
+    getTheme: protectedProcedure.query(async ({ ctx }) => {
+      const user = await db.getUserById(ctx.user.id);
+      return {
+        selectedTheme: user?.selectedTheme || 'default-dark',
+      };
+    }),
+    
+    setTheme: protectedProcedure
+      .input(z.object({
+        themeId: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Check if user has Premium Themes addon
+        const userAddons = await db.getUserAddons(ctx.user.id);
+        const hasPremiumThemes = userAddons.some((item: any) => 
+          item.addon.name === 'Premium Themes'
+        );
+        
+        // Allow default-dark for everyone, require addon for others
+        if (input.themeId !== 'default-dark' && !hasPremiumThemes) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Premium Themes addon required to use custom themes',
+          });
+        }
+        
+        await db.updateUserTheme(ctx.user.id, input.themeId);
         return { success: true };
       }),
   }),

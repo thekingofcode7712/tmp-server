@@ -777,3 +777,17 @@
 - [x] Add reply/forward/delete actions to email reader
 - [x] Improve Settings UI with better tab design, spacing, and icons
 - [x] Add visual hierarchy and section dividers to Settings tabs
+
+### Current Priority - Round 2 User Requested Features
+- [x] Create theme presets (5-10 color schemes) for Premium Themes add-on
+- [x] Add theme selection UI in Settings/Customization tab
+- [x] Apply theme changes dynamically to CSS variables
+- [x] Restrict theme selection to users who purchased Premium Themes add-on
+- [x] Add file preview functionality for images in Cloud Storage
+- [x] Add file preview functionality for videos in Cloud Storage
+- [x] Add file preview functionality for PDFs in Cloud Storage
+- [x] Create preview dialog/modal component
+- [x] Add real-time toast notifications for new emails
+- [x] Add storage warning notifications (when approaching limit)
+- [x] Add subscription update notifications
+- [x] Create notification preferences in Settings

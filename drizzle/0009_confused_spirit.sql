@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `selectedTheme` varchar(50) DEFAULT 'default-dark';

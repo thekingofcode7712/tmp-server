@@ -4,6 +4,8 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useApplyTheme } from "./hooks/useApplyTheme";
+import { useStorageWarnings } from "./hooks/useStorageWarnings";
 import Dashboard from "./pages/Dashboard";
 import CloudStorage from "./pages/CloudStorage";
 import VideoDownloader from "./pages/VideoDownloader";
@@ -30,6 +32,9 @@ import ServerStatus from "./pages/ServerStatus";
 import Addons from "./pages/Addons";
 
 function Router() {
+  useApplyTheme();
+  useStorageWarnings();
+  
   return (
     <Switch>
       <Route path={"/"} component={Dashboard} />
