@@ -5,8 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { ArrowLeft, Mail, Send, Trash2, RefreshCw, Search, Filter } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Mail, Send, Trash2, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -17,8 +16,6 @@ export default function Email() {
   const [to, setTo] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<'all' | 'read' | 'unread'>('all');
   const utils = trpc.useUtils();
 
   const { data: account } = trpc.email.getAccount.useQuery();
@@ -139,63 +136,19 @@ export default function Email() {
         </div>
       </header>
 
-      <div className="container py-8">
-        {/* Search and Filter Bar */}
-        <div className="flex gap-4 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by sender, subject, or content..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
-            <SelectTrigger className="w-[180px]">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <SelectValue />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Emails</SelectItem>
-              <SelectItem value="unread">Unread Only</SelectItem>
-              <SelectItem value="read">Read Only</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <Tabs defaultValue="inbox" className="w-full">
+      <div className="container py-8 max-w-6xl">
+        <Tabs defaultValue="inbox">
           <TabsList>
             <TabsTrigger value="inbox">Inbox ({inbox?.length || 0})</TabsTrigger>
             <TabsTrigger value="sent">Sent ({sent?.length || 0})</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="inbox">
             <Card>
               <CardContent className="pt-6">
                 {inbox && inbox.length > 0 ? (
                   <div className="space-y-2">
-                    {inbox
-                      .filter((email) => {
-                        // Apply read/unread filter
-                        if (filterStatus === 'read' && !email.isRead) return false;
-                        if (filterStatus === 'unread' && email.isRead) return false;
-                        
-                        // Apply search filter
-                        if (searchQuery) {
-                          const query = searchQuery.toLowerCase();
-                          return (
-                            email.fromAddress?.toLowerCase().includes(query) ||
-                            email.subject?.toLowerCase().includes(query) ||
-                            email.body?.toLowerCase().includes(query)
-                          );
-                        }
-                        
-                        return true;
-                      })
-                      .map((email) => (
+                    {inbox.map((email) => (
                       <div
                         key={email.id}
                         className={`p-4 rounded border border-border cursor-pointer hover:bg-accent/50 transition-colors ${!email.isRead ? "bg-muted" : ""}`}
@@ -246,21 +199,7 @@ export default function Email() {
               <CardContent className="pt-6">
                 {sent && sent.length > 0 ? (
                   <div className="space-y-2">
-                    {sent
-                      .filter((email) => {
-                        // Sent emails don't have read/unread status, so only apply search
-                        if (searchQuery) {
-                          const query = searchQuery.toLowerCase();
-                          return (
-                            email.toAddress?.toLowerCase().includes(query) ||
-                            email.subject?.toLowerCase().includes(query) ||
-                            email.body?.toLowerCase().includes(query)
-                          );
-                        }
-                        
-                        return true;
-                      })
-                      .map((email) => (
+                    {sent.map((email) => (
                       <div key={email.id} className="p-4 rounded border border-border">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">

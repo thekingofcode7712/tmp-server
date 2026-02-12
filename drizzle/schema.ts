@@ -25,8 +25,6 @@ export const users = mysqlTable("users", {
   customLogo: text("customLogo"),
   customColors: json("customColors"),
   customTheme: varchar("customTheme", { length: 50 }),
-  selectedTheme: varchar("selectedTheme", { length: 50 }).default("default-dark"),
-  themeMode: mysqlEnum("themeMode", ["light", "dark"]).default("dark"),
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

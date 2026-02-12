@@ -1,1 +1,0 @@
-ALTER TABLE `users` ADD `themeMode` enum('light','dark') DEFAULT 'dark';

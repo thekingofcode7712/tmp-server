@@ -4,10 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
-import { ArrowLeft, User, CreditCard, Palette, Bell, Settings as SettingsIcon, Lock, Sun, Moon } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { THEMES } from "@/lib/themes";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, User, CreditCard, Palette, Bell, Settings as SettingsIcon } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,33 +15,6 @@ export default function Settings() {
   const { user } = useAuth();
   const [customLogo, setCustomLogo] = useState("");
   const [customTheme, setCustomTheme] = useState("");
-  
-  const { data: userAddons } = trpc.addons.getUserAddons.useQuery();
-  const { data: userTheme } = trpc.user.getTheme.useQuery();
-  const setThemeMutation = trpc.user.setTheme.useMutation({
-    onSuccess: () => {
-      toast.success("Theme updated!");
-      // Reload page to apply theme
-      window.location.reload();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-  
-  const hasPremiumThemes = userAddons?.some((item: any) => 
-    item.addon.name === 'Premium Themes'
-  );
-  
-  const setThemeModeMutation = trpc.user.setThemeMode.useMutation({
-    onSuccess: () => {
-      toast.success("Theme mode updated!");
-      window.location.reload();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
   const [editName, setEditName] = useState(user?.name || "");
   const [editEmail, setEditEmail] = useState(user?.email || "");
   const utils = trpc.useUtils();
@@ -227,105 +197,36 @@ export default function Settings() {
                     : "Purchase customization feature for £19.99"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-8">
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Appearance</h3>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      {userTheme?.themeMode === 'dark' ? (
-                        <Moon className="h-5 w-5 text-primary" />
-                      ) : (
-                        <Sun className="h-5 w-5 text-primary" />
-                      )}
-                      <div>
-                        <Label className="text-sm font-medium">Theme Mode</Label>
-                        <p className="text-xs text-muted-foreground">
-                          {userTheme?.themeMode === 'dark' ? 'Dark mode' : 'Light mode'}
-                        </p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={userTheme?.themeMode === 'dark'}
-                      onCheckedChange={(checked) => {
-                        setThemeModeMutation.mutate({ mode: checked ? 'dark' : 'light' });
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                <div className="border-t pt-6 space-y-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Color Theme</h3>
-                  <div className="space-y-4">
+              <CardContent className="space-y-6">
+                {user?.hasCustomization ? (
+                  <>
                     <div>
-                      <Label className="text-sm font-medium">Color Theme</Label>
-                      <Select 
-                        value={userTheme?.selectedTheme || 'default-dark'}
-                        onValueChange={(value) => setThemeMutation.mutate({ themeId: value })}
-                      >
-                        <SelectTrigger className="mt-1.5">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {THEMES.filter(t => t.mode === (userTheme?.themeMode || 'dark')).map((theme) => {
-                            const isLocked = !theme.id.startsWith('default-') && !hasPremiumThemes;
-                            return (
-                              <SelectItem 
-                                key={theme.id} 
-                                value={theme.id}
-                                disabled={isLocked}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {isLocked && <Lock className="h-3 w-3" />}
-                                  <span>{theme.name}</span>
-                                </div>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                      {!hasPremiumThemes && (
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Purchase Premium Themes add-on for £3 to unlock all themes
-                        </p>
-                      )}
+                      <Label>Custom Logo URL</Label>
+                      <Input
+                        placeholder="https://example.com/logo.png"
+                        value={customLogo}
+                        onChange={(e) => setCustomLogo(e.target.value)}
+                      />
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      {THEMES.filter(t => t.mode === (userTheme?.themeMode || 'dark')).map((theme) => {
-                        const isLocked = !theme.id.startsWith('default-') && !hasPremiumThemes;
-                        const isSelected = userTheme?.selectedTheme === theme.id;
-                        return (
-                          <div
-                            key={theme.id}
-                            className={`p-3 rounded-lg border-2 transition-all ${
-                              isSelected ? 'border-primary' : 'border-border'
-                            } ${isLocked ? 'opacity-50' : 'cursor-pointer hover:border-primary/50'}`}
-                            onClick={() => !isLocked && setThemeMutation.mutate({ themeId: theme.id })}
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-medium text-sm">{theme.name}</span>
-                              {isLocked && <Lock className="h-3 w-3" />}
-                            </div>
-                            <p className="text-xs text-muted-foreground">{theme.description}</p>
-                            <div className="flex gap-1 mt-2">
-                              <div className="w-4 h-4 rounded" style={{ backgroundColor: `hsl(${theme.colors.primary})` }} />
-                              <div className="w-4 h-4 rounded" style={{ backgroundColor: `hsl(${theme.colors.accent})` }} />
-                              <div className="w-4 h-4 rounded" style={{ backgroundColor: `hsl(${theme.colors.background})` }} />
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <div>
+                      <Label>Custom Theme</Label>
+                      <Input
+                        placeholder="dark, light, or custom"
+                        value={customTheme}
+                        onChange={(e) => setCustomTheme(e.target.value)}
+                      />
                     </div>
-                  </div>
-                </div>
-                
-                {!hasPremiumThemes && (
-                  <div className="border-t pt-6">
-                    <Link href="/addons">
-                      <Button className="w-full">
-                        <Palette className="h-4 w-4 mr-2" />
-                        Unlock Premium Themes - £3
-                      </Button>
+                    <Button onClick={handleSaveCustomization} className="w-full">
+                      Save Customization
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">
+                      Unlock customization features to personalize your TMP Server
+                    </p>
+                    <Link href="/subscription">
+                      <Button>Purchase Customization - £19.99</Button>
                     </Link>
                   </div>
                 )}

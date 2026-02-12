@@ -143,18 +143,6 @@ export async function updateUserCustomization(userId: number, customization: { h
   await db.update(users).set(customization).where(eq(users.id, userId));
 }
 
-export async function updateUserTheme(userId: number, themeId: string) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(users).set({ selectedTheme: themeId }).where(eq(users.id, userId));
-}
-
-export async function updateUserThemeMode(userId: number, mode: 'light' | 'dark') {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(users).set({ themeMode: mode }).where(eq(users.id, userId));
-}
-
 export async function updateUserProfile(userId: number, profile: { name?: string, email?: string }) {
   const db = await getDb();
   if (!db) return;

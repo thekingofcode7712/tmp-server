@@ -4,12 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { ArrowLeft, Upload, Trash2, Download, FolderOpen, Eye } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowLeft, Upload, Trash2, Download, FolderOpen } from "lucide-react";
 import { useState, useRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { notifyFileUploaded } from "@/lib/notifications";
 import { getMimeType } from "@/lib/mimeTypes";
 
 export default function CloudStorage() {
@@ -17,7 +15,6 @@ export default function CloudStorage() {
   const [selectedFolder, setSelectedFolder] = useState("/");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [previewFile, setPreviewFile] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
@@ -27,10 +24,8 @@ export default function CloudStorage() {
   );
 
   const uploadMutation = trpc.storage.uploadFile.useMutation({
-    onSuccess: (data, variables) => {
-      // Calculate file size from base64 data
-      const fileSize = Math.ceil((variables.fileData.length * 3) / 4);
-      notifyFileUploaded(variables.fileName, fileSize);
+    onSuccess: () => {
+      toast.success("File uploaded successfully");
       utils.storage.getFiles.invalidate();
       utils.dashboard.stats.invalidate();
       setIsUploading(false);
@@ -213,17 +208,6 @@ export default function CloudStorage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex gap-2">
-                  {(file.mimeType?.startsWith('image/') || file.mimeType?.startsWith('video/') || file.mimeType === 'application/pdf') && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setPreviewFile(file)}
-                      className="flex-1"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Preview
-                    </Button>
-                  )}
                   <Button variant="outline" size="sm" asChild className="flex-1">
                     <a href={file.fileUrl} target="_blank" rel="noopener noreferrer">
                       <Download className="h-4 w-4 mr-2" />
@@ -251,63 +235,6 @@ export default function CloudStorage() {
           </Card>
         )}
       </div>
-      
-      {/* File Preview Dialog */}
-      <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          {previewFile && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{previewFile.fileName}</DialogTitle>
-              </DialogHeader>
-              <div className="mt-4">
-                {previewFile.mimeType?.startsWith('image/') && (
-                  <img 
-                    src={previewFile.fileUrl} 
-                    alt={previewFile.fileName}
-                    className="w-full h-auto rounded"
-                  />
-                )}
-                {previewFile.mimeType?.startsWith('video/') && (
-                  <video 
-                    src={previewFile.fileUrl} 
-                    controls
-                    className="w-full rounded"
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                )}
-                {previewFile.mimeType === 'application/pdf' && (
-                  <iframe 
-                    src={previewFile.fileUrl}
-                    className="w-full h-[70vh] rounded"
-                    title={previewFile.fileName}
-                  />
-                )}
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button variant="outline" asChild className="flex-1">
-                  <a href={previewFile.fileUrl} target="_blank" rel="noopener noreferrer">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </a>
-                </Button>
-                <Button 
-                  variant="destructive"
-                  onClick={() => {
-                    deleteMutation.mutate({ fileId: previewFile.id });
-                    setPreviewFile(null);
-                  }}
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
