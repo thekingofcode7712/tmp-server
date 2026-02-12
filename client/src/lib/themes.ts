@@ -2,6 +2,7 @@ export interface Theme {
   id: string;
   name: string;
   description: string;
+  mode: 'light' | 'dark';
   colors: {
     background: string;
     foreground: string;
@@ -27,9 +28,37 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   {
+    id: 'default-light',
+    name: 'Default Light',
+    description: 'Clean light theme with blue accents',
+    mode: 'light',
+    colors: {
+      background: '0 0% 100%',
+      foreground: '0 0% 10%',
+      card: '0 0% 98%',
+      cardForeground: '0 0% 10%',
+      popover: '0 0% 98%',
+      popoverForeground: '0 0% 10%',
+      primary: '217 91% 60%',
+      primaryForeground: '0 0% 100%',
+      secondary: '0 0% 95%',
+      secondaryForeground: '0 0% 10%',
+      muted: '0 0% 95%',
+      mutedForeground: '0 0% 45%',
+      accent: '0 0% 95%',
+      accentForeground: '0 0% 10%',
+      destructive: '0 84% 60%',
+      destructiveForeground: '0 0% 100%',
+      border: '0 0% 90%',
+      input: '0 0% 90%',
+      ring: '217 91% 60%',
+    },
+  },
+  {
     id: 'default-dark',
     name: 'Default Dark',
     description: 'Classic dark theme with blue accents',
+    mode: 'dark',
     colors: {
       background: '0 0% 8%',
       foreground: '0 0% 98%',
@@ -56,6 +85,7 @@ export const THEMES: Theme[] = [
     id: 'ocean-blue',
     name: 'Ocean Blue',
     description: 'Deep ocean blues with teal accents',
+    mode: 'dark',
     colors: {
       background: '210 50% 10%',
       foreground: '180 100% 95%',
@@ -82,6 +112,7 @@ export const THEMES: Theme[] = [
     id: 'forest-green',
     name: 'Forest Green',
     description: 'Natural greens inspired by the forest',
+    mode: 'dark',
     colors: {
       background: '140 30% 8%',
       foreground: '120 20% 95%',
@@ -108,6 +139,7 @@ export const THEMES: Theme[] = [
     id: 'sunset-orange',
     name: 'Sunset Orange',
     description: 'Warm sunset colors with orange and pink',
+    mode: 'dark',
     colors: {
       background: '20 30% 10%',
       foreground: '30 100% 95%',
@@ -134,6 +166,7 @@ export const THEMES: Theme[] = [
     id: 'purple-haze',
     name: 'Purple Haze',
     description: 'Mystical purples with violet accents',
+    mode: 'dark',
     colors: {
       background: '270 30% 10%',
       foreground: '280 20% 95%',
@@ -160,6 +193,7 @@ export const THEMES: Theme[] = [
     id: 'crimson-red',
     name: 'Crimson Red',
     description: 'Bold reds with dark crimson tones',
+    mode: 'dark',
     colors: {
       background: '0 30% 10%',
       foreground: '0 20% 95%',
@@ -186,6 +220,7 @@ export const THEMES: Theme[] = [
     id: 'midnight-blue',
     name: 'Midnight Blue',
     description: 'Deep midnight blues with navy accents',
+    mode: 'dark',
     colors: {
       background: '220 40% 8%',
       foreground: '220 20% 95%',
@@ -212,6 +247,7 @@ export const THEMES: Theme[] = [
     id: 'slate-gray',
     name: 'Slate Gray',
     description: 'Professional slate grays with minimal color',
+    mode: 'dark',
     colors: {
       background: '215 15% 10%',
       foreground: '215 10% 95%',

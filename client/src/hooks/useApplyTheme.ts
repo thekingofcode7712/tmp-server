@@ -6,9 +6,17 @@ export function useApplyTheme() {
   const { data: userTheme } = trpc.user.getTheme.useQuery();
 
   useEffect(() => {
-    if (!userTheme?.selectedTheme) return;
+    if (!userTheme) return;
 
-    const theme = THEMES.find(t => t.id === userTheme.selectedTheme);
+    const mode = userTheme.themeMode || 'dark';
+    const themeId = userTheme.selectedTheme || 'default-dark';
+    
+    // Find theme matching both ID and mode, or fallback to default for that mode
+    let theme = THEMES.find(t => t.id === themeId && t.mode === mode);
+    if (!theme) {
+      // Fallback to default theme for the selected mode
+      theme = THEMES.find(t => t.id === `default-${mode}`);
+    }
     if (!theme) return;
 
     // Apply theme colors to CSS variables
@@ -18,5 +26,5 @@ export function useApplyTheme() {
       const cssVar = key.replace(/([A-Z])/g, '-$1').toLowerCase();
       root.style.setProperty(`--${cssVar}`, value);
     });
-  }, [userTheme?.selectedTheme]);
+  }, [userTheme?.selectedTheme, userTheme?.themeMode]);
 }

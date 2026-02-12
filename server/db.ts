@@ -149,6 +149,12 @@ export async function updateUserTheme(userId: number, themeId: string) {
   await db.update(users).set({ selectedTheme: themeId }).where(eq(users.id, userId));
 }
 
+export async function updateUserThemeMode(userId: number, mode: 'light' | 'dark') {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ themeMode: mode }).where(eq(users.id, userId));
+}
+
 export async function updateUserProfile(userId: number, profile: { name?: string, email?: string }) {
   const db = await getDb();
   if (!db) return;

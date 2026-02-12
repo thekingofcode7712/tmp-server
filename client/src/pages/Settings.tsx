@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
-import { ArrowLeft, User, CreditCard, Palette, Bell, Settings as SettingsIcon, Lock } from "lucide-react";
+import { ArrowLeft, User, CreditCard, Palette, Bell, Settings as SettingsIcon, Lock, Sun, Moon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { THEMES } from "@/lib/themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -34,6 +35,16 @@ export default function Settings() {
   const hasPremiumThemes = userAddons?.some((item: any) => 
     item.addon.name === 'Premium Themes'
   );
+  
+  const setThemeModeMutation = trpc.user.setThemeMode.useMutation({
+    onSuccess: () => {
+      toast.success("Theme mode updated!");
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
   const [editName, setEditName] = useState(user?.name || "");
   const [editEmail, setEditEmail] = useState(user?.email || "");
   const utils = trpc.useUtils();
@@ -218,7 +229,32 @@ export default function Settings() {
               </CardHeader>
               <CardContent className="space-y-8">
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Theme Selection</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Appearance</h3>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {userTheme?.themeMode === 'dark' ? (
+                        <Moon className="h-5 w-5 text-primary" />
+                      ) : (
+                        <Sun className="h-5 w-5 text-primary" />
+                      )}
+                      <div>
+                        <Label className="text-sm font-medium">Theme Mode</Label>
+                        <p className="text-xs text-muted-foreground">
+                          {userTheme?.themeMode === 'dark' ? 'Dark mode' : 'Light mode'}
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={userTheme?.themeMode === 'dark'}
+                      onCheckedChange={(checked) => {
+                        setThemeModeMutation.mutate({ mode: checked ? 'dark' : 'light' });
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                <div className="border-t pt-6 space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Color Theme</h3>
                   <div className="space-y-4">
                     <div>
                       <Label className="text-sm font-medium">Color Theme</Label>
@@ -230,8 +266,8 @@ export default function Settings() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {THEMES.map((theme) => {
-                            const isLocked = theme.id !== 'default-dark' && !hasPremiumThemes;
+                          {THEMES.filter(t => t.mode === (userTheme?.themeMode || 'dark')).map((theme) => {
+                            const isLocked = !theme.id.startsWith('default-') && !hasPremiumThemes;
                             return (
                               <SelectItem 
                                 key={theme.id} 
@@ -255,8 +291,8 @@ export default function Settings() {
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
-                      {THEMES.map((theme) => {
-                        const isLocked = theme.id !== 'default-dark' && !hasPremiumThemes;
+                      {THEMES.filter(t => t.mode === (userTheme?.themeMode || 'dark')).map((theme) => {
+                        const isLocked = !theme.id.startsWith('default-') && !hasPremiumThemes;
                         const isSelected = userTheme?.selectedTheme === theme.id;
                         return (
                           <div

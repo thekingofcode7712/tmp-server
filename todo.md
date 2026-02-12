@@ -791,3 +791,13 @@
 - [x] Add storage warning notifications (when approaching limit)
 - [x] Add subscription update notifications
 - [x] Create notification preferences in Settings
+
+### Current Priority - Round 3 User Requested Features
+- [x] Add light/dark mode toggle in Settings
+- [x] Create light theme color scheme
+- [x] Update theme context to support mode switching
+- [x] Persist user's mode preference in database
+- [x] Add email search functionality by sender, subject, content
+- [x] Add email filter dropdown (All/Read/Unread)
+- [x] Implement search logic in frontend
+- [x] Add UI for search bar and filters in Email page

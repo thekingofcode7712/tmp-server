@@ -994,8 +994,18 @@ export const appRouter = router({
       const user = await db.getUserById(ctx.user.id);
       return {
         selectedTheme: user?.selectedTheme || 'default-dark',
+        themeMode: user?.themeMode || 'dark',
       };
     }),
+    
+    setThemeMode: protectedProcedure
+      .input(z.object({
+        mode: z.enum(['light', 'dark']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateUserThemeMode(ctx.user.id, input.mode);
+        return { success: true };
+      }),
     
     setTheme: protectedProcedure
       .input(z.object({
