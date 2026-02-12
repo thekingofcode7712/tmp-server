@@ -825,6 +825,68 @@ export const appRouter = router({
         checkoutUrl: `${ctx.req.protocol}://${ctx.req.headers.host || ctx.req.headers.origin}/subscription`
       };
     }),
+
+    pauseSubscription: protectedProcedure
+      .input(z.object({ months: z.number().min(1).max(3) }))
+      .mutation(async ({ ctx, input }) => {
+        const subscription = await db.getUserSubscription(ctx.user.id);
+        if (!subscription || !subscription.stripeSubscriptionId) {
+          throw new Error('No active subscription found');
+        }
+
+        if (subscription.status !== 'active') {
+          throw new Error('Can only pause active subscriptions');
+        }
+
+        const Stripe = (await import('stripe')).default;
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+          apiVersion: '2026-01-28.clover',
+        });
+
+        // Pause the Stripe subscription
+        await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+          pause_collection: {
+            behavior: 'void',
+          },
+        });
+
+        // Calculate pause end date
+        const pausedUntil = new Date();
+        pausedUntil.setMonth(pausedUntil.getMonth() + input.months);
+
+        // Update subscription status in database
+        await db.updateSubscriptionStatus(subscription.id, 'paused');
+        await db.updateSubscriptionPausedUntil(subscription.id, pausedUntil);
+
+        return { success: true, pausedUntil };
+      }),
+
+    resumeSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+      const subscription = await db.getUserSubscription(ctx.user.id);
+      if (!subscription || !subscription.stripeSubscriptionId) {
+        throw new Error('No subscription found');
+      }
+
+      if (subscription.status !== 'paused') {
+        throw new Error('Subscription is not paused');
+      }
+
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+        apiVersion: '2026-01-28.clover',
+      });
+
+      // Resume the Stripe subscription
+      await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+        pause_collection: null as any,
+      });
+
+      // Update subscription status in database
+      await db.updateSubscriptionStatus(subscription.id, 'active');
+      await db.updateSubscriptionPausedUntil(subscription.id, null);
+
+      return { success: true };
+    }),
   }),
 
   // User Profile

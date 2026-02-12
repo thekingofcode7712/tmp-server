@@ -47,6 +47,28 @@ export default function ManageSubscription() {
     },
   });
 
+  const pauseSubscriptionMutation = trpc.payment.pauseSubscription.useMutation({
+    onSuccess: (data: any) => {
+      toast.success(`Subscription paused until ${formatDate(data.pausedUntil)}`);
+      utils.payment.getSubscription.invalidate();
+      utils.auth.me.invalidate();
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const resumeSubscriptionMutation = trpc.payment.resumeSubscription.useMutation({
+    onSuccess: () => {
+      toast.success("Subscription resumed successfully");
+      utils.payment.getSubscription.invalidate();
+      utils.auth.me.invalidate();
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
   const formatDate = (date: Date | null) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleDateString("en-GB", {
@@ -131,32 +153,63 @@ export default function ManageSubscription() {
               </Button>
             )}
 
+            {subscription?.status === "paused" && (
+              <Button 
+                onClick={() => resumeSubscriptionMutation.mutate()}
+                className="w-full"
+              >
+                Resume Subscription
+              </Button>
+            )}
+
             {subscription?.status === "active" && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-full">
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel Subscription
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => pauseSubscriptionMutation.mutate({ months: 1 })}
+                  >
+                    Pause 1 Month
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will immediately cancel your subscription and downgrade you to the free plan (5GB storage). You can reactivate anytime.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => cancelSubscriptionMutation.mutate()}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Downgrade to Free
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                  <Button 
+                    variant="outline"
+                    onClick={() => pauseSubscriptionMutation.mutate({ months: 2 })}
+                  >
+                    Pause 2 Months
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => pauseSubscriptionMutation.mutate({ months: 3 })}
+                  >
+                    Pause 3 Months
+                  </Button>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="w-full">
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel Subscription
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will immediately cancel your subscription and downgrade you to the free plan (5GB storage). You can reactivate anytime.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => cancelSubscriptionMutation.mutate()}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Downgrade to Free
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             )}
           </CardContent>
         </Card>

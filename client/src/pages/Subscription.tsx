@@ -23,6 +23,8 @@ export default function Subscription() {
   const { user } = useAuth();
   const [customAmount, setCustomAmount] = useState<string>("");
 
+  const utils = trpc.useUtils();
+
   const createCheckoutMutation = trpc.payment.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
@@ -35,9 +37,27 @@ export default function Subscription() {
     },
   });
 
+  const cancelSubscriptionMutation = trpc.payment.cancelSubscription.useMutation({
+    onSuccess: () => {
+      toast.success("Downgraded to free plan successfully!");
+      utils.auth.me.invalidate();
+      utils.payment.getSubscription.invalidate();
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
   const handleUpgrade = (planId: string) => {
     if (planId === "free") {
-      toast.info("Contact support to downgrade to free plan");
+      // Downgrade to free by cancelling subscription
+      if (user?.subscriptionTier !== "free") {
+        if (confirm("Are you sure you want to downgrade to the free plan? This will cancel your subscription immediately.")) {
+          cancelSubscriptionMutation.mutate();
+        }
+      } else {
+        toast.info("You are already on the free plan");
+      }
       return;
     }
 

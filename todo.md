@@ -418,3 +418,20 @@
 - [x] Remove "contact support" message from cancellation flow
 - [x] Ensure cancellation works without any support contact requirement
 - [x] Update confirmation dialog text
+
+### Subscription Pause Feature
+- [x] Add pausedUntil field to subscriptions table
+- [x] Add pause subscription endpoint with duration (1-3 months)
+- [x] Pause Stripe subscription billing
+- [x] Add resume subscription endpoint
+- [x] Create pause UI with duration selector (1, 2, or 3 months)
+- [x] Show paused status in subscription management
+- [x] Maintain user data and settings during pause
+- [ ] Auto-resume subscription after pause period
+- [ ] Test complete pause and resume flow
+
+### Fix Subscription Page Downgrade
+- [x] Remove "Contact support to downgrade to free plan" message from subscription page
+- [x] Make "Downgrade" button on Free plan card work properly
+- [x] Connect downgrade button to cancelSubscription mutation
+- [ ] Test downgrade from subscription page

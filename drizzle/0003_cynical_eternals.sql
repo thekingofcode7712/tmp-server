@@ -1,0 +1,2 @@
+ALTER TABLE `subscriptions` MODIFY COLUMN `status` enum('active','cancelled','expired','pending','paused') NOT NULL DEFAULT 'pending';--> statement-breakpoint
+ALTER TABLE `subscriptions` ADD `pausedUntil` timestamp;

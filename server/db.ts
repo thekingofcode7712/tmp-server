@@ -354,6 +354,12 @@ export async function updateSubscriptionStatus(subscriptionId: number, status: s
   await db.update(subscriptions).set({ status: status as any }).where(eq(subscriptions.id, subscriptionId));
 }
 
+export async function updateSubscriptionPausedUntil(subscriptionId: number, pausedUntil: Date | null) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(subscriptions).set({ pausedUntil }).where(eq(subscriptions.id, subscriptionId));
+}
+
 export async function createPayment(payment: InsertPayment) {
   const db = await getDb();
   if (!db) return null;
