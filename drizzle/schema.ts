@@ -296,3 +296,59 @@ export const notifications = mysqlTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+
+/**
+ * Ad blocker settings and statistics
+ */
+export const adBlockerSettings = mysqlTable("adBlockerSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  enabled: boolean("enabled").default(false).notNull(),
+  blockAds: boolean("blockAds").default(true).notNull(),
+  blockTrackers: boolean("blockTrackers").default(true).notNull(),
+  blockMalware: boolean("blockMalware").default(true).notNull(),
+  dnsBlocking: boolean("dnsBlocking").default(true).notNull(),
+  customFilters: json("customFilters"), // Array of custom filter rules
+  whitelist: json("whitelist"), // Array of whitelisted domains
+  totalBlocked: int("totalBlocked").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AdBlockerSettings = typeof adBlockerSettings.$inferSelect;
+export type InsertAdBlockerSettings = typeof adBlockerSettings.$inferInsert;
+
+/**
+ * VPN settings and connection logs
+ */
+export const vpnSettings = mysqlTable("vpnSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  enabled: boolean("enabled").default(false).notNull(),
+  selectedServer: varchar("selectedServer", { length: 100 }).default("us-east").notNull(),
+  protocol: mysqlEnum("protocol", ["wireguard", "openvpn", "proxy"]).default("proxy").notNull(),
+  autoConnect: boolean("autoConnect").default(false).notNull(),
+  killSwitch: boolean("killSwitch").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type VpnSettings = typeof vpnSettings.$inferSelect;
+export type InsertVpnSettings = typeof vpnSettings.$inferInsert;
+
+/**
+ * VPN connection logs
+ */
+export const vpnConnections = mysqlTable("vpnConnections", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  server: varchar("server", { length: 100 }).notNull(),
+  protocol: varchar("protocol", { length: 50 }).notNull(),
+  connectedAt: timestamp("connectedAt").defaultNow().notNull(),
+  disconnectedAt: timestamp("disconnectedAt"),
+  bytesTransferred: bigint("bytesTransferred", { mode: "number" }).default(0).notNull(),
+});
+
+export type VpnConnection = typeof vpnConnections.$inferSelect;
+export type InsertVpnConnection = typeof vpnConnections.$inferInsert;

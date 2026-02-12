@@ -7,7 +7,9 @@ import {
   payments, InsertPayment, aiChats, InsertAiChat,
   cliHistory, InsertCliHistory, videoDownloads, InsertVideoDownload,
   backups, InsertBackup, alertPreferences, InsertAlertPreference,
-  alertHistory, InsertAlertHistory, notifications, InsertNotification
+  alertHistory, InsertAlertHistory, notifications, InsertNotification,
+  adBlockerSettings, InsertAdBlockerSettings, vpnSettings, InsertVpnSettings,
+  vpnConnections, InsertVpnConnection
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -592,3 +594,90 @@ export async function deleteNotification(notificationId: number, userId: number)
     .where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId)));
 }
 
+
+
+// ===== AD BLOCKER =====
+export async function getAdBlockerSettings(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(adBlockerSettings)
+    .where(eq(adBlockerSettings.userId, userId))
+    .limit(1);
+  return result[0] || null;
+}
+
+export async function upsertAdBlockerSettings(userId: number, settings: Partial<InsertAdBlockerSettings>) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const existing = await getAdBlockerSettings(userId);
+  if (existing) {
+    await db.update(adBlockerSettings)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(adBlockerSettings.userId, userId));
+  } else {
+    await db.insert(adBlockerSettings).values({
+      userId,
+      ...settings,
+    } as InsertAdBlockerSettings);
+  }
+}
+
+export async function incrementBlockedCount(userId: number, count = 1) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(adBlockerSettings)
+    .set({ totalBlocked: sql`${adBlockerSettings.totalBlocked} + ${count}` })
+    .where(eq(adBlockerSettings.userId, userId));
+}
+
+// ===== VPN =====
+export async function getVpnSettings(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(vpnSettings)
+    .where(eq(vpnSettings.userId, userId))
+    .limit(1);
+  return result[0] || null;
+}
+
+export async function upsertVpnSettings(userId: number, settings: Partial<InsertVpnSettings>) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const existing = await getVpnSettings(userId);
+  if (existing) {
+    await db.update(vpnSettings)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(vpnSettings.userId, userId));
+  } else {
+    await db.insert(vpnSettings).values({
+      userId,
+      ...settings,
+    } as InsertVpnSettings);
+  }
+}
+
+export async function createVpnConnection(connection: InsertVpnConnection) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(vpnConnections).values(connection);
+  return result;
+}
+
+export async function getVpnConnections(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(vpnConnections)
+    .where(eq(vpnConnections.userId, userId))
+    .orderBy(desc(vpnConnections.connectedAt))
+    .limit(limit);
+}
+
+export async function updateVpnConnection(connectionId: number, updates: Partial<InsertVpnConnection>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(vpnConnections)
+    .set(updates)
+    .where(eq(vpnConnections.id, connectionId));
+}

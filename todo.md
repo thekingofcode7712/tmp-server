@@ -519,3 +519,44 @@
 - [x] Fix subscription status enum inconsistency (canceled vs cancelled)
 - [x] Update all references to use consistent spelling
 - [x] Test downgrade functionality
+
+### Alert History Viewer
+- [x] Add alert history section to Settings Alerts tab
+- [x] Display past alerts with timestamps
+- [x] Show alert metadata (storage %, credits, etc.)
+- [x] Format dates in user-friendly way
+- [ ] Add pagination or load more functionality (future enhancement)
+
+### Notification Filters
+- [x] Add filter buttons to notification dropdown
+- [x] Filter by type (storage_warning, credits_low, subscription_resumed, info)
+- [x] Show active filter state
+- [x] Update notification count based on filter
+
+### Settings UI Cleanup
+- [x] Improve tab layout and spacing
+- [x] Better visual hierarchy for sections
+- [x] Improve form field styling and alignment
+- [x] Add better visual separation between sections
+- [x] Improve responsive design for mobile
+
+### Ad Blocker Implementation
+- [x] Browser-based ad blocking (filter lists, script blocking)
+- [x] DNS-based ad blocking (block ad domains at network level)
+- [x] Ad blocker settings page with enable/disable toggle
+- [x] Block trackers and malicious scripts
+- [x] Show blocked ads counter
+- [x] Restrict to paid plans only
+- [ ] Custom filter list management (future enhancement)
+- [ ] Whitelist/blacklist domains (future enhancement)
+
+### VPN Implementation
+- [x] Proxy service for secure browsing
+- [x] VPN configuration generator (WireGuard/OpenVPN)
+- [x] VPN server selection (multiple locations)
+- [x] Connection status indicator
+- [x] VPN settings page
+- [x] Restrict to paid plans only
+- [ ] Speed test functionality (future enhancement)
+- [ ] Auto-connect option (future enhancement)
+- [ ] Kill switch feature (future enhancement)

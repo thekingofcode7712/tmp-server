@@ -36,6 +36,13 @@
       "when": 1770881329367,
       "tag": "0004_solid_sumo",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1770882420575,
+      "tag": "0005_adorable_starbolt",
+      "breakpoints": true
     }
   ]
 }

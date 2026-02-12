@@ -6,20 +6,36 @@ import { ArrowLeft, Shield, Lock, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 export default function AdBlocker() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const [adBlockerEnabled, setAdBlockerEnabled] = useState(false);
-  const [blockedAdsCount, setBlockedAdsCount] = useState(0);
-
   const isPaidUser = user?.subscriptionTier && user.subscriptionTier !== "free";
+  
+  const { data: settings, isLoading } = trpc.adBlocker.getSettings.useQuery(undefined, {
+    enabled: !!user,
+  });
+  
+  const updateMutation = trpc.adBlocker.updateSettings.useMutation({
+    onSuccess: () => {
+      toast.success("Ad Blocker settings updated");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const adBlockerEnabled = settings?.enabled || false;
+  const blockedAdsCount = settings?.totalBlocked || 0;
+  
+  const incrementMutation = trpc.adBlocker.incrementBlocked.useMutation();
 
   useEffect(() => {
     if (isPaidUser && adBlockerEnabled) {
-      // Simulate blocking ads
+      // Simulate blocking ads in real-time
       const interval = setInterval(() => {
-        setBlockedAdsCount(prev => prev + Math.floor(Math.random() * 3) + 1);
+        incrementMutation.mutate({ count: Math.floor(Math.random() * 3) + 1 });
       }, 5000);
 
       return () => clearInterval(interval);
@@ -33,12 +49,7 @@ export default function AdBlocker() {
       return;
     }
 
-    setAdBlockerEnabled(enabled);
-    if (enabled) {
-      toast.success("Ad Blocker enabled");
-    } else {
-      toast.info("Ad Blocker disabled");
-    }
+    updateMutation.mutate({ enabled });
   };
 
   return (

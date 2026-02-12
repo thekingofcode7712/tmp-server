@@ -9,6 +9,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { AlertHistory } from "@/components/AlertHistory";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -57,9 +58,9 @@ export default function Settings() {
         </div>
       </header>
 
-      <div className="container py-8 max-w-4xl">
-        <Tabs defaultValue="account">
-          <TabsList className="grid w-full grid-cols-5">
+      <div className="container py-8 max-w-5xl">
+        <Tabs defaultValue="account" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5 h-auto p-1">
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
             <TabsTrigger value="customization">Customization</TabsTrigger>
@@ -73,7 +74,7 @@ export default function Settings() {
                 <CardTitle>Account Information</CardTitle>
                 <CardDescription>Your account details</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div>
                   <Label>Name</Label>
                   <Input
@@ -112,7 +113,7 @@ export default function Settings() {
                 <CardTitle>Subscription</CardTitle>
                 <CardDescription>Manage your subscription plan</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div>
                   <Label>Current Plan</Label>
                   <Input value={user?.subscriptionTier || "free"} disabled className="capitalize" />
@@ -145,7 +146,7 @@ export default function Settings() {
                     : "Purchase customization feature for £19.99"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 {user?.hasCustomization ? (
                   <>
                     <div>
@@ -241,6 +242,16 @@ export default function Settings() {
                 <Button className="w-full">Save Alert Preferences</Button>
               </CardContent>
             </Card>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Alert History</CardTitle>
+                <CardDescription>View your past alert notifications</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AlertHistory />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="preferences">
@@ -249,7 +260,7 @@ export default function Settings() {
                 <CardTitle>Preferences</CardTitle>
                 <CardDescription>Configure your preferences</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div>
                   <Label>Notifications</Label>
                   <p className="text-sm text-muted-foreground mt-1">

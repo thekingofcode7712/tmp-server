@@ -21,11 +21,47 @@ const vpnServers = [
 export default function VPN() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const [connected, setConnected] = useState(false);
-  const [selectedServer, setSelectedServer] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const [connectionId, setConnectionId] = useState<number | null>(null);
 
   const isPaidUser = user?.subscriptionTier && user.subscriptionTier !== "free";
+  
+  const { data: settings } = trpc.vpn.getSettings.useQuery(undefined, {
+    enabled: !!user,
+  });
+  
+  const { data: connections } = trpc.vpn.getConnections.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: 5000,
+  });
+  
+  const connectMutation = trpc.vpn.connect.useMutation({
+    onSuccess: (data, variables) => {
+      setConnecting(false);
+      toast.success(`Connected to ${vpnServers.find(s => s.id === variables.server)?.name}`);
+    },
+    onError: (error) => {
+      setConnecting(false);
+      toast.error(error.message);
+    },
+  });
+  
+  const disconnectMutation = trpc.vpn.disconnect.useMutation({
+    onSuccess: () => {
+      setConnectionId(null);
+      toast.info("Disconnected from VPN");
+    },
+  });
+  
+  const updateSettingsMutation = trpc.vpn.updateSettings.useMutation({
+    onSuccess: () => {
+      toast.success("VPN settings updated");
+    },
+  });
+
+  const activeConnection = connections?.[0];
+  const connected = activeConnection && !activeConnection.disconnectedAt;
+  const selectedServer = connected ? activeConnection.server : settings?.selectedServer || null;
 
   const handleConnect = async (serverId: string) => {
     if (!isPaidUser) {
@@ -35,20 +71,19 @@ export default function VPN() {
     }
 
     setConnecting(true);
-    setSelectedServer(serverId);
-
-    // Simulate VPN connection
-    setTimeout(() => {
-      setConnected(true);
-      setConnecting(false);
-      toast.success(`Connected to ${vpnServers.find(s => s.id === serverId)?.name}`);
-    }, 2000);
+    connectMutation.mutate({
+      server: serverId,
+      protocol: settings?.protocol || 'proxy',
+    });
+    
+    // Update selected server setting
+    updateSettingsMutation.mutate({ selectedServer: serverId });
   };
 
   const handleDisconnect = () => {
-    setConnected(false);
-    setSelectedServer(null);
-    toast.info("Disconnected from VPN");
+    if (activeConnection) {
+      disconnectMutation.mutate({ connectionId: activeConnection.id });
+    }
   };
 
   return (
@@ -191,7 +226,51 @@ export default function VPN() {
             </div>
           </CardContent>
         </Card>
+
+        {isPaidUser && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>VPN Configuration</CardTitle>
+              <CardDescription>Generate configuration files for WireGuard or OpenVPN</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-4">
+                <VpnConfigGenerator protocol="wireguard" selectedServer={selectedServer || 'us-east'} />
+                <VpnConfigGenerator protocol="openvpn" selectedServer={selectedServer || 'us-east'} />
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
+  );
+}
+
+function VpnConfigGenerator({ protocol, selectedServer }: { protocol: 'wireguard' | 'openvpn', selectedServer: string }) {
+  const generateMutation = trpc.vpn.generateConfig.useMutation({
+    onSuccess: (data) => {
+      const blob = new Blob([data.config], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${protocol}-${selectedServer}.conf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${protocol.toUpperCase()} configuration downloaded`);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  return (
+    <Button
+      onClick={() => generateMutation.mutate({ protocol, server: selectedServer })}
+      disabled={generateMutation.isPending}
+      variant="outline"
+      className="flex-1"
+    >
+      {generateMutation.isPending ? 'Generating...' : `Download ${protocol === 'wireguard' ? 'WireGuard' : 'OpenVPN'} Config`}
+    </Button>
   );
 }

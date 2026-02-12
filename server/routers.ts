@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { verifyEmailConnection } from "./email-service";
 import { getDb } from "./db";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { storagePut } from "./storage";
@@ -943,55 +944,6 @@ export const appRouter = router({
       }),
   }),
 
-  // VPN Service
-  vpn: router({
-    connect: protectedProcedure
-      .input(z.object({ serverId: z.string() }))
-      .mutation(async ({ ctx, input }) => {
-        const isPaid = ctx.user.subscriptionTier && ctx.user.subscriptionTier !== 'free';
-        if (!isPaid) {
-          throw new Error('VPN is only available for paid subscribers');
-        }
-        
-        // In a real implementation, this would configure proxy routing
-        // For now, we'll simulate the connection
-        return { 
-          success: true, 
-          server: input.serverId,
-          ip: '192.168.1.' + Math.floor(Math.random() * 255),
-          connected: true 
-        };
-      }),
-    
-    disconnect: protectedProcedure.mutation(async ({ ctx }) => {
-      return { success: true, connected: false };
-    }),
-  }),
-
-  // Ad Blocker
-  adBlocker: router({
-    toggle: protectedProcedure
-      .input(z.object({ enabled: z.boolean() }))
-      .mutation(async ({ ctx, input }) => {
-        const isPaid = ctx.user.subscriptionTier && ctx.user.subscriptionTier !== 'free';
-        if (!isPaid) {
-          throw new Error('Ad Blocker is only available for paid subscribers');
-        }
-        
-        // In a real implementation, this would configure DNS filtering
-        return { success: true, enabled: input.enabled };
-      }),
-    
-    getStats: protectedProcedure.query(async ({ ctx }) => {
-      // Simulate ad blocking stats
-      return {
-        adsBlocked: Math.floor(Math.random() * 1000) + 500,
-        trackersBlocked: Math.floor(Math.random() * 500) + 200,
-        malwareBlocked: Math.floor(Math.random() * 50) + 10,
-      };
-    }),
-  }),
-
   // Customization
   customization: router({
     get: protectedProcedure.query(async ({ ctx }) => {
@@ -1063,6 +1015,10 @@ export const appRouter = router({
       return await db.getAlertPreferences(ctx.user.id);
     }),
 
+    getHistory: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserAlertHistory(ctx.user.id, 50);
+    }),
+
     update: protectedProcedure
       .input(z.object({
         storageAlertsEnabled: z.boolean().optional(),
@@ -1076,6 +1032,139 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         await db.upsertAlertPreferences(ctx.user.id, input);
         return { success: true };
+      }),
+  }),
+
+  // Ad Blocker
+  adBlocker: router({
+    getSettings: protectedProcedure.query(async ({ ctx }) => {
+      const settings = await db.getAdBlockerSettings(ctx.user.id);
+      if (!settings) {
+        // Create default settings
+        await db.upsertAdBlockerSettings(ctx.user.id, {
+          enabled: false,
+          blockAds: true,
+          blockTrackers: true,
+          blockMalware: true,
+          dnsBlocking: true,
+        });
+        return await db.getAdBlockerSettings(ctx.user.id);
+      }
+      return settings;
+    }),
+
+    updateSettings: protectedProcedure
+      .input(z.object({
+        enabled: z.boolean().optional(),
+        blockAds: z.boolean().optional(),
+        blockTrackers: z.boolean().optional(),
+        blockMalware: z.boolean().optional(),
+        dnsBlocking: z.boolean().optional(),
+        customFilters: z.array(z.string()).optional(),
+        whitelist: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (user?.subscriptionTier === 'free') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Ad blocker requires paid subscription' });
+        }
+        await db.upsertAdBlockerSettings(ctx.user.id, input);
+        return { success: true };
+      }),
+
+    incrementBlocked: protectedProcedure
+      .input(z.object({ count: z.number().default(1) }))
+      .mutation(async ({ ctx, input }) => {
+        await db.incrementBlockedCount(ctx.user.id, input.count);
+        return { success: true };
+      }),
+  }),
+
+  // VPN
+  vpn: router({
+    getSettings: protectedProcedure.query(async ({ ctx }) => {
+      const settings = await db.getVpnSettings(ctx.user.id);
+      if (!settings) {
+        // Create default settings
+        await db.upsertVpnSettings(ctx.user.id, {
+          enabled: false,
+          selectedServer: 'us-east',
+          protocol: 'proxy',
+          autoConnect: false,
+          killSwitch: false,
+        });
+        return await db.getVpnSettings(ctx.user.id);
+      }
+      return settings;
+    }),
+
+    updateSettings: protectedProcedure
+      .input(z.object({
+        enabled: z.boolean().optional(),
+        selectedServer: z.string().optional(),
+        protocol: z.enum(['wireguard', 'openvpn', 'proxy']).optional(),
+        autoConnect: z.boolean().optional(),
+        killSwitch: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (user?.subscriptionTier === 'free') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'VPN requires paid subscription' });
+        }
+        await db.upsertVpnSettings(ctx.user.id, input);
+        return { success: true };
+      }),
+
+    connect: protectedProcedure
+      .input(z.object({
+        server: z.string(),
+        protocol: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (user?.subscriptionTier === 'free') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'VPN requires paid subscription' });
+        }
+        await db.createVpnConnection({
+          userId: ctx.user.id,
+          server: input.server,
+          protocol: input.protocol,
+        });
+        return { success: true };
+      }),
+
+    disconnect: protectedProcedure
+      .input(z.object({ connectionId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateVpnConnection(input.connectionId, {
+          disconnectedAt: new Date(),
+        });
+        return { success: true };
+      }),
+
+    getConnections: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getVpnConnections(ctx.user.id, 10);
+    }),
+
+    generateConfig: protectedProcedure
+      .input(z.object({
+        protocol: z.enum(['wireguard', 'openvpn']),
+        server: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (user?.subscriptionTier === 'free') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'VPN requires paid subscription' });
+        }
+        
+        // Generate VPN configuration based on protocol
+        if (input.protocol === 'wireguard') {
+          const config = `[Interface]\nPrivateKey = <GENERATED_PRIVATE_KEY>\nAddress = 10.0.0.2/24\nDNS = 1.1.1.1\n\n[Peer]\nPublicKey = <SERVER_PUBLIC_KEY>\nEndpoint = ${input.server}:51820\nAllowedIPs = 0.0.0.0/0\nPersistentKeepalive = 25`;
+          return { config, protocol: 'wireguard' };
+        } else {
+          const config = `client\ndev tun\nproto udp\nremote ${input.server} 1194\nresolv-retry infinite\nnobind\npersist-key\npersist-tun\nca ca.crt\ncert client.crt\nkey client.key\ncipher AES-256-CBC\nverb 3`;
+          return { config, protocol: 'openvpn' };
+        }
       }),
   }),
 });

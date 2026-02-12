@@ -11,14 +11,21 @@ import {
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 
+type NotificationType = 'all' | 'storage_warning' | 'credits_low' | 'subscription_resumed' | 'info';
+
 export function NotificationBell() {
   const { isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
+  const [filter, setFilter] = useState<NotificationType>('all');
   
-  const { data: notifications = [] } = trpc.notifications.getNotifications.useQuery(undefined, {
+  const { data: allNotifications = [] } = trpc.notifications.getNotifications.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+  
+  const notifications = filter === 'all' 
+    ? allNotifications 
+    : allNotifications.filter((n: any) => n.type === filter);
   
   const { data: unreadCount = 0 } = trpc.notifications.getUnreadCount.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -61,7 +68,7 @@ export function NotificationBell() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-96">
         <div className="flex items-center justify-between px-2 py-2">
           <h3 className="font-semibold">Notifications</h3>
           {unreadCount > 0 && (
@@ -74,6 +81,41 @@ export function NotificationBell() {
               Mark all as read
             </Button>
           )}
+        </div>
+        <DropdownMenuSeparator />
+        <div className="flex gap-1 px-2 py-2 flex-wrap">
+          <Button
+            variant={filter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('all')}
+            className="text-xs h-7"
+          >
+            All
+          </Button>
+          <Button
+            variant={filter === 'storage_warning' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('storage_warning')}
+            className="text-xs h-7"
+          >
+            Storage
+          </Button>
+          <Button
+            variant={filter === 'credits_low' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('credits_low')}
+            className="text-xs h-7"
+          >
+            Credits
+          </Button>
+          <Button
+            variant={filter === 'subscription_resumed' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilter('subscription_resumed')}
+            className="text-xs h-7"
+          >
+            Subscription
+          </Button>
         </div>
         <DropdownMenuSeparator />
         {notifications.length === 0 ? (
