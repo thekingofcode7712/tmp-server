@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, name, colors FROM themes WHERE name = 'Forest Green';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute SELECT id, name, colors FROM themes WHERE name = 'Forest Green';",
+  "rows": [
+    {
+      "id": "3",
+      "name": "Forest Green",
+      "colors": "{\"accent\": \"173 58% 39%\", \"background\": \"140 20% 8%\", \"card\": \"140 20% 12%\", \"foreground\": \"140 10% 98%\", \"muted\": \"142 30% 16%\", \"primary\": \"142 76% 36%\", \"secondary\": \"142 76% 46%\"}"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcolors\n3\tForest Green\t{\"accent\": \"173 58% 39%\", \"background\": \"140 20% 8%\", \"card\": \"140 20% 12%\", \"foreground\": \"140 10% 98%\", \"muted\": \"142 30% 16%\", \"primary\": \"142 76% 36%\", \"secondary\": \"142 76% 46%\"}\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

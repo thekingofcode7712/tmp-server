@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, name FROM themes ORDER BY id LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute SELECT id, name FROM themes ORDER BY id LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Midnight Blue"
+    },
+    {
+      "id": "2",
+      "name": "Sunset Orange"
+    },
+    {
+      "id": "3",
+      "name": "Forest Green"
+    },
+    {
+      "id": "4",
+      "name": "Purple Haze"
+    },
+    {
+      "id": "5",
+      "name": "Crimson Red"
+    },
+    {
+      "id": "6",
+      "name": "Ocean Teal"
+    },
+    {
+      "id": "7",
+      "name": "Golden Yellow"
+    },
+    {
+      "id": "8",
+      "name": "Rose Pink"
+    },
+    {
+      "id": "9",
+      "name": "Arctic Ice"
+    },
+    {
+      "id": "10",
+      "name": "Lavender Dream"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1\tMidnight Blue\n2\tSunset Orange\n3\tForest Green\n4\tPurple Haze\n5\tCrimson Red\n6\tOcean Teal\n7\tGolden Yellow\n8\tRose Pink\n9\tArctic Ice\n10\tLavender Dream\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

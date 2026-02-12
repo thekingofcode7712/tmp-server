@@ -1,0 +1,79 @@
+{
+  "query": "SELECT name FROM themes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute SELECT name FROM themes;",
+  "rows": [
+    {
+      "name": "Midnight Blue"
+    },
+    {
+      "name": "Sunset Orange"
+    },
+    {
+      "name": "Forest Green"
+    },
+    {
+      "name": "Purple Haze"
+    },
+    {
+      "name": "Crimson Red"
+    },
+    {
+      "name": "Ocean Teal"
+    },
+    {
+      "name": "Golden Yellow"
+    },
+    {
+      "name": "Rose Pink"
+    },
+    {
+      "name": "Arctic Ice"
+    },
+    {
+      "name": "Lavender Dream"
+    },
+    {
+      "name": "Emerald City"
+    },
+    {
+      "name": "Chocolate Brown"
+    },
+    {
+      "name": "Neon Cyan"
+    },
+    {
+      "name": "Burgundy Wine"
+    },
+    {
+      "name": "Mint Fresh"
+    },
+    {
+      "name": "Slate Gray"
+    },
+    {
+      "name": "Peach Sorbet"
+    },
+    {
+      "name": "Indigo Night"
+    },
+    {
+      "name": "Lime Zest"
+    },
+    {
+      "name": "Copper Rust"
+    },
+    {
+      "name": "Sapphire Blue"
+    },
+    {
+      "name": "Charcoal Black"
+    },
+    {
+      "name": "Coral Reef"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\nMidnight Blue\nSunset Orange\nForest Green\nPurple Haze\nCrimson Red\nOcean Teal\nGolden Yellow\nRose Pink\nArctic Ice\nLavender Dream\nEmerald City\nChocolate Brown\nNeon Cyan\nBurgundy Wine\nMint Fresh\nSlate Gray\nPeach Sorbet\nIndigo Night\nLime Zest\nCopper Rust\nSapphire Blue\nCharcoal Black\nCoral Reef\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

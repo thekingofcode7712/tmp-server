@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE themes SET colors = JSON_OBJECT(\n  'primary', '142 76% 36%',\n  'secondary', '142 76% 46%',\n  'accent', '173 58% 39%',\n  'background', '140 20% 8%',\n  'foreground', '140 10% 98%',\n  'card', '140 20% 12%',\n  'card-foreground', '140 10% 98%',\n  'popover', '140 20% 12%',\n  'popover-foreground', '140 10% 98%',\n  'primary-foreground', '140 10% 10%',\n  'secondary-foreground', '140 10% 98%',\n  'muted', '142 30% 16%',\n  'muted-foreground', '140 10% 70%',\n  'accent-foreground', '140 10% 98%',\n  'destructive', '0 84% 60%',\n  'destructive-foreground', '0 0% 98%',\n  'border', '142 30% 18%',\n  'input', '142 30% 18%',\n  'ring', '142 76% 36%'\n) WHERE name = 'Forest Green';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute UPDATE themes SET colors = JSON_OBJECT(\n  'primary', '142 76% 36%',\n  'secondary', '142 76% 46%',\n  'accent', '173 58% 39%',\n  'background', '140 20% 8%',\n  'foreground', '140 10% 98%',\n  'card', '140 20% 12%',\n  'card-foreground', '140 10% 98%',\n  'popover', '140 20% 12%',\n  'popover-foreground', '140 10% 98%',\n  'primary-foreground', '140 10% 10%',\n  'secondary-foreground', '140 10% 98%',\n  'muted', '142 30% 16%',\n  'muted-foreground', '140 10% 70%',\n  'accent-foreground', '140 10% 98%',\n  'destructive', '0 84% 60%',\n  'destructive-foreground', '0 0% 98%',\n  'border', '142 30% 18%',\n  'input', '142 30% 18%',\n  'ring', '142 76% 36%'\n) WHERE name = 'Forest Green';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 63
+}

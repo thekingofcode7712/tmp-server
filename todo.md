@@ -65,8 +65,22 @@
 ### Theme Application Issues
 - [x] Fix purchased themes not applying their actual colors
 - [x] Ensure theme CSS variables are properly injected
-- [x] Test all theme color schemes display correctly
+- [x] Fix Forest Green theme showing washed out/light gray instead of green colors
+- [x] Update all 23 themes with complete CSS variable sets
 - [x] Add "Reset to Default Theme" button to revert to default theme
+
+### Cloud Storage Upload Issues
+- [x] Fix presigned URL endpoint returning 404 error (server restarted)
+- [x] Verify getPresignedUploadUrl endpoint is properly registered
+- [x] Test direct S3 upload flow end-to-end
+
+### Theme Bundles
+- [ ] Create theme bundle database table
+- [ ] Add "Warm Tones Bundle" (3 themes for £7)
+- [ ] Add "Cool Tones Bundle" (3 themes for £7)
+- [ ] Add "All Themes Bundle" (20+ themes for £25)
+- [ ] Implement bundle purchase flow with Stripe
+- [ ] Show bundle savings percentage on cards
 - [ ] Add automatic data refresh after Stripe checkout return
 - [ ] Invalidate queries when user returns from successful purchase
 - [ ] Show success message and updated data without manual refresh
