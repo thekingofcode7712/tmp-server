@@ -9,6 +9,7 @@ import { ArrowLeft, Mail, Send, Trash2, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { parseEmailContent } from "@/lib/emailParser";
 
 export default function Email() {
   const [composing, setComposing] = useState(false);
@@ -262,8 +263,8 @@ export default function Email() {
                     </div>
                   )}
                 </div>
-                <div className="whitespace-pre-wrap">
-                  {selectedEmail.body}
+                <div className="whitespace-pre-wrap text-base leading-relaxed">
+                  {parseEmailContent(selectedEmail.body)}
                 </div>
                 <div className="flex gap-2 pt-4 border-t">
                   <Button

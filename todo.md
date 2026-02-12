@@ -777,3 +777,13 @@
 - [x] Add reply/forward/delete actions to email reader
 - [x] Improve Settings UI with better tab design, spacing, and icons
 - [x] Add visual hierarchy and section dividers to Settings tabs
+
+### Current Priority - File Sorting & Email Readability
+- [x] Add sorting dropdown to Cloud Storage page
+- [x] Implement sort by Name (A-Z, Z-A)
+- [x] Implement sort by Date (Newest first, Oldest first)
+- [x] Implement sort by Size (Largest first, Smallest first)
+- [x] Create email content parser utility
+- [x] Strip MIME headers from email content
+- [x] Parse HTML and display as readable text
+- [x] Update email detail view with parsed content

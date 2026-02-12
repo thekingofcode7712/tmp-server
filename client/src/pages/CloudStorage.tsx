@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { ArrowLeft, Upload, Trash2, Download, FolderOpen } from "lucide-react";
+import { ArrowLeft, Upload, Trash2, Download, FolderOpen, ArrowUpDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ export default function CloudStorage() {
   const [selectedFolder, setSelectedFolder] = useState("/");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "date-asc" | "date-desc" | "size-asc" | "size-desc">("date-desc");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
@@ -193,13 +195,47 @@ export default function CloudStorage() {
           </div>
         </div>
 
+        <div className="flex justify-end mb-4">
+          <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+            <SelectTrigger className="w-[200px]">
+              <ArrowUpDown className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+              <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+              <SelectItem value="date-desc">Date (Newest first)</SelectItem>
+              <SelectItem value="date-asc">Date (Oldest first)</SelectItem>
+              <SelectItem value="size-desc">Size (Largest first)</SelectItem>
+              <SelectItem value="size-asc">Size (Smallest first)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {isLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           </div>
         ) : files && files.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {files.map((file) => (
+            {[...files].sort((a, b) => {
+              switch (sortBy) {
+                case "name-asc":
+                  return a.fileName.localeCompare(b.fileName);
+                case "name-desc":
+                  return b.fileName.localeCompare(a.fileName);
+                case "date-asc":
+                  return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                case "date-desc":
+                  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                case "size-asc":
+                  return (a.fileSize || 0) - (b.fileSize || 0);
+                case "size-desc":
+                  return (b.fileSize || 0) - (a.fileSize || 0);
+                default:
+                  return 0;
+              }
+            }).map((file) => (
               <Card key={file.id}>
                 <CardHeader>
                   <CardTitle className="text-base truncate">{file.fileName}</CardTitle>
