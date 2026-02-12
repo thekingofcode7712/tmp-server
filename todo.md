@@ -393,3 +393,17 @@
 - [x] Map flexible subscription to appropriate storage tier based on amount
 - [x] Update subscription page UI with flexible option
 - [ ] Test flexible subscription checkout flow
+
+### Automatic Subscription Cancellation
+- [x] Implement Stripe subscription cancellation API call
+- [x] Add "Downgrade to Free" button in subscription management
+- [x] Cancel Stripe subscription when user downgrades to free
+- [x] Update user database to free tier after cancellation
+- [x] Show confirmation dialog before cancellation
+- [ ] Test complete cancellation flow
+
+### Update Domain References
+- [x] Update email addresses to use tmpserver.manus.space domain
+- [x] Update all hardcoded domain references in code
+- [ ] Update success/cancel URLs for Stripe checkout
+- [ ] Update any documentation or help text with new domain

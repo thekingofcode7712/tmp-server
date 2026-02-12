@@ -5,7 +5,7 @@ import { simpleParser } from 'mailparser';
 import * as db from './db';
 
 // Email configuration
-const EMAIL_DOMAIN = 'tmpserver.app';
+const EMAIL_DOMAIN = 'tmpserver.manus.space';
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
 const SMTP_USER = process.env.SMTP_USER || '';

@@ -326,7 +326,7 @@ export const appRouter = router({
       
       if (!account) {
         // Create email account for user
-        const emailAddress = `${ctx.user.name?.toLowerCase().replace(/\s+/g, '') || 'user'}${ctx.user.id}@tmpserver.app`;
+        const emailAddress = `${ctx.user.name?.toLowerCase().replace(/\s+/g, '') || 'user'}${ctx.user.id}@tmpserver.manus.space`;
         await db.createEmailAccount({
           userId: ctx.user.id,
           emailAddress,
@@ -791,8 +791,22 @@ export const appRouter = router({
         apiVersion: '2026-01-28.clover',
       });
 
+      // Cancel the Stripe subscription immediately
       await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
+      
+      // Update subscription status in database
       await db.updateSubscriptionStatus(subscription.id, 'canceled');
+      
+      // Downgrade user to free plan
+      await db.updateUserSubscription(
+        ctx.user.id,
+        'free',
+        5368709120, // 5GB in bytes
+        new Date() // expires immediately
+      );
+      
+      // Reset AI credits to 0
+      await db.updateUserAICredits(ctx.user.id, 0);
       
       return { success: true };
     }),
