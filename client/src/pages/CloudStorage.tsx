@@ -61,21 +61,25 @@ export default function CloudStorage() {
     // Detect MIME type with fallback
     const mimeType = getMimeType(file.name, file.type);
 
-    const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks for faster uploads
     const shouldChunk = file.size > CHUNK_SIZE;
     
     if (shouldChunk) {
-      // Chunked upload for large files
+      // Chunked upload for large files with parallel processing
       const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
       const uploadId = Math.random().toString(36).substring(7);
+      
+      // Process up to 3 chunks in parallel for faster uploads
+      const PARALLEL_UPLOADS = 3;
+      const chunks: Promise<void>[] = [];
       
       for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
         const start = chunkIndex * CHUNK_SIZE;
         const end = Math.min(start + CHUNK_SIZE, file.size);
         const chunk = file.slice(start, end);
         
-        const reader = new FileReader();
-        await new Promise<void>((resolve, reject) => {
+        const uploadPromise = new Promise<void>((resolve, reject) => {
+          const reader = new FileReader();
           reader.onload = async (event) => {
             try {
               const base64 = event.target?.result as string;
@@ -101,6 +105,14 @@ export default function CloudStorage() {
           reader.onerror = reject;
           reader.readAsDataURL(chunk);
         });
+        
+        chunks.push(uploadPromise);
+        
+        // Wait for batch to complete before starting next batch
+        if (chunks.length >= PARALLEL_UPLOADS || chunkIndex === totalChunks - 1) {
+          await Promise.all(chunks);
+          chunks.length = 0;
+        }
       }
       
       setIsUploading(false);

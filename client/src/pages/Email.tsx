@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { ArrowLeft, Mail, Send, Trash2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Mail, Send, Trash2, RefreshCw, Star } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -40,6 +40,12 @@ export default function Email() {
   const deleteEmailMutation = trpc.email.deleteEmail.useMutation({
     onSuccess: () => {
       toast.success("Email deleted");
+      utils.email.getEmails.invalidate();
+    },
+  });
+  
+  const toggleStarMutation = trpc.email.toggleStar.useMutation({
+    onSuccess: () => {
       utils.email.getEmails.invalidate();
     },
   });
@@ -171,16 +177,28 @@ export default function Email() {
                               {new Date(email.createdAt).toLocaleString()}
                             </p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteEmailMutation.mutate({ emailId: email.id });
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleStarMutation.mutate({ emailId: email.id, isStarred: !email.isStarred });
+                              }}
+                            >
+                              <Star className={`h-4 w-4 ${email.isStarred ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteEmailMutation.mutate({ emailId: email.id });
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -213,21 +231,32 @@ export default function Email() {
                             <p className="text-xs text-muted-foreground mt-2">
                               {new Date(email.createdAt).toLocaleString()}
                             </p>
+                            </div>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleStarMutation.mutate({ emailId: email.id, isStarred: !email.isStarred });
+                              }}
+                            >
+                              <Star className={`h-4 w-4 ${email.isStarred ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteEmailMutation.mutate({ emailId: email.id })}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteEmailMutation.mutate({ emailId: email.id })}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Send className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">No sent emails</p>
                   </div>
                 )}

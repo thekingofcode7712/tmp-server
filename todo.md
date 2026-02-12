@@ -787,3 +787,18 @@
 - [x] Strip MIME headers from email content
 - [x] Parse HTML and display as readable text
 - [x] Update email detail view with parsed content
+
+### Current Priority - Email Starring, File Sharing, Game Achievements
+- [x] Add isStarred field to emails table
+- [x] Create star/unstar email endpoint
+- [x] Add star icon to email list items
+- [ ] Add "Starred" filter to email page
+- [x] Optimize file uploads (10MB chunks, parallel processing)
+- [ ] Create file sharing table with expiration dates
+- [ ] Add generate share link endpoint
+- [ ] Add share button to Cloud Storage files
+- [ ] Create public file access route
+- [ ] Design achievements schema (game, milestone, unlocked date)
+- [ ] Create achievements tracking system
+- [ ] Add achievement badges UI
+- [ ] Track game milestones (first win, high score, 10 games played)

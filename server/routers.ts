@@ -510,6 +510,13 @@ export const appRouter = router({
         const newCount = await pollUserEmails(ctx.user.id);
         return { success: true, newEmails: newCount };
       }),
+    
+    toggleStar: protectedProcedure
+      .input(z.object({ emailId: z.number(), isStarred: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateEmail(input.emailId, { isStarred: input.isStarred });
+        return { success: true };
+      }),
   }),
 
   // Games
