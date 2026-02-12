@@ -52,6 +52,10 @@ export default function Dashboard() {
   const storagePercent = stats ? (stats.storageUsed / stats.storageLimit) * 100 : 0;
   const storageUsedGB = stats ? (stats.storageUsed / (1024 ** 3)).toFixed(2) : "0";
   const storageLimitGB = stats ? (stats.storageLimit / (1024 ** 3)).toFixed(2) : "5";
+  
+  const emailStoragePercent = stats ? (stats.emailStorageUsed / stats.emailStorageLimit) * 100 : 0;
+  const emailStorageUsedGB = stats ? (stats.emailStorageUsed / (1024 ** 3)).toFixed(2) : "0";
+  const emailStorageLimitGB = stats ? (stats.emailStorageLimit / (1024 ** 3)).toFixed(2) : "15";
 
   return (
     <div className="min-h-screen bg-background">
@@ -114,14 +118,47 @@ export default function Dashboard() {
                   <span>{stats?.fileCount || 0} files</span>
                   <span>{stats?.subscriptionTier || "free"} plan</span>
                 </div>
-                {storagePercent >= 95 && (
+                {storagePercent >= 90 && (
                   <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-600 dark:text-red-400">
-                    ⚠️ Storage almost full! Please delete files or upgrade your plan.
+                    ⚠️ File storage almost full! Please delete files or upgrade your plan.
                   </div>
                 )}
                 {storagePercent >= 80 && storagePercent < 95 && (
                   <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-sm text-yellow-600 dark:text-yellow-400">
                     ⚠️ Storage is 80% full. Consider upgrading your plan.
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Email Storage Overview */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Email Storage</CardTitle>
+            <CardDescription>
+              {emailStorageUsedGB} GB of {emailStorageLimitGB} GB used
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {statsLoading ? (
+              <Skeleton className="h-4 w-full" />
+            ) : (
+              <>
+                <Progress value={emailStoragePercent} className="mb-2" />
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Email storage</span>
+                  <span>15GB free</span>
+                </div>
+                {emailStoragePercent >= 90 && (
+                  <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-600 dark:text-red-400">
+                    ⚠️ Email storage almost full! Please delete emails or upgrade your plan.
+                  </div>
+                )}
+                {emailStoragePercent >= 75 && emailStoragePercent < 90 && (
+                  <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-sm text-yellow-600 dark:text-yellow-400">
+                    ⚠️ Email storage is {emailStoragePercent.toFixed(0)}% full
                   </div>
                 )}
               </>

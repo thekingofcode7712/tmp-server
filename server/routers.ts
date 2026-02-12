@@ -147,6 +147,8 @@ export const appRouter = router({
       return {
         storageUsed: user?.storageUsed || 0,
         storageLimit: user?.storageLimit || 5368709120,
+        emailStorageUsed: user?.emailStorageUsed || 0,
+        emailStorageLimit: user?.emailStorageLimit || 16106127360,
         subscriptionTier: user?.subscriptionTier || "free",
         subscriptionStatus: subscription?.status || "active",
         pausedUntil: subscription?.pausedUntil || null,
@@ -456,6 +458,17 @@ export const appRouter = router({
           throw new Error(result.error || 'Failed to send email');
         }
 
+        // Calculate email size (subject + body + headers estimate)
+        const emailSize = Buffer.byteLength(input.subject, 'utf8') + 
+                         Buffer.byteLength(input.body, 'utf8') + 
+                         500; // Estimate for headers
+        
+        // Update sender's email storage usage
+        const sender = await db.getUserById(ctx.user.id);
+        if (sender) {
+          await db.updateUserEmailStorage(ctx.user.id, (sender.emailStorageUsed || 0) + emailSize);
+        }
+
         // Create sent email record
         await db.createEmail({
           emailAccountId: account.id,
@@ -472,6 +485,12 @@ export const appRouter = router({
         // If recipient is internal, deliver to their inbox
         const recipientAccount = await db.getEmailAccountByEmail(input.to);
         if (recipientAccount) {
+          // Update recipient's email storage
+          const recipient = await db.getUserByEmail(input.to);
+          if (recipient) {
+            await db.updateUserEmailStorage(recipient.id, (recipient.emailStorageUsed || 0) + emailSize);
+          }
+          
           await db.createEmail({
             emailAccountId: recipientAccount.id,
             fromAddress: account.emailAddress,

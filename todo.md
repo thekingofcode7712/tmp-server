@@ -34,3 +34,18 @@ Cloud storage platform with email, games, AI features, and premium themes.
 - [ ] Store encrypted email credentials
 - [ ] Implement IMAP inbox sync
 - [ ] Implement SMTP sending through external account
+
+### Current Priority - Email Storage Display & Tracking
+- [x] Add email storage to dashboard stats query
+- [x] Display email storage meter in Dashboard
+- [x] Calculate email size on send (content + attachments)
+- [x] Update emailStorageUsed when sending emails
+- [x] Calculate email size on receive
+- [x] Update emailStorageUsed when receiving emails
+- [ ] Add external email account form in Email settings
+- [ ] Store encrypted IMAP/SMTP credentials
+- [ ] Implement IMAP inbox sync
+- [ ] Implement SMTP sending via external account
+
+### Quick Fix - Remove Premium Themes from Addons
+- [ ] Remove Premium Themes add-on from addons table (has its own marketplace now)

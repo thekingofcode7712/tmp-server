@@ -110,10 +110,23 @@ export async function getUserById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
 export async function updateUserStorage(userId: number, storageUsed: number) {
   const db = await getDb();
   if (!db) return;
   await db.update(users).set({ storageUsed }).where(eq(users.id, userId));
+}
+
+export async function updateUserEmailStorage(userId: number, emailStorageUsed: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ emailStorageUsed }).where(eq(users.id, userId));
 }
 
 export async function updateUserStorageLimit(userId: number, storageLimit: number) {
