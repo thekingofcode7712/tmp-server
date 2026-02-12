@@ -94,10 +94,15 @@ export const appRouter = router({
       const files = await db.getUserFiles(ctx.user.id);
       const recentFiles = files.slice(0, 5);
       
+      // Get subscription info
+      const subscription = await db.getUserSubscription(ctx.user.id);
+      
       return {
         storageUsed: user?.storageUsed || 0,
         storageLimit: user?.storageLimit || 5368709120,
         subscriptionTier: user?.subscriptionTier || "free",
+        subscriptionStatus: subscription?.status || "active",
+        pausedUntil: subscription?.pausedUntil || null,
         aiCredits: user?.aiCredits || 0,
         fileCount: files.length,
         recentFiles,

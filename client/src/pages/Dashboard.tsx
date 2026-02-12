@@ -77,6 +77,24 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* Pause Countdown Alert */}
+      {stats?.subscriptionStatus === 'paused' && stats?.pausedUntil && (
+        <div className="bg-yellow-500/10 border-b border-yellow-500/20">
+          <div className="container py-3">
+            <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+              <Shield className="h-5 w-5" />
+              <p className="text-sm font-medium">
+                Your subscription is paused and will automatically resume in{' '}
+                <strong>
+                  {Math.ceil((new Date(stats.pausedUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days
+                </strong>
+                {' '}(on {new Date(stats.pausedUntil).toLocaleDateString()})
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container py-8">
         {/* Storage Overview */}
         <Card className="mb-8">
@@ -96,6 +114,16 @@ export default function Dashboard() {
                   <span>{stats?.fileCount || 0} files</span>
                   <span>{stats?.subscriptionTier || "free"} plan</span>
                 </div>
+                {storagePercent >= 95 && (
+                  <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-600 dark:text-red-400">
+                    ⚠️ Storage almost full! Please delete files or upgrade your plan.
+                  </div>
+                )}
+                {storagePercent >= 80 && storagePercent < 95 && (
+                  <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-sm text-yellow-600 dark:text-yellow-400">
+                    ⚠️ Storage is 80% full. Consider upgrading your plan.
+                  </div>
+                )}
               </>
             )}
           </CardContent>
@@ -110,6 +138,11 @@ export default function Dashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{stats?.aiCredits || 0}</div>
               <p className="text-xs text-muted-foreground">credits remaining</p>
+              {stats && stats.aiCredits > 0 && stats.aiCredits <= 10 && (
+                <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-600 dark:text-yellow-400">
+                  ⚠️ Low credits! <Link href="/buy-credits" className="underline">Buy more</Link>
+                </div>
+              )}
             </CardContent>
           </Card>
           

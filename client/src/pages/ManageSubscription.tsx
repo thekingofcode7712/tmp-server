@@ -123,10 +123,17 @@ export default function ManageSubscription() {
                 <p className="text-lg font-semibold">
                   {subscription?.status === "active" ? (
                     <span className="text-green-500">Active</span>
+                  ) : subscription?.status === "paused" ? (
+                    <span className="text-yellow-500">Paused</span>
                   ) : (
                     <span className="text-muted-foreground">Inactive</span>
                   )}
                 </p>
+                {subscription?.status === "paused" && subscription?.pausedUntil && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Resumes in {Math.ceil((new Date(subscription.pausedUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Storage</p>

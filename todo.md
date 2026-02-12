@@ -435,3 +435,45 @@
 - [x] Make "Downgrade" button on Free plan card work properly
 - [x] Connect downgrade button to cancelSubscription mutation
 - [ ] Test downgrade from subscription page
+
+### Automatic Subscription Resume
+- [ ] Create scheduled job to check for expired paused subscriptions
+- [ ] Auto-resume subscriptions when pausedUntil date is reached
+- [ ] Send email notification when subscription auto-resumes
+- [ ] Update subscription status in database
+- [ ] Resume billing in Stripe
+
+### Pause Expiry Countdown
+- [ ] Add countdown display to dashboard for paused subscriptions
+- [ ] Show remaining days until auto-resume in subscription management
+- [ ] Add visual indicator (progress bar or badge) for pause status
+- [ ] Update countdown in real-time
+
+### Usage Alerts
+- [ ] Send email when storage reaches 80% capacity
+- [ ] Send email when storage reaches 95% capacity
+- [ ] Send email when AI credits drop below 10%
+- [ ] Add alert preferences to settings
+- [ ] Track alert history to avoid spam
+- [ ] Show usage warnings in dashboard
+
+### Automatic Subscription Resume
+- [x] Create scheduled job to check for expired paused subscriptions
+- [x] Auto-resume subscriptions when pausedUntil date is reached
+- [x] Send email notification when subscription auto-resumes
+- [x] Update subscription status in database
+- [x] Resume billing in Stripe
+
+### Pause Expiry Countdown
+- [x] Add countdown display to dashboard for paused subscriptions
+- [x] Show remaining days until auto-resume in subscription management
+- [x] Add visual indicator (progress bar or badge) for pause status
+- [x] Update countdown in real-time
+
+### Usage Alerts
+- [x] Send email when storage reaches 80% capacity
+- [x] Send email when storage reaches 95% capacity
+- [x] Send email when AI credits drop below 10%
+- [x] Show usage warnings in dashboard
+- [ ] Add alert preferences to settings (future enhancement)
+- [ ] Track alert history to avoid spam (future enhancement)

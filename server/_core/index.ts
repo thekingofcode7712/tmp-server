@@ -67,6 +67,16 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
+
+  // Initialize scheduled jobs
+  const { autoResumeSubscriptions, checkUsageAlerts } = await import('../scheduled-jobs');
+  // Run immediately on startup
+  autoResumeSubscriptions();
+  checkUsageAlerts();
+  // Run auto-resume daily
+  setInterval(autoResumeSubscriptions, 24 * 60 * 60 * 1000);
+  // Run usage alerts every 6 hours
+  setInterval(checkUsageAlerts, 6 * 60 * 60 * 1000);
 }
 
 startServer().catch(console.error);
