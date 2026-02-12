@@ -39,8 +39,9 @@ export function useApplyPurchasedTheme() {
 
     // Apply colors to CSS variables
     // Colors are stored as HSL values like "142 76% 36%"
+    // Wrap them with hsl() for Tailwind CSS 4 compatibility
     Object.entries(colors).forEach(([key, value]) => {
-      root.style.setProperty(`--${key}`, value);
+      root.style.setProperty(`--${key}`, `hsl(${value})`);
     });
 
     console.log(`[Theme] Applied theme: ${theme.name}`, colors);
