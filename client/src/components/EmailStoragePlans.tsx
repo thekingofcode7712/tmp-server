@@ -49,8 +49,11 @@ const PLANS = [
 ];
 
 export function EmailStoragePlans() {
-  const { user } = useAuth();
-  const { data: plan, isLoading } = trpc.email.getStoragePlan.useQuery();
+  const { user, isAuthenticated } = useAuth();
+  const { data: plan, isLoading, error } = trpc.email.getStoragePlan.useQuery(undefined, {
+    enabled: isAuthenticated,
+    retry: 1,
+  });
   const createCheckout = trpc.email.createStorageCheckout.useMutation();
 
   const handleUpgrade = async (priceId: string) => {
@@ -62,11 +65,26 @@ export function EmailStoragePlans() {
     }
   };
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   if (isLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin" />
+          <span className="ml-2 text-sm text-muted-foreground">Loading plans...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-sm text-muted-foreground">
+          Unable to load storage plans. Please try refreshing the page.
         </CardContent>
       </Card>
     );

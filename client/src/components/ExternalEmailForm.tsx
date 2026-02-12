@@ -8,7 +8,10 @@ import { toast } from 'sonner';
 import { Loader2, Mail, Server, Trash2 } from 'lucide-react';
 
 export function ExternalEmailForm() {
-  const { data: credential, isLoading, refetch } = trpc.email.getExternalCredential.useQuery();
+  const { data: credential, isLoading, error, refetch } = trpc.email.getExternalCredential.useQuery(undefined, {
+    retry: 1,
+    staleTime: 30000,
+  });
   const saveCredential = trpc.email.saveExternalCredential.useMutation();
   const deleteCredential = trpc.email.deleteExternalCredential.useMutation();
 
@@ -79,6 +82,28 @@ export function ExternalEmailForm() {
       <Card>
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin" />
+          <span className="ml-2 text-sm text-muted-foreground">Loading email settings...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            External Email Account
+          </CardTitle>
+          <CardDescription>
+            Connect your Gmail, Outlook, or other email account via IMAP/SMTP
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground text-center py-4">
+            Unable to load email settings. Please try refreshing the page.
+          </div>
         </CardContent>
       </Card>
     );

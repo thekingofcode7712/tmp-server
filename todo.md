@@ -3,7 +3,7 @@
 ## Current Sprint - Major Feature Additions
 
 ### Bugs to Fix
-- [x] Fix infinite loading spinner in Email Settings tab
+- [x] Fix infinite loading spinner in Email Settings tab (added retry limits and error handling)
 
 ### Email Storage Plans Upgrade UI
 - [x] Create email storage plan selection UI in Email Settings
