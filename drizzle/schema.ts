@@ -464,3 +464,32 @@ export const userAddons = mysqlTable("userAddons", {
 });
 export type UserAddon = typeof userAddons.$inferSelect;
 export type InsertUserAddon = typeof userAddons.$inferInsert;
+
+/**
+ * UI Themes (£3 each)
+ */
+export const themes = mysqlTable("themes", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  colors: json("colors").notNull(), // { primary, secondary, accent, background, foreground, etc. }
+  previewImage: text("previewImage"),
+  price: int("price").default(300).notNull(), // £3 in pence
+  isDefault: boolean("isDefault").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Theme = typeof themes.$inferSelect;
+export type InsertTheme = typeof themes.$inferInsert;
+
+/**
+ * User purchased themes
+ */
+export const userThemes = mysqlTable("userThemes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  themeId: int("themeId").notNull(),
+  purchasedAt: timestamp("purchasedAt").defaultNow().notNull(),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+});
+export type UserTheme = typeof userThemes.$inferSelect;
+export type InsertUserTheme = typeof userThemes.$inferInsert;

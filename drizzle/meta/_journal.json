@@ -85,6 +85,13 @@
       "when": 1770921257611,
       "tag": "0011_faulty_dragon_lord",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1770922153093,
+      "tag": "0012_same_killmonger",
+      "breakpoints": true
     }
   ]
 }
