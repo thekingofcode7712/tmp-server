@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { VpnBandwidthUsage } from "@/components/VpnBandwidthUsage";
 import { VpnSpeedTest } from "@/components/VpnSpeedTest";
 import { ProxyBrowser } from "@/components/ProxyBrowser";
+import { IpGeolocation } from "@/components/IpGeolocation";
 
 const vpnServers = [
   { id: "us-east", name: "United States (East)", location: "New York", flag: "🇺🇸" },
@@ -242,6 +243,11 @@ export default function VPN() {
 
         {isPaidUser && (
           <>
+            <IpGeolocation 
+              selectedServer={selectedServer || undefined}
+              isConnected={!!connectionId}
+            />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <VpnBandwidthUsage />
               <VpnSpeedTest 

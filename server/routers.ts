@@ -1359,6 +1359,75 @@ export const appRouter = router({
           .limit(input.limit)
           .offset(input.offset);
       }),
+
+    getMyIp: publicProcedure.query(async () => {
+      try {
+        // Use ipapi.co for IP geolocation (free tier: 1000 requests/day)
+        const response = await axios.get('https://ipapi.co/json/', { timeout: 5000 });
+        return {
+          ip: response.data.ip,
+          city: response.data.city,
+          region: response.data.region,
+          country: response.data.country_name,
+          countryCode: response.data.country_code,
+          latitude: response.data.latitude,
+          longitude: response.data.longitude,
+          isp: response.data.org,
+          timezone: response.data.timezone,
+        };
+      } catch (error) {
+        // Fallback to simpler API
+        try {
+          const response = await axios.get('https://api.ipify.org?format=json', { timeout: 5000 });
+          return {
+            ip: response.data.ip,
+            city: 'Unknown',
+            region: 'Unknown',
+            country: 'Unknown',
+            countryCode: 'XX',
+            latitude: null,
+            longitude: null,
+            isp: 'Unknown',
+            timezone: 'Unknown',
+          };
+        } catch (fallbackError) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch IP information' });
+        }
+      }
+    }),
+
+    getProxyIp: protectedProcedure
+      .input(z.object({ server: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const user = await db.getUserById(ctx.user.id);
+        if (user?.subscriptionTier === 'free') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Proxy requires paid subscription' });
+        }
+
+        try {
+          // Make request through proxy to get proxy's IP
+          const response = await routeThroughProxy(ctx.user.id, input.server, {
+            url: 'https://ipapi.co/json/',
+            method: 'GET',
+          });
+
+          const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+          
+          return {
+            ip: data.ip,
+            city: data.city,
+            region: data.region,
+            country: data.country_name,
+            countryCode: data.country_code,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            isp: data.org,
+            timezone: data.timezone,
+          };
+        } catch (error: any) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch proxy IP information' });
+        }
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

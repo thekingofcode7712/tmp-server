@@ -633,3 +633,13 @@
 - [x] Add server location and duration
 - [x] Implement pagination for logs
 - [x] Add export logs functionality
+
+
+### IP Geolocation Display
+- [x] Add IP geolocation API endpoint
+- [x] Fetch user's current IP and location
+- [x] Create IP display component for VPN page
+- [x] Show IP before VPN connection
+- [x] Show IP after VPN connection (through proxy)
+- [x] Display location details (country, city, ISP)
+- [x] Add visual indicator for VPN status
