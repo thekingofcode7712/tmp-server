@@ -45,6 +45,12 @@
 - [x] Register file metadata after successful upload
 - [x] Add upload progress tracking for direct uploads
 
+### UX Improvements
+- [x] Change all Stripe checkout links to open in same tab (already using window.location.href)
+- [x] Email storage plan upgrade buttons use same tab
+- [x] Marketplace checkout buttons use same tab
+- [x] Subscription upgrade buttons use same tab
+
 ### Email Storage Plans Upgrade UI
 - [x] Create email storage plan selection UI in Email Settings
 - [x] Display current plan and usage
