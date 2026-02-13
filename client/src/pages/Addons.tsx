@@ -62,7 +62,7 @@ export default function Addons() {
   const handlePurchase = async (addonId: string) => {
     const result = await purchaseAddon.mutateAsync({ addonId });
     if (result.checkoutUrl) {
-      window.open(result.checkoutUrl, '_blank');
+      window.location.href = result.checkoutUrl;
     }
   };
 

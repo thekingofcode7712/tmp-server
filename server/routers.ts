@@ -2220,6 +2220,7 @@ export const appRouter = router({
           success_url: `${ctx.req.headers.origin}/addons?success=true`,
           cancel_url: `${ctx.req.headers.origin}/addons?canceled=true`,
           client_reference_id: ctx.user.id.toString(),
+          allow_promotion_codes: true,
           metadata: {
             user_id: ctx.user.id.toString(),
             addon_id: input.addonId,

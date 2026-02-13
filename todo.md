@@ -293,3 +293,4 @@
 - [x] All Themes Bundle - allow_promotion_codes enabled + price updated to £44.99
 - [x] Theme bundles - allow_promotion_codes enabled
 - [ ] Test coupon 100offDeveloper on all payment areas
+- [x] Fix Add-ons Marketplace Stripe checkout to properly open payment page
