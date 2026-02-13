@@ -282,3 +282,14 @@
 - [x] Update "All Themes Bundle" price from £25 to £44.99
 - [x] Fix TypeScript duplicate property errors in routers.ts
 - [x] Updated database with new pricing
+
+### 100% Off Promo Code (100offDeveloper)
+- [x] Coupon created in Stripe: 100offDeveloper
+- [x] Fix missing price_email_unlimited Stripe price ID error - Changed to use inline price_data
+- [x] Enable allow_promotion_codes on all Stripe checkout sessions
+- [x] Email storage subscriptions - allow_promotion_codes enabled
+- [x] Storage subscriptions - allow_promotion_codes enabled
+- [x] Individual theme purchases - allow_promotion_codes enabled
+- [x] All Themes Bundle - allow_promotion_codes enabled + price updated to £44.99
+- [x] Theme bundles - allow_promotion_codes enabled
+- [ ] Test coupon 100offDeveloper on all payment areas

@@ -1022,21 +1022,45 @@ export const appRouter = router({
     }),
     
     createStorageCheckout: protectedProcedure
-      .input(z.object({ priceId: z.string() }))
+      .input(z.object({ tier: z.enum(['50gb', '100gb', '200gb', 'unlimited']) }))
       .mutation(async ({ ctx, input }) => {
         const Stripe = (await import('stripe')).default;
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
           apiVersion: '2026-01-28.clover',
         });
+        
+        // Map tier to price and storage
+        const tierConfig = {
+          '50gb': { name: '50GB Email Storage', price: 299, storage: '50GB' },
+          '100gb': { name: '100GB Email Storage', price: 399, storage: '100GB' },
+          '200gb': { name: '200GB Email Storage', price: 1099, storage: '200GB' },
+          'unlimited': { name: 'Unlimited Email Storage', price: 10000, storage: 'Unlimited' },
+        };
+        
+        const config = tierConfig[input.tier];
+        
         const session = await stripe.checkout.sessions.create({
           customer_email: ctx.user.email || undefined,
-          line_items: [{ price: input.priceId, quantity: 1 }],
+          line_items: [{
+            price_data: {
+              currency: 'gbp',
+              product_data: {
+                name: config.name,
+                description: `${config.storage} email storage subscription`,
+              },
+              unit_amount: config.price,
+              recurring: { interval: 'month' },
+            },
+            quantity: 1,
+          }],
           mode: 'subscription',
           success_url: `${process.env.VITE_APP_URL || 'http://localhost:3000'}/email?success=true`,
           cancel_url: `${process.env.VITE_APP_URL || 'http://localhost:3000'}/email`,
+          allow_promotion_codes: true,
           metadata: {
             userId: ctx.user.id.toString(),
             type: 'email_storage',
+            tier: input.tier,
           },
         });
         return { url: session.url! };
@@ -2253,6 +2277,7 @@ export const appRouter = router({
           success_url: `${ctx.req.headers.origin}/themes?success=true`,
           cancel_url: `${ctx.req.headers.origin}/themes?canceled=true`,
           client_reference_id: ctx.user.id.toString(),
+          allow_promotion_codes: true,
           metadata: {
             theme_id: input.themeId.toString(),
             type: 'theme_purchase',
@@ -2278,7 +2303,7 @@ export const appRouter = router({
                   name: 'All Themes Bundle',
                   description: 'Unlock all 23 premium themes',
                 },
-                unit_amount: 3499, // £34.99
+                unit_amount: 4499, // £44.99
               },
               quantity: 1,
             },
@@ -2287,6 +2312,7 @@ export const appRouter = router({
           success_url: `${ctx.req.headers.origin}/themes?success=true`,
           cancel_url: `${ctx.req.headers.origin}/themes?canceled=true`,
           client_reference_id: ctx.user.id.toString(),
+          allow_promotion_codes: true,
           metadata: {
             type: 'all_themes_purchase',
           },
@@ -2336,6 +2362,7 @@ export const appRouter = router({
           success_url: `${ctx.req.headers.origin}/themes?success=true`,
           cancel_url: `${ctx.req.headers.origin}/themes?canceled=true`,
           client_reference_id: ctx.user.id.toString(),
+          allow_promotion_codes: true,
           metadata: {
             bundle_id: input.bundleId.toString(),
             type: 'bundle_purchase',

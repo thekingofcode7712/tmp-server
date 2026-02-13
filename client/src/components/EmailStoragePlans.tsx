@@ -56,9 +56,9 @@ export function EmailStoragePlans() {
   });
   const createCheckout = trpc.email.createStorageCheckout.useMutation();
 
-  const handleUpgrade = async (priceId: string) => {
+  const handleUpgrade = async (tier: '50gb' | '100gb' | '200gb' | 'unlimited') => {
     try {
-      const { url } = await createCheckout.mutateAsync({ priceId });
+      const { url } = await createCheckout.mutateAsync({ tier });
       window.location.href = url;
     } catch (error: any) {
       toast.error(error.message || 'Failed to start checkout');
@@ -143,7 +143,7 @@ export function EmailStoragePlans() {
                   {!isCurrentPlan && !isFreePlan && (
                     <Button
                       className="w-full"
-                      onClick={() => handleUpgrade(planOption.priceId!)}
+                      onClick={() => handleUpgrade(planOption.tier)}
                       disabled={createCheckout.isPending}
                     >
                       {createCheckout.isPending ? (
