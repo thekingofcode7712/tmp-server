@@ -37,6 +37,7 @@ import SeasonalEvents from "./pages/SeasonalEvents";
 import Referrals from "./pages/Referrals";
 import { Themes } from "./pages/Themes";
 import CodeSnippets from "./pages/CodeSnippets";
+import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import SharedFile from "./pages/SharedFile";
 import Activity from "./pages/Activity";
@@ -75,7 +76,8 @@ function Router() {
       <Route path="/weekly-challenges" component={WeeklyChallenges} />
       <Route path="/seasonal-events" component={SeasonalEvents} />
       <Route path={"/referrals"} component={Referrals} />
-      <Route path={"/code-snippets"} component={CodeSnippets} />
+      <Route path="/code-snippets" component={CodeSnippets} />
+      <Route path="/admin" component={Admin} />
       <Route path="/themes" component={Themes} />
       <Route path={"/checkout-success"} component={CheckoutSuccess} />
       <Route path={"/terms"} component={TermsOfService} />

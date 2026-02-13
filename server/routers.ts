@@ -1300,6 +1300,43 @@ export const appRouter = router({
         
         return result;
       }),
+
+    distributePrizes: protectedProcedure
+      .input(z.object({ period: z.enum(["weekly", "monthly"]) }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.id !== 1) throw new TRPCError({ code: 'FORBIDDEN' });
+        const db_instance = await db.getDb();
+        if (!db_instance) throw new Error("Database not available");
+        const { gameScores, users } = await import("../drizzle/schema");
+        const { desc, sql, eq } = await import("drizzle-orm");
+        
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        
+        const timeFilter = input.period === "weekly" 
+          ? sql`${gameScores.createdAt} >= ${weekAgo.toISOString()}`
+          : sql`${gameScores.createdAt} >= ${monthAgo.toISOString()}`;
+        
+        const topScores = await db_instance
+          .select({
+            userId: gameScores.userId,
+            score: gameScores.score,
+          })
+          .from(gameScores)
+          .where(timeFilter)
+          .orderBy(desc(gameScores.score))
+          .limit(3);
+        
+        const prizes = [500, 300, 100];
+        for (let i = 0; i < topScores.length; i++) {
+          await db_instance.update(users)
+            .set({ aiCredits: sql`${users.aiCredits} + ${prizes[i]}` })
+            .where(eq(users.id, topScores[i].userId));
+        }
+        
+        return { success: true, awarded: topScores.length };
+      }),
   }),
 
   // Power-ups
@@ -2811,7 +2848,7 @@ export const appRouter = router({
       const { eq } = await import("drizzle-orm");
       return await db_instance.select().from(codeSnippets).where(eq(codeSnippets.userId, ctx.user.id));
     }),
-    
+
     create: protectedProcedure
       .input(z.object({
         title: z.string(),
@@ -2826,15 +2863,11 @@ export const appRouter = router({
         const { codeSnippets } = await import("../drizzle/schema");
         await db_instance.insert(codeSnippets).values({
           userId: ctx.user.id,
-          title: input.title,
-          description: input.description || "",
-          code: input.code,
-          language: input.language,
-          tags: input.tags || "",
+          ...input,
         });
         return { success: true };
       }),
-    
+
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
@@ -2846,6 +2879,58 @@ export const appRouter = router({
           eq(codeSnippets.id, input.id),
           eq(codeSnippets.userId, ctx.user.id)
         ));
+        return { success: true };
+      }),
+  }),
+    
+  // Admin router
+  admin: router({
+    getAllUsers: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.id !== 1) throw new TRPCError({ code: 'FORBIDDEN' });
+      const db_instance = await getDb();
+      if (!db_instance) throw new Error("Database not available");
+      const { users } = await import("../drizzle/schema");
+      return await db_instance.select().from(users);
+    }),
+
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.id !== 1) throw new TRPCError({ code: 'FORBIDDEN' });
+      const db_instance = await getDb();
+      if (!db_instance) throw new Error("Database not available");
+      const { users, payments, gameScores } = await import("../drizzle/schema");
+      const { count, sum, sql } = await import("drizzle-orm");
+      
+      const [totalUsers] = await db_instance.select({ count: count() }).from(users);
+      const [totalRevenue] = await db_instance.select({ sum: sum(payments.amount) }).from(payments);
+      const [totalGamesPlayed] = await db_instance.select({ count: count() }).from(gameScores);
+      const [activeSubscriptions] = await db_instance.select({ count: count() }).from(users).where(sql`subscription_tier != 'free'`);
+      
+      return {
+        totalUsers: totalUsers.count,
+        totalRevenue: totalRevenue.sum || 0,
+        totalGamesPlayed: totalGamesPlayed.count,
+        activeSubscriptions: activeSubscriptions.count,
+      };
+    }),
+
+    updateUser: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        aiCredits: z.number().optional(),
+        subscriptionTier: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.id !== 1) throw new TRPCError({ code: 'FORBIDDEN' });
+        const db_instance = await getDb();
+        if (!db_instance) throw new Error("Database not available");
+        const { users } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        
+        const updateData: any = {};
+        if (input.aiCredits !== undefined) updateData.aiCredits = input.aiCredits;
+        if (input.subscriptionTier) updateData.subscriptionTier = input.subscriptionTier;
+        
+        await db_instance.update(users).set(updateData).where(eq(users.id, input.userId));
         return { success: true };
       }),
   }),

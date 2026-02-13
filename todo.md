@@ -363,3 +363,10 @@
 - [x] Format all storage amounts in appropriate units (PB, TB, GB, MB)
 - [x] Remove file upload type restrictions (allow all file types) - Already no restrictions
 - [x] Remove file upload size limits - Already no size limits
+- [x] Create admin panel at /admin with password protection (8142627712)
+- [x] Add user management dashboard to admin panel
+- [x] Add analytics and prize distribution to admin panel
+- [ ] Add one-time payment options to subscription page (₹10,000-50,000)
+- [ ] Update subscription UI to show both monthly and one-time options
+- [ ] Create automated backup system with daily backups
+- [ ] Add backup restore functionality
