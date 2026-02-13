@@ -370,3 +370,8 @@
 - [ ] Update subscription UI to show both monthly and one-time options
 - [ ] Create automated backup system with daily backups
 - [ ] Add backup restore functionality
+- [x] Add PWA manifest.json with app metadata
+- [x] Create service worker for offline support
+- [x] Generate app icons for iOS and Android (192x192, 512x512)
+- [x] Add iOS-specific meta tags for app installation
+- [x] Upload icons to CDN and update manifest
