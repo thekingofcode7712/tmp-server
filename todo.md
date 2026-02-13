@@ -391,3 +391,13 @@
 - [x] Implement build file storage and metadata tracking in database
 - [x] Add build version tracking and release notes
 - [x] Create public download page for app builds
+
+## Capacitor Android App Setup
+- [x] Install Capacitor dependencies
+- [x] Configure Capacitor for Android
+- [x] Create Android project structure
+- [x] Configure app icons and splash screen
+- [x] Set up build configuration
+- [x] Create build guides and automation script
+- [ ] Generate signed .aab file (requires local Android Studio)
+- [ ] Test Android build on device
