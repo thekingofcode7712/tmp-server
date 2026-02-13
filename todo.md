@@ -334,3 +334,7 @@
 - [ ] Implement prize distribution system for top performers
 - [x] Add more achievements with varied unlock conditionsction dropdown
 - [ ] Add more achievements with varied unlock conditions
+- [x] Create global leaderboards page with all games rankings
+- [x] Add weekly and monthly leaderboard periods
+- [x] Implement power-up activation system for purchased items
+- [ ] Add visual effects for active power-ups in games

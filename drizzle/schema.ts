@@ -794,3 +794,18 @@ export const userPurchases = mysqlTable("userPurchases", {
 
 export type UserPurchase = typeof userPurchases.$inferSelect;
 export type InsertUserPurchase = typeof userPurchases.$inferInsert;
+
+/**
+ * Active Power-ups for users
+ */
+export const activePowerUps = mysqlTable("activePowerUps", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  powerUpType: varchar("powerUpType", { length: 100 }).notNull(), // "2x_score", "extra_life", "time_freeze", etc.
+  expiresAt: timestamp("expiresAt"), // null for one-time use items
+  usesRemaining: int("usesRemaining").default(1).notNull(),
+  activatedAt: timestamp("activatedAt").defaultNow().notNull(),
+});
+
+export type ActivePowerUp = typeof activePowerUps.$inferSelect;
+export type InsertActivePowerUp = typeof activePowerUps.$inferInsert;

@@ -1206,6 +1206,136 @@ export const appRouter = router({
       }),
   }),
 
+  // Leaderboards
+  leaderboards: router({
+    getAll: publicProcedure
+      .input(z.object({ period: z.enum(["all", "weekly", "monthly"]).default("all") }))
+      .query(async ({ input }) => {
+        const db_instance = await db.getDb();
+        if (!db_instance) return {};
+        
+        const { gameScores, users } = await import('../drizzle/schema');
+        const { desc, gte, and, eq } = await import('drizzle-orm');
+        
+        const games = [
+          "snake", "tetris", "pong", "2048", "memory", "tictactoe", "connect4",
+          "minesweeper", "flappybird", "breakout", "spaceinvaders", "sudoku",
+          "trivia", "puzzle", "pacman", "racing", "platformer", "solitaire",
+          "chess", "checkers"
+        ];
+        
+        const result: Record<string, any[]> = {};
+        
+        for (const game of games) {
+          let query = db_instance
+            .select({
+              id: gameScores.id,
+              score: gameScores.score,
+              userName: users.name,
+              createdAt: gameScores.createdAt,
+            })
+            .from(gameScores)
+            .leftJoin(users, eq(gameScores.userId, users.id))
+            .where(eq(gameScores.gameName, game))
+            .orderBy(desc(gameScores.score))
+            .limit(10);
+          
+          if (input.period === "weekly") {
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            query = db_instance
+              .select({
+                id: gameScores.id,
+                score: gameScores.score,
+                userName: users.name,
+                createdAt: gameScores.createdAt,
+              })
+              .from(gameScores)
+              .leftJoin(users, eq(gameScores.userId, users.id))
+              .where(and(
+                eq(gameScores.gameName, game),
+                gte(gameScores.createdAt, weekAgo)
+              ))
+              .orderBy(desc(gameScores.score))
+              .limit(10);
+          } else if (input.period === "monthly") {
+            const monthAgo = new Date();
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            query = db_instance
+              .select({
+                id: gameScores.id,
+                score: gameScores.score,
+                userName: users.name,
+                createdAt: gameScores.createdAt,
+              })
+              .from(gameScores)
+              .leftJoin(users, eq(gameScores.userId, users.id))
+              .where(and(
+                eq(gameScores.gameName, game),
+                gte(gameScores.createdAt, monthAgo)
+              ))
+              .orderBy(desc(gameScores.score))
+              .limit(10);
+          }
+          
+          result[game] = await query;
+        }
+        
+        return result;
+      }),
+  }),
+
+  // Power-ups
+  powerups: router({
+    getActive: protectedProcedure.query(async ({ ctx }) => {
+      const db_instance = await db.getDb();
+      if (!db_instance) return [];
+      
+      const { activePowerUps } = await import('../drizzle/schema');
+      const { eq, or, gt, isNull } = await import('drizzle-orm');
+      
+      // Get active power-ups (not expired and has uses remaining)
+      const now = new Date();
+      return db_instance.select().from(activePowerUps)
+        .where(
+          eq(activePowerUps.userId, ctx.user.id)
+        );
+    }),
+    
+    use: protectedProcedure
+      .input(z.object({ powerUpId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db_instance = await db.getDb();
+        if (!db_instance) return { success: false };
+        
+        const { activePowerUps } = await import('../drizzle/schema');
+        const { eq, and } = await import('drizzle-orm');
+        
+        // Get power-up
+        const [powerUp] = await db_instance.select().from(activePowerUps)
+          .where(and(
+            eq(activePowerUps.id, input.powerUpId),
+            eq(activePowerUps.userId, ctx.user.id)
+          ));
+        
+        if (!powerUp || powerUp.usesRemaining <= 0) {
+          return { success: false };
+        }
+        
+        // Decrement uses or delete if no uses left
+        if (powerUp.usesRemaining === 1) {
+          await db_instance.delete(activePowerUps)
+            .where(eq(activePowerUps.id, input.powerUpId));
+        } else {
+          await db_instance.update(activePowerUps)
+            .set({ usesRemaining: powerUp.usesRemaining - 1 })
+            .where(eq(activePowerUps.id, input.powerUpId));
+        }
+        
+        return { success: true, powerUpType: powerUp.powerUpType };
+      }),
+  }),
+
   // Bits Shop
   shop: router({    getItems: publicProcedure.query(async () => {
       const db_instance = await db.getDb();
@@ -1258,6 +1388,38 @@ export const appRouter = router({
             .set({ aiCredits: ctx.user.aiCredits + creditsToAdd })
             .where(eq(users.id, ctx.user.id));
           return { success: true, message: `Purchased ${item.name}! +${creditsToAdd} AI Credits` };
+        }
+        
+        // Handle power-ups and boosts - activate them
+        if (item.category === 'powerup' || item.category === 'boost') {
+          const { activePowerUps } = await import('../drizzle/schema');
+          
+          // Map item names to power-up types
+          const powerUpTypeMap: Record<string, string> = {
+            '2x Score Boost': '2x_score',
+            'Extra Life': 'extra_life',
+            'Time Freeze': 'time_freeze',
+            'Score Multiplier': 'score_multiplier',
+            'Lucky Dice': 'lucky_dice',
+            'Shield': 'shield',
+          };
+          
+          const powerUpType = powerUpTypeMap[item.name];
+          if (powerUpType) {
+            // For boosts, set expiration to 24 hours
+            const expiresAt = item.category === 'boost' 
+              ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+              : null;
+            
+            await db_instance.insert(activePowerUps).values({
+              userId: ctx.user.id,
+              powerUpType,
+              expiresAt,
+              usesRemaining: 1,
+            });
+            
+            return { success: true, message: `${item.name} activated!` };
+          }
         }
         
         return { success: true, message: `Purchased ${item.name}!` };
