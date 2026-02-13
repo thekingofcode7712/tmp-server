@@ -301,3 +301,6 @@
 - [x] Implement 10 fully functional games for Premium Games Pack (Snake, Tetris, 2048, Flappy Bird, Pong, Breakout, Space Invaders, Pac-Man, Tic-Tac-Toe, Memory Match)
 - [x] Add game leaderboards and high score tracking system
 - [x] Fix Add-ons Marketplace to properly detect and display owned add-ons with "Owned" badges
+- [x] Add global leaderboards UI showing top players for each game
+- [x] Implement high score sharing with shareable links
+- [x] Create friend challenge system for competitive gameplay

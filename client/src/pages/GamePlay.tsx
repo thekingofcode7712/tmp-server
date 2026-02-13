@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useParams } from "wouter";
-import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Share2, Trophy, Users } from "lucide-react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { SnakeGame, TetrisGame, PongGame, Game2048, MemoryGame, TicTacToeGame, ConnectFourGame, MinesweeperGame, FlappyBirdGame, BreakoutGame, SpaceInvadersGame, SudokuGame, TriviaGame, PuzzleGame, PacManGame, RacingGame, PlatformerGame, SolitaireGame, ChessGame, CheckersGame } from "@/components/games/AllGames";
@@ -11,6 +11,22 @@ export default function GamePlay() {
   const { gameName } = useParams();
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [challengeScore, setChallengeScore] = useState<number | null>(null);
+  
+  // Detect challenge parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const challenge = params.get('challenge');
+    if (challenge) {
+      const targetScore = parseInt(challenge, 10);
+      if (!isNaN(targetScore)) {
+        setChallengeScore(targetScore);
+        toast.info(`Challenge accepted! Beat the score of ${targetScore} points!`, {
+          duration: 5000,
+        });
+      }
+    }
+  }, []);
 
   const { data: leaderboard } = trpc.games.getLeaderboard.useQuery(
     { gameName: gameName || "" },
@@ -34,6 +50,17 @@ export default function GamePlay() {
         gameName,
         score: finalScore,
       });
+      
+      // Check if challenge was beaten
+      if (challengeScore && finalScore > challengeScore) {
+        toast.success(`🎉 Challenge completed! You beat the score of ${challengeScore}!`, {
+          duration: 7000,
+        });
+      } else if (challengeScore && finalScore <= challengeScore) {
+        toast.error(`Almost! You scored ${finalScore} but needed ${challengeScore + 1} to win.`, {
+          duration: 5000,
+        });
+      }
     }
   };
 
@@ -122,7 +149,14 @@ export default function GamePlay() {
             </Link>
             <div>
               <h1 className="text-2xl font-bold">{getGameTitle()}</h1>
-              <p className="text-sm text-muted-foreground">Current Score: {score}</p>
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-muted-foreground">Current Score: {score}</p>
+                {challengeScore && (
+                  <p className="text-sm font-semibold text-primary">
+                    🎯 Challenge: Beat {challengeScore}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -136,11 +170,50 @@ export default function GamePlay() {
             </Card>
           </div>
 
-          <div>
+          <div className="space-y-4">
+            {/* Social Actions */}
+            {score > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Share Your Score</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button 
+                    onClick={() => {
+                      const shareUrl = `${window.location.origin}/games/${gameName}?challenge=${score}`;
+                      navigator.clipboard.writeText(shareUrl);
+                      toast.success('Challenge link copied! Share it with friends.');
+                    }}
+                    variant="outline" 
+                    className="w-full"
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share Score ({score})
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      const text = `I just scored ${score} points in ${getGameTitle()}! Can you beat my score?`;
+                      navigator.clipboard.writeText(text);
+                      toast.success('Score text copied to clipboard!');
+                    }}
+                    variant="outline" 
+                    className="w-full"
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Copy Score Text
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Global Leaderboard */}
             <Card>
               <CardHeader>
-                <CardTitle>Leaderboard</CardTitle>
-                <CardDescription>Top 10 scores</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Global Leaderboard
+                </CardTitle>
+                <CardDescription>Top 10 players worldwide</CardDescription>
               </CardHeader>
               <CardContent>
                 {leaderboard && leaderboard.length > 0 ? (
@@ -148,7 +221,14 @@ export default function GamePlay() {
                     {leaderboard.map((entry, index) => (
                       <div key={entry.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-primary">#{index + 1}</span>
+                          <span className={`font-bold ${
+                            index === 0 ? 'text-yellow-500' : 
+                            index === 1 ? 'text-gray-400' : 
+                            index === 2 ? 'text-amber-600' : 
+                            'text-primary'
+                          }`}>
+                            #{index + 1}
+                          </span>
                           <span className="text-sm">{entry.userName || 'Anonymous'}</span>
                         </div>
                         <span className="font-semibold">{entry.score}</span>
@@ -156,7 +236,7 @@ export default function GamePlay() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-center text-muted-foreground py-4">No scores yet</p>
+                  <p className="text-center text-muted-foreground py-4">No scores yet. Be the first!</p>
                 )}
               </CardContent>
             </Card>
