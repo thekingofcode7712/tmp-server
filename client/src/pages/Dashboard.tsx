@@ -5,7 +5,7 @@ import { Link, useLocation } from "wouter";
 import { 
   HardDrive, Mail, Gamepad2, Terminal, Bot, Link as LinkIcon, 
   Download, Settings, CreditCard, Database, LogOut, Shield, ShoppingCart, Palette,
-  Activity, Trophy, Package, Target
+  Activity, Trophy, Package, Target, Gift, Users
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,6 +55,8 @@ export default function Dashboard() {
     { icon: Gamepad2, label: "Games", path: "/games", color: "text-purple-500" },
     { icon: Trophy, label: "Game Stats", path: "/game-stats", color: "text-yellow-500" },
     { icon: Target, label: "Weekly Challenges", path: "/weekly-challenges", color: "text-orange-500" },
+    { icon: Gift, label: "Seasonal Events", path: "/seasonal-events", color: "text-red-500" },
+    { icon: Users, label: "Referrals", path: "/referrals", color: "text-green-500" },
     { icon: Mail, label: "Email", path: "/email", color: "text-cyan-500" },
     { icon: Bot, label: "AI Chat", path: "/ai-chat", color: "text-pink-500" },
     { icon: Terminal, label: "CLI", path: "/cli", color: "text-gray-500" },

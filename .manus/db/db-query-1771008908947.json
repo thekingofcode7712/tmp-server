@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO seasonalEvents (name, description, gameMode, startDate, endDate, rewards, isActive) VALUES\n('Valentine Madness', 'Double points on all games for 7 days', 'double_points', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), JSON_OBJECT('bits', 200, 'aiCredits', 50), true),\n('Spring Speedrun', 'Complete Snake in under 30 seconds for bonus rewards', 'speedrun', DATE_ADD(NOW(), INTERVAL 7 DAY), DATE_ADD(NOW(), INTERVAL 14 DAY), JSON_OBJECT('bits', 300, 'aiCredits', 100), true),\n('Summer Blitz', 'Play 10 games daily to unlock exclusive cosmetics', 'daily_quest', DATE_ADD(NOW(), INTERVAL 14 DAY), DATE_ADD(NOW(), INTERVAL 21 DAY), JSON_OBJECT('bits', 500, 'cosmetic', 'summer_theme'), true);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute INSERT INTO seasonalEvents (name, description, gameMode, startDate, endDate, rewards, isActive) VALUES\n('Valentine Madness', 'Double points on all games for 7 days', 'double_points', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), JSON_OBJECT('bits', 200, 'aiCredits', 50), true),\n('Spring Speedrun', 'Complete Snake in under 30 seconds for bonus rewards', 'speedrun', DATE_ADD(NOW(), INTERVAL 7 DAY), DATE_ADD(NOW(), INTERVAL 14 DAY), JSON_OBJECT('bits', 300, 'aiCredits', 100), true),\n('Summer Blitz', 'Play 10 games daily to unlock exclusive cosmetics', 'daily_quest', DATE_ADD(NOW(), INTERVAL 14 DAY), DATE_ADD(NOW(), INTERVAL 21 DAY), JSON_OBJECT('bits', 500, 'cosmetic', 'summer_theme'), true);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 100
+}

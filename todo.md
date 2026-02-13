@@ -341,3 +341,6 @@
 - [ ] Integrate power-ups into game mechanics with visual effects
 - [ ] Implement Bits earning system - award Bits based on game scores
 - [ ] Create automatic prize distribution for weekly/monthly leaderboard winners
+- [x] Implement daily login rewards system with streak tracking
+- [x] Create seasonal events with special game modes and exclusive rewards
+- [x] Add friend invitation system with referral bonuses

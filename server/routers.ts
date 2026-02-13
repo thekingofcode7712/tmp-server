@@ -132,6 +132,12 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+    claimDailyReward: protectedProcedure.mutation(async ({ ctx }) => {
+      const bitsReward = 50;
+      const aiCreditsReward = 10;
+      const streak = 1;
+      return { success: true, bitsReward, aiCreditsReward, streak, message: 'Daily reward claimed!' };
+    }),
   }),
 
   // Dashboard & User Info

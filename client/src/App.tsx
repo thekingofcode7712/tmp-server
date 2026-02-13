@@ -33,6 +33,8 @@ import BitsShop from "./pages/BitsShop";
 import Leaderboards from "./pages/Leaderboards";
 import GameStats from "./pages/GameStats";
 import WeeklyChallenges from "./pages/WeeklyChallenges";
+import SeasonalEvents from "./pages/SeasonalEvents";
+import Referrals from "./pages/Referrals";
 import { Themes } from "./pages/Themes";
 import Login from "./pages/Login";
 import SharedFile from "./pages/SharedFile";
@@ -70,6 +72,8 @@ function Router() {
       <Route path="/leaderboards" component={Leaderboards} />
       <Route path="/game-stats" component={GameStats} />
       <Route path="/weekly-challenges" component={WeeklyChallenges} />
+      <Route path="/seasonal-events" component={SeasonalEvents} />
+      <Route path="/referrals" component={Referrals} />
       <Route path="/themes" component={Themes} />
       <Route path={"/checkout-success"} component={CheckoutSuccess} />
       <Route path={"/terms"} component={TermsOfService} />
