@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,20 @@ export default function Addons() {
   const utils = trpc.useUtils();
 
   const { data: userAddons } = trpc.addons.getUserAddons.useQuery();
+  
+  // Handle success/cancel redirects from Stripe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success') === 'true') {
+      toast.success('Add-on purchased successfully! Your purchase has been activated.');
+      utils.addons.getUserAddons.invalidate();
+      // Clean up URL
+      window.history.replaceState({}, '', '/addons');
+    } else if (params.get('canceled') === 'true') {
+      toast.error('Purchase canceled. You can try again anytime.');
+      window.history.replaceState({}, '', '/addons');
+    }
+  }, [utils]);
   
   const purchaseAddon = trpc.addons.purchase.useMutation({
     onSuccess: () => {

@@ -294,3 +294,6 @@
 - [x] Theme bundles - allow_promotion_codes enabled
 - [ ] Test coupon 100offDeveloper on all payment areas
 - [x] Fix Add-ons Marketplace Stripe checkout to properly open payment page
+- [x] Implement add-on webhook handler to process Stripe purchases
+- [x] Add add-on activation logic in database after successful payment
+- [x] Add purchase confirmation UI with success message and immediate activation
