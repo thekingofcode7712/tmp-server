@@ -9,7 +9,20 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useState } from "react";
+
+// Helper function to format storage in appropriate units
+function formatStorage(bytes: number): string {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
+  let size = bytes;
+  let unitIndex = 0;
+  
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+  
+  return `${size.toFixed(2)} ${units[unitIndex]}`;
+}
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -41,12 +54,12 @@ export default function Dashboard() {
   }
 
   const storagePercent = stats ? (stats.storageUsed / stats.storageLimit) * 100 : 0;
-  const storageUsedGB = stats ? (stats.storageUsed / (1024 ** 3)).toFixed(2) : "0";
-  const storageLimitGB = stats ? (stats.storageLimit / (1024 ** 3)).toFixed(2) : "5";
+  const storageUsed = formatStorage(stats?.storageUsed || 0);
+  const storageLimit = (stats?.storageLimit || 0) > 1e15 ? "Unlimited" : formatStorage(stats?.storageLimit || 0);
   
   const emailStoragePercent = stats ? (stats.emailStorageUsed / stats.emailStorageLimit) * 100 : 0;
-  const emailStorageUsedGB = stats ? (stats.emailStorageUsed / (1024 ** 3)).toFixed(2) : "0";
-  const emailStorageLimitGB = stats ? (stats.emailStorageLimit / (1024 ** 3)).toFixed(2) : "15";
+  const emailStorageUsed = formatStorage(stats?.emailStorageUsed || 0);
+  const emailStorageLimit = (stats?.emailStorageLimit || 0) > 1e15 ? "Unlimited" : formatStorage(stats?.emailStorageLimit || 0);
 
   const menuItems = [
     { icon: HardDrive, label: "Cloud Storage", path: "/storage", color: "text-blue-500" },
@@ -130,7 +143,7 @@ export default function Dashboard() {
                 <CardTitle>Cloud Storage</CardTitle>
               </div>
               <CardDescription>
-                {storageUsedGB} GB of {storageLimitGB} GB used
+                {storageUsed} of {storageLimit} used
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -138,17 +151,20 @@ export default function Dashboard() {
                 <Skeleton className="h-4 w-full" />
               ) : (
                 <>
-                  <Progress value={storagePercent} className="mb-2 h-3" />
+                  {storageLimit !== "Unlimited" && <Progress value={storagePercent} className="mb-2 h-3" />}
+                  {storageLimit === "Unlimited" && (
+                    <div className="mb-2 h-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"></div>
+                  )}
                   <div className="flex justify-between text-sm text-muted-foreground mt-3">
                     <span>{stats?.fileCount || 0} files</span>
                     <span>{stats?.subscriptionTier || "free"} plan</span>
                   </div>
-                  {storagePercent >= 90 && (
+                  {storagePercent >= 90 && storageLimit !== "Unlimited" && (
                     <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
                       ⚠️ Storage almost full! <Link href="/subscription" className="underline font-semibold">Upgrade now</Link>
                     </div>
                   )}
-                  {storagePercent >= 75 && storagePercent < 90 && (
+                  {storagePercent >= 75 && storagePercent < 90 && storageLimit !== "Unlimited" && (
                     <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm text-yellow-600 dark:text-yellow-400">
                       ⚠️ Storage is {storagePercent.toFixed(0)}% full
                     </div>
@@ -166,7 +182,7 @@ export default function Dashboard() {
                 <CardTitle>Email Storage</CardTitle>
               </div>
               <CardDescription>
-                {emailStorageUsedGB} GB of {emailStorageLimitGB} GB used
+                {emailStorageUsed} of {emailStorageLimit} used
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -174,17 +190,20 @@ export default function Dashboard() {
                 <Skeleton className="h-4 w-full" />
               ) : (
                 <>
-                  <Progress value={emailStoragePercent} className="mb-2 h-3" />
+                  {emailStorageLimit !== "Unlimited" && <Progress value={emailStoragePercent} className="mb-2 h-3" />}
+                  {emailStorageLimit === "Unlimited" && (
+                    <div className="mb-2 h-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"></div>
+                  )}
                   <div className="flex justify-between text-sm text-muted-foreground mt-3">
                     <span>Email storage</span>
-                    <span>15GB free</span>
+                    <span>{emailStorageLimit}</span>
                   </div>
-                  {emailStoragePercent >= 90 && (
+                  {emailStoragePercent >= 90 && emailStorageLimit !== "Unlimited" && (
                     <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
                       ⚠️ Email storage almost full!
                     </div>
                   )}
-                  {emailStoragePercent >= 75 && emailStoragePercent < 90 && (
+                  {emailStoragePercent >= 75 && emailStoragePercent < 90 && emailStorageLimit !== "Unlimited" && (
                     <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm text-yellow-600 dark:text-yellow-400">
                       ⚠️ Email storage is {emailStoragePercent.toFixed(0)}% full
                     </div>
@@ -212,7 +231,7 @@ export default function Dashboard() {
               </div>
               <div className="p-4 rounded-lg bg-cyan-500/5 border border-cyan-500/10">
                 <p className="text-sm text-muted-foreground mb-1">AI Credits</p>
-                <p className="text-2xl font-bold text-cyan-600">{stats?.aiCredits || 0}</p>
+                <p className="text-2xl font-bold text-cyan-600">{stats?.aiCredits?.toLocaleString() || 0}</p>
               </div>
               <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/10">
                 <p className="text-sm text-muted-foreground mb-1">Bits Balance</p>

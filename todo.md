@@ -354,3 +354,12 @@
 - [ ] Update subscription UI to show monthly and one-time payment options
 - [x] Complete code snippets router and fix TypeScript errors
 - [x] Grant unlimited storage and all premium features to user
+- [ ] Create admin panel with password protection (8142627712)
+- [ ] Restrict admin access to owner account only
+- [ ] Add user management dashboard with user list and actions
+- [ ] Add analytics dashboard with platform statistics
+- [ ] Add prize distribution controls for leaderboard winners
+- [x] Update Dashboard to show "Unlimited" for email storage
+- [x] Format all storage amounts in appropriate units (PB, TB, GB, MB)
+- [x] Remove file upload type restrictions (allow all file types) - Already no restrictions
+- [x] Remove file upload size limits - Already no size limits
