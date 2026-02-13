@@ -2,23 +2,38 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
-import { ArrowLeft, Send, Bot, Plus } from "lucide-react";
+import { ArrowLeft, Send, Bot, Plus, Code } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 
+interface Message {
+  role: string;
+  content: string;
+}
+
 export default function AIChat() {
   const { user } = useAuth();
-  const [message, setMessage] = useState("");
-  const [chatId, setChatId] = useState<number | undefined>();
-  const [messages, setMessages] = useState<Array<{ role: string; content: any }>>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<"general" | "coding">("general");
+  const [generalMessage, setGeneralMessage] = useState("");
+  const [codingMessage, setCodingMessage] = useState("");
+  const [generalChatId, setGeneralChatId] = useState<number | undefined>();
+  const [codingChatId, setCodingChatId] = useState<number | undefined>();
+  const [generalMessages, setGeneralMessages] = useState<Array<{ role: string; content: any }>>([]);
+  const [codingMessages, setCodingMessages] = useState<Array<{ role: string; content: any }>>([]);
+  const generalMessagesEndRef = useRef<HTMLDivElement>(null);
+  const codingMessagesEndRef = useRef<HTMLDivElement>(null);
 
   const chatMutation = trpc.ai.chat.useMutation({
     onSuccess: (data) => {
-      setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
-      setChatId(data.chatId);
+      if (activeTab === "general") {
+        setGeneralMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
+        setGeneralChatId(data.chatId);
+      } else {
+        setCodingMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
+        setCodingChatId(data.chatId);
+      }
       toast.success(`${data.creditsRemaining} credits remaining`);
     },
     onError: (error) => {
@@ -27,11 +42,18 @@ export default function AIChat() {
   });
 
   const handleSend = () => {
+    const message = activeTab === "general" ? generalMessage : codingMessage;
     if (!message.trim()) return;
 
-    setMessages((prev) => [...prev, { role: "user", content: message }]);
-    chatMutation.mutate({ message, chatId });
-    setMessage("");
+    if (activeTab === "general") {
+      setGeneralMessages((prev) => [...prev, { role: "user", content: message }]);
+      chatMutation.mutate({ message, chatId: generalChatId });
+      setGeneralMessage("");
+    } else {
+      setCodingMessages((prev) => [...prev, { role: "user", content: message }]);
+      chatMutation.mutate({ message: `[CODING] ${message}`, chatId: codingChatId });
+      setCodingMessage("");
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -42,8 +64,16 @@ export default function AIChat() {
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    generalMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [generalMessages]);
+
+  useEffect(() => {
+    codingMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [codingMessages]);
+
+  const currentMessages = activeTab === "general" ? generalMessages : codingMessages;
+  const currentMessage = activeTab === "general" ? generalMessage : codingMessage;
+  const setCurrentMessage = activeTab === "general" ? setGeneralMessage : setCodingMessage;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -58,7 +88,7 @@ export default function AIChat() {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold">AI Chat</h1>
-                <p className="text-sm text-muted-foreground">Chat with AI assistant</p>
+                <p className="text-sm text-muted-foreground">Chat with AI assistants</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -77,22 +107,68 @@ export default function AIChat() {
       </header>
 
       <div className="container flex-1 py-8 max-w-4xl flex flex-col">
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab("general")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              activeTab === "general"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border hover:border-primary/50"
+            }`}
+          >
+            <Bot className="h-4 w-4" />
+            General Assistant
+          </button>
+          <button
+            onClick={() => setActiveTab("coding")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              activeTab === "coding"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border hover:border-primary/50"
+            }`}
+          >
+            <Code className="h-4 w-4" />
+            Coding Assistant
+          </button>
+        </div>
+
         <Card className="flex-1 flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              TMP Server AI Assistant
+              {activeTab === "general" ? (
+                <>
+                  <Bot className="h-5 w-5" />
+                  TMP Server AI Assistant
+                </>
+              ) : (
+                <>
+                  <Code className="h-5 w-5" />
+                  Coding Assistant
+                </>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
             <div className="flex-1 overflow-y-auto mb-4 space-y-4">
-              {messages.length === 0 ? (
+              {currentMessages.length === 0 ? (
                 <div className="text-center py-12">
-                  <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Start a conversation with the AI assistant</p>
+                  {activeTab === "general" ? (
+                    <>
+                      <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Start a conversation with the AI assistant</p>
+                      <p className="text-xs text-muted-foreground mt-2">Ask questions, get advice, or chat about anything</p>
+                    </>
+                  ) : (
+                    <>
+                      <Code className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Start coding with the AI assistant</p>
+                      <p className="text-xs text-muted-foreground mt-2">Get help with code writing, debugging, and optimization</p>
+                    </>
+                  )}
                 </div>
               ) : (
-                messages.map((msg, index) => (
+                currentMessages.map((msg, index) => (
                   <div
                     key={index}
                     className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
@@ -104,25 +180,29 @@ export default function AIChat() {
                           : "bg-muted"
                       }`}
                     >
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      {activeTab === "coding" && msg.role === "assistant" ? (
+                        <div className="whitespace-pre-wrap font-mono text-sm">{msg.content}</div>
+                      ) : (
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      )}
                     </div>
                   </div>
                 ))
               )}
-              <div ref={messagesEndRef} />
+              <div ref={activeTab === "general" ? generalMessagesEndRef : codingMessagesEndRef} />
             </div>
 
             <div className="flex gap-2">
               <Input
-                placeholder="Type your message..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                placeholder={activeTab === "general" ? "Ask me anything..." : "Ask for code help..."}
+                value={currentMessage}
+                onChange={(e) => setCurrentMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={chatMutation.isPending}
               />
               <Button
                 onClick={handleSend}
-                disabled={chatMutation.isPending || !message.trim()}
+                disabled={chatMutation.isPending || !currentMessage.trim()}
               >
                 {chatMutation.isPending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
