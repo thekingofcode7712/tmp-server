@@ -28,6 +28,7 @@ import Status from "./pages/Status";
 import WordProcessor from "./pages/WordProcessor";
 import ServerStatus from "./pages/ServerStatus";
 import Addons from "./pages/Addons";
+import MyAddons from "./pages/MyAddons";
 import { Themes } from "./pages/Themes";
 import Login from "./pages/Login";
 import SharedFile from "./pages/SharedFile";
@@ -60,6 +61,7 @@ function Router() {
       <Route path="/word-processor" component={WordProcessor} />
       <Route path="/server-status" component={ServerStatus} />
       <Route path="/addons" component={Addons} />
+      <Route path="/my-addons" component={MyAddons} />
       <Route path="/themes" component={Themes} />
       <Route path={"/checkout-success"} component={CheckoutSuccess} />
       <Route path={"/terms"} component={TermsOfService} />

@@ -81,10 +81,16 @@ export default function Addons() {
   };
 
   const hasAddon = (addonId: string) => {
-    return userAddons?.some((item: any) => {
-      const name = item.addon.name.toLowerCase().replace(/\s+/g, '_');
-      return name === addonId;
-    });
+    // Map addon IDs to database names
+    const addonNameMap: Record<string, string> = {
+      'games_pack': 'Premium Games Pack',
+      'premium_themes': 'Premium Themes Pack',
+      'extra_storage': 'Extra Storage',
+      'ai_boost': 'Ai Credits Boost',
+    };
+    
+    const dbName = addonNameMap[addonId];
+    return userAddons?.some((item: any) => item.addon.name === dbName);
   };
 
   return (

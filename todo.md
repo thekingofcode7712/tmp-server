@@ -297,3 +297,7 @@
 - [x] Implement add-on webhook handler to process Stripe purchases
 - [x] Add add-on activation logic in database after successful payment
 - [x] Add purchase confirmation UI with success message and immediate activation
+- [x] Create My Add-ons page showing purchased add-ons with activation status and purchase dates
+- [x] Implement 10 fully functional games for Premium Games Pack (Snake, Tetris, 2048, Flappy Bird, Pong, Breakout, Space Invaders, Pac-Man, Tic-Tac-Toe, Memory Match)
+- [x] Add game leaderboards and high score tracking system
+- [x] Fix Add-ons Marketplace to properly detect and display owned add-ons with "Owned" badges
