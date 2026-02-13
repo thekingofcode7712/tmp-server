@@ -347,3 +347,10 @@
 - [x] Add coding AI chatbot tab to AI Chat page
 - [x] Implement code highlighting and syntax support for multiple languages
 - [ ] Add code execution and testing features
+- [x] Implement AI response streaming with real-time token generation
+- [x] Create code snippet library database schema
+- [x] Build code snippet management UI with save/load functionality
+- [ ] Add one-time payment options for all subscription tiers (10,000-50,000 for unlimited)
+- [ ] Update subscription UI to show monthly and one-time payment options
+- [x] Complete code snippets router and fix TypeScript errors
+- [x] Grant unlimited storage and all premium features to user

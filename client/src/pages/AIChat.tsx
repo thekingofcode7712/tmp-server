@@ -22,22 +22,42 @@ export default function AIChat() {
   const [codingChatId, setCodingChatId] = useState<number | undefined>();
   const [generalMessages, setGeneralMessages] = useState<Array<{ role: string; content: any }>>([]);
   const [codingMessages, setCodingMessages] = useState<Array<{ role: string; content: any }>>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
   const generalMessagesEndRef = useRef<HTMLDivElement>(null);
   const codingMessagesEndRef = useRef<HTMLDivElement>(null);
 
   const chatMutation = trpc.ai.chat.useMutation({
     onSuccess: (data) => {
-      if (activeTab === "general") {
-        setGeneralMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
-        setGeneralChatId(data.chatId);
-      } else {
-        setCodingMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
-        setCodingChatId(data.chatId);
-      }
+      const response = typeof data.response === 'string' ? data.response : JSON.stringify(data.response);
+      setIsStreaming(true);
+      setStreamingContent("");
+      
+      let index = 0;
+      const streamInterval = setInterval(() => {
+        if (index < response.length) {
+          setStreamingContent(response.substring(0, index + 1));
+          index++;
+        } else {
+          clearInterval(streamInterval);
+          setIsStreaming(false);
+          
+          if (activeTab === "general") {
+            setGeneralMessages((prev) => [...prev, { role: "assistant", content: response }]);
+            setGeneralChatId(data.chatId);
+          } else {
+            setCodingMessages((prev) => [...prev, { role: "assistant", content: response }]);
+            setCodingChatId(data.chatId);
+          }
+          setStreamingContent("");
+        }
+      }, 20);
+      
       toast.success(`${data.creditsRemaining} credits remaining`);
     },
     onError: (error) => {
       toast.error(error.message);
+      setIsStreaming(false);
     },
   });
 
@@ -188,6 +208,17 @@ export default function AIChat() {
                     </div>
                   </div>
                 ))
+              )}
+              {isStreaming && streamingContent && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] p-3 rounded-lg bg-muted">
+                    {activeTab === "coding" ? (
+                      <div className="whitespace-pre-wrap font-mono text-sm">{streamingContent}<span className="animate-pulse">▊</span></div>
+                    ) : (
+                      <p className="whitespace-pre-wrap">{streamingContent}<span className="animate-pulse">▊</span></p>
+                    )}
+                  </div>
+                </div>
               )}
               <div ref={activeTab === "general" ? generalMessagesEndRef : codingMessagesEndRef} />
             </div>

@@ -809,3 +809,21 @@ export const activePowerUps = mysqlTable("activePowerUps", {
 
 export type ActivePowerUp = typeof activePowerUps.$inferSelect;
 export type InsertActivePowerUp = typeof activePowerUps.$inferInsert;
+
+/**
+ * Code Snippets Library
+ */
+export const codeSnippets = mysqlTable("codeSnippets", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  code: text("code").notNull(),
+  language: varchar("language", { length: 50 }).default("javascript").notNull(),
+  tags: varchar("tags", { length: 500 }), // Comma-separated tags
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CodeSnippet = typeof codeSnippets.$inferSelect;
+export type InsertCodeSnippet = typeof codeSnippets.$inferInsert;

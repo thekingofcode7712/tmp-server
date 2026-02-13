@@ -2802,5 +2802,52 @@ export const appRouter = router({
         return { success: true, message: "Prizes distributed!" };
       }),
   }),
+  
+  snippets: router({
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      const db_instance = await getDb();
+      if (!db_instance) throw new Error("Database not available");
+      const { codeSnippets } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      return await db_instance.select().from(codeSnippets).where(eq(codeSnippets.userId, ctx.user.id));
+    }),
+    
+    create: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        code: z.string(),
+        language: z.string(),
+        tags: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db_instance = await getDb();
+        if (!db_instance) throw new Error("Database not available");
+        const { codeSnippets } = await import("../drizzle/schema");
+        await db_instance.insert(codeSnippets).values({
+          userId: ctx.user.id,
+          title: input.title,
+          description: input.description || "",
+          code: input.code,
+          language: input.language,
+          tags: input.tags || "",
+        });
+        return { success: true };
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db_instance = await getDb();
+        if (!db_instance) throw new Error("Database not available");
+        const { codeSnippets } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        await db_instance.delete(codeSnippets).where(and(
+          eq(codeSnippets.id, input.id),
+          eq(codeSnippets.userId, ctx.user.id)
+        ));
+        return { success: true };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

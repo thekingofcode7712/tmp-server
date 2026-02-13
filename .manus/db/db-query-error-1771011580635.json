@@ -1,0 +1,8 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS codeSnippets (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  title VARCHAR(255) NOT NULL,\n  description TEXT,\n  code TEXT NOT NULL,\n  language VARCHAR(50) DEFAULT 'javascript',\n  tags VARCHAR(500),\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute CREATE TABLE IF NOT EXISTS codeSnippets (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  title VARCHAR(255) NOT NULL,\n  description TEXT,\n  code TEXT NOT NULL,\n  language VARCHAR(50) DEFAULT 'javascript',\n  tags VARCHAR(500),\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE\n);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1824 (HY000) at line 1: Failed to open the referenced table 'user'"
+  ]
+}

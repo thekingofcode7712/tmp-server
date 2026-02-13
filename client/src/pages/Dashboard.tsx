@@ -57,6 +57,7 @@ export default function Dashboard() {
     { icon: Target, label: "Weekly Challenges", path: "/weekly-challenges", color: "text-orange-500" },
     { icon: Gift, label: "Seasonal Events", path: "/seasonal-events", color: "text-red-500" },
     { icon: Users, label: "Referrals", path: "/referrals", color: "text-green-500" },
+    { icon: Terminal, label: "Code Snippets", path: "/code-snippets", color: "text-indigo-500" },
     { icon: Mail, label: "Email", path: "/email", color: "text-cyan-500" },
     { icon: Bot, label: "AI Chat", path: "/ai-chat", color: "text-pink-500" },
     { icon: Terminal, label: "CLI", path: "/cli", color: "text-gray-500" },
