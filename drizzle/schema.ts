@@ -726,3 +726,4 @@ export const emailStoragePlans = mysqlTable("emailStoragePlans", {
 });
 export type EmailStoragePlan = typeof emailStoragePlans.$inferSelect;
 export type InsertEmailStoragePlan = typeof emailStoragePlans.$inferInsert;
+

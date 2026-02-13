@@ -1100,6 +1100,25 @@ export const appRouter = router({
       }),
   }),
 
+  // Achievements
+  achievements: router({
+    getAll: protectedProcedure.query(async () => {
+      return await db.getAllAchievements();
+    }),
+    
+    getUserAchievements: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserAchievements(ctx.user.id);
+    }),
+    
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserAchievementStats(ctx.user.id);
+    }),
+    
+    checkAndUnlock: protectedProcedure.mutation(async ({ ctx }) => {
+      return await db.checkAndUnlockAchievements(ctx.user.id);
+    }),
+  }),
+
   // AI Chatbot
   ai: router({
     chat: protectedProcedure

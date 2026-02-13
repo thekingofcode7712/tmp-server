@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Gamepad2, Palette, HardDrive, Zap, Calendar, CheckCircle2, ArrowRight } from "lucide-react";
+import { Gamepad2, Palette, HardDrive, Zap, Calendar, CheckCircle2, ArrowRight, Trophy, Star } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Link } from "wouter";
 
@@ -13,6 +13,83 @@ const ADDON_ICONS: Record<string, any> = {
   "Extra Storage (50GB)": HardDrive,
   "AI Credits Boost": Zap,
 };
+
+function AchievementsSection() {
+  const { data: achievements, isLoading } = trpc.achievements.getUserAchievements.useQuery();
+  const { data: stats } = trpc.achievements.getStats.useQuery();
+
+  if (isLoading) {
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="w-5 h-5" />
+            Achievements
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-16 bg-muted rounded"></div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const recentAchievements = achievements?.slice(0, 5) || [];
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="w-5 h-5" />
+              Achievements
+            </CardTitle>
+            <CardDescription>
+              {stats?.unlocked || 0} of {stats?.total || 0} unlocked • {stats?.points || 0} points earned
+            </CardDescription>
+          </div>
+          <Link href="/game-stats">
+            <Button variant="outline" size="sm">
+              View All Stats
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {recentAchievements.length > 0 ? (
+          <div className="space-y-3">
+            {recentAchievements.map((achievement: any) => (
+              <div
+                key={achievement.id}
+                className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              >
+                <div className="text-2xl">{achievement.icon}</div>
+                <div className="flex-1">
+                  <div className="font-medium">{achievement.name}</div>
+                  <div className="text-sm text-muted-foreground">{achievement.description}</div>
+                </div>
+                <Badge variant="secondary">
+                  <Star className="w-3 h-3 mr-1" />
+                  {achievement.points}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground py-6">
+            No achievements unlocked yet. Play games to earn achievements!
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 const ADDON_BENEFITS: Record<string, string[]> = {
   "Premium Games Pack": ["10 classic games", "High score tracking", "Leaderboards", "Offline play"],
@@ -158,6 +235,9 @@ export default function MyAddons() {
             );
           })}
         </div>
+
+        {/* Achievements Section */}
+        <AchievementsSection />
 
         {/* Browse More */}
         <Card className="mt-6 bg-muted/50">

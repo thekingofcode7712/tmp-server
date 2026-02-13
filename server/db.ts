@@ -18,7 +18,8 @@ import {
   externalEmailCredentials, InsertExternalEmailCredential,
   emailFolders, InsertEmailFolder, emailAttachments, InsertEmailAttachment,
   emailStoragePlans, InsertEmailStoragePlan, fileShares, InsertFileShare,
-  fileVersions, InsertFileVersion, folders, InsertFolder
+  fileVersions, InsertFileVersion, folders, InsertFolder,
+  achievements, InsertAchievement, userAchievements, InsertUserAchievement
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1268,4 +1269,133 @@ export async function purchaseBundle(userId: number, bundleId: number, paymentIn
   }
   
   return { success: true, themeCount: themeIds.length };
+}
+
+// ==================== Achievements ====================
+
+export async function getAllAchievements() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(achievements).where(eq(achievements.isSecret, false)).orderBy(achievements.points);
+}
+
+export async function getUserAchievements(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: userAchievements.id,
+    achievementId: userAchievements.achievementId,
+    earnedAt: userAchievements.earnedAt,
+    progress: userAchievements.progress,
+    name: achievements.name,
+    description: achievements.description,
+    icon: achievements.icon,
+    category: achievements.category,
+    points: achievements.points,
+  })
+  .from(userAchievements)
+  .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
+  .where(eq(userAchievements.userId, userId))
+  .orderBy(desc(userAchievements.earnedAt));
+}
+
+export async function unlockAchievement(userId: number, achievementId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Check if already unlocked
+  const existing = await db.select().from(userAchievements)
+    .where(and(eq(userAchievements.userId, userId), eq(userAchievements.achievementId, achievementId)))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    return existing[0];
+  }
+  
+  // Unlock achievement
+  const result = await db.insert(userAchievements).values({
+    userId,
+    achievementId,
+    progress: 100,
+  });
+  
+  const insertId = (result as any).insertId || (result as any)[0]?.insertId || 0;
+  return { id: Number(insertId), userId, achievementId };
+}
+
+export async function checkAndUnlockAchievements(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const user = await getUserById(userId);
+  if (!user) return [];
+  
+  const unlockedAchievements = [];
+  
+  // Get user stats
+  const totalGames = await db.select({ count: sql<number>`count(*)` })
+    .from(gameScores)
+    .where(eq(gameScores.userId, userId));
+  const gamesPlayed = totalGames[0]?.count || 0;
+  
+  const uniqueGames = await db.select({ count: sql<number>`count(DISTINCT ${gameScores.gameName})` })
+    .from(gameScores)
+    .where(eq(gameScores.userId, userId));
+  const uniqueGamesCount = uniqueGames[0]?.count || 0;
+  
+  const highScore = await db.select({ max: sql<number>`max(${gameScores.score})` })
+    .from(gameScores)
+    .where(eq(gameScores.userId, userId));
+  const maxScore = highScore[0]?.max || 0;
+  
+  // Check achievements
+  const allAchievements = await db.select().from(achievements);
+  
+  for (const achievement of allAchievements) {
+    const condition = achievement.condition as any;
+    let shouldUnlock = false;
+    
+    if (condition.type === 'games_played' && gamesPlayed >= condition.value) {
+      shouldUnlock = true;
+    } else if (condition.type === 'unique_games' && uniqueGamesCount >= condition.value) {
+      shouldUnlock = true;
+    } else if (condition.type === 'score' && maxScore >= condition.value) {
+      shouldUnlock = true;
+    } else if (condition.type === 'storage_used' && user.storageUsed >= condition.value) {
+      shouldUnlock = true;
+    }
+    // Note: fileCount tracking would need to be added to user schema for files_uploaded achievements
+    
+    if (shouldUnlock) {
+      const unlocked = await unlockAchievement(userId, achievement.id);
+      if (unlocked) {
+        unlockedAchievements.push({ ...achievement, earnedAt: new Date() });
+      }
+    }
+  }
+  
+  return unlockedAchievements;
+}
+
+export async function getUserAchievementStats(userId: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, unlocked: 0, points: 0 };
+  
+  const totalAchievements = await db.select({ count: sql<number>`count(*)` })
+    .from(achievements)
+    .where(eq(achievements.isSecret, false));
+  
+  const unlockedAchievements = await db.select({ 
+    count: sql<number>`count(*)`,
+    points: sql<number>`sum(${achievements.points})`
+  })
+  .from(userAchievements)
+  .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
+  .where(eq(userAchievements.userId, userId));
+  
+  return {
+    total: totalAchievements[0]?.count || 0,
+    unlocked: unlockedAchievements[0]?.count || 0,
+    points: unlockedAchievements[0]?.points || 0,
+  };
 }

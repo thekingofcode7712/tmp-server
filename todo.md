@@ -304,3 +304,8 @@
 - [x] Add global leaderboards UI showing top players for each game
 - [x] Implement high score sharing with shareable links
 - [x] Create friend challenge system for competitive gameplay
+- [x] Design and implement achievements database schema
+- [x] Create achievements tracking system with badge unlocking logic
+- [x] Build game statistics dashboard with charts showing total games, average scores, win streaks
+- [x] Display achievements on user profiles and My Add-ons page
+- [x] Fix add-on purchase processing - purchases complete but add-ons aren't being granted to users

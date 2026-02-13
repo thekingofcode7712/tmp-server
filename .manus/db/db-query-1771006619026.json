@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO addons (name, description, category, price, icon, isActive) VALUES\n('Premium Games Pack', '10 fully working games: Snake, Tetris, 2048, Flappy Bird, Pong, Breakout, Space Invaders, Pac-Man, Tic-Tac-Toe, Memory Match', 'game', 300, '🎮', true),\n('Premium Themes Pack', '5 beautiful custom themes with unique color schemes and animations', 'theme', 300, '🎨', true),\n('Extra Storage', 'Add 50GB of additional cloud storage to your account', 'storage', 300, '💾', true),\n('Ai Credits Boost', '1000 extra AI credits for advanced features', 'feature', 300, '⚡', true);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute INSERT INTO addons (name, description, category, price, icon, isActive) VALUES\n('Premium Games Pack', '10 fully working games: Snake, Tetris, 2048, Flappy Bird, Pong, Breakout, Space Invaders, Pac-Man, Tic-Tac-Toe, Memory Match', 'game', 300, '🎮', true),\n('Premium Themes Pack', '5 beautiful custom themes with unique color schemes and animations', 'theme', 300, '🎨', true),\n('Extra Storage', 'Add 50GB of additional cloud storage to your account', 'storage', 300, '💾', true),\n('Ai Credits Boost', '1000 extra AI credits for advanced features', 'feature', 300, '⚡', true);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 70
+}

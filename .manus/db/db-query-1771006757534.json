@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE users SET storageLimit = storageLimit + 53687091200, aiCredits = aiCredits + 1000 WHERE id = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute UPDATE users SET storageLimit = storageLimit + 53687091200, aiCredits = aiCredits + 1000 WHERE id = 1;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 73
+}
