@@ -134,6 +134,13 @@
       "when": 1771007826798,
       "tag": "0018_smiling_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1771008179575,
+      "tag": "0019_safe_husk",
+      "breakpoints": true
     }
   ]
 }

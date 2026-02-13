@@ -324,3 +324,13 @@
 - [ ] Fix challenge auto-completion syntax error and complete implementation
 - [ ] Add challenge completion endpoint to backend
 - [ ] Create challenge leaderboards UI
+- [x] Implement challenge auto-completion backend endpoint
+- [ ] Add frontend logic to detect challenge completion and award credits
+- [x] Create Bits shop database schema for items and purchases
+- [x] Build Bits shop UI with power-ups and cosmetic items
+- [x] Implement Bits to AI credits exchange system
+- [ ] Create global leaderboards for all games
+- [ ] Add weekly and monthly ranking periods
+- [ ] Implement prize distribution system for top performers
+- [x] Add more achievements with varied unlock conditionsction dropdown
+- [ ] Add more achievements with varied unlock conditions

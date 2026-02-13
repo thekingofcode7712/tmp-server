@@ -1143,6 +1143,125 @@ export const appRouter = router({
       return db_instance.select().from(userWeeklyChallenges)
         .where(eq(userWeeklyChallenges.userId, ctx.user.id));
     }),
+    
+    complete: protectedProcedure
+      .input(z.object({ 
+        challengeId: z.number(), 
+        score: z.number(),
+        gameName: z.string()
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db_instance = await db.getDb();
+        if (!db_instance) return { completed: false };
+        
+        const { weeklyChallenges, userWeeklyChallenges, users } = await import('../drizzle/schema');
+        const { eq, and } = await import('drizzle-orm');
+        
+        // Check if challenge exists and is active
+        const [challenge] = await db_instance.select().from(weeklyChallenges)
+          .where(and(
+            eq(weeklyChallenges.id, input.challengeId),
+            eq(weeklyChallenges.isActive, true),
+            eq(weeklyChallenges.gameName, input.gameName)
+          ));
+          
+        if (!challenge) {
+          return { completed: false, message: 'Challenge not found or inactive' };
+        }
+        
+        // Check if already completed
+        const [existing] = await db_instance.select().from(userWeeklyChallenges)
+          .where(and(
+            eq(userWeeklyChallenges.userId, ctx.user.id),
+            eq(userWeeklyChallenges.challengeId, input.challengeId)
+          ));
+          
+        if (existing) {
+          return { completed: false, message: 'Challenge already completed' };
+        }
+        
+        // Check if score meets target
+        if (input.score < challenge.targetScore) {
+          return { completed: false, message: 'Score does not meet target' };
+        }
+        
+        // Record completion
+        await db_instance.insert(userWeeklyChallenges).values({
+          userId: ctx.user.id,
+          challengeId: input.challengeId,
+          score: input.score,
+          rewardClaimed: true,
+        });
+        
+        // Award AI credits
+        await db_instance.update(users)
+          .set({ aiCredits: ctx.user.aiCredits + challenge.reward })
+          .where(eq(users.id, ctx.user.id));
+        
+        return { 
+          completed: true, 
+          reward: challenge.reward,
+          message: `Challenge completed! +${challenge.reward} AI Credits` 
+        };
+      }),
+  }),
+
+  // Bits Shop
+  shop: router({    getItems: publicProcedure.query(async () => {
+      const db_instance = await db.getDb();
+      if (!db_instance) return [];
+      const { shopItems } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      return db_instance.select().from(shopItems)
+        .where(eq(shopItems.isActive, true));
+    }),
+    
+    purchase: protectedProcedure
+      .input(z.object({ itemId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db_instance = await db.getDb();
+        if (!db_instance) return { success: false, message: 'Database unavailable' };
+        
+        const { shopItems, userPurchases, users } = await import('../drizzle/schema');
+        const { eq } = await import('drizzle-orm');
+        
+        // Get item details
+        const [item] = await db_instance.select().from(shopItems)
+          .where(eq(shopItems.id, input.itemId));
+          
+        if (!item) {
+          return { success: false, message: 'Item not found' };
+        }
+        
+        // Check if user has enough Bits
+        if (ctx.user.bitsBalance < item.price) {
+          return { success: false, message: 'Insufficient Bits' };
+        }
+        
+        // Deduct Bits
+        await db_instance.update(users)
+          .set({ bitsBalance: ctx.user.bitsBalance - item.price })
+          .where(eq(users.id, ctx.user.id));
+        
+        // Record purchase
+        await db_instance.insert(userPurchases).values({
+          userId: ctx.user.id,
+          itemId: input.itemId,
+          pricePaid: item.price,
+          quantity: 1,
+        });
+        
+        // Handle exchange items (convert Bits to AI Credits)
+        if (item.category === 'exchange') {
+          const creditsToAdd = item.name.includes('100') ? 100 : 500;
+          await db_instance.update(users)
+            .set({ aiCredits: ctx.user.aiCredits + creditsToAdd })
+            .where(eq(users.id, ctx.user.id));
+          return { success: true, message: `Purchased ${item.name}! +${creditsToAdd} AI Credits` };
+        }
+        
+        return { success: true, message: `Purchased ${item.name}!` };
+      }),
   }),
 
   // AI Chatbot

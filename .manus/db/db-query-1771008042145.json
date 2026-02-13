@@ -1,0 +1,21 @@
+{
+  "query": "SELECT * FROM achievements LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute SELECT * FROM achievements LIMIT 1;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "First Win",
+      "description": "Complete your first game",
+      "icon": "🎯",
+      "category": "milestone",
+      "condition": "{\"type\": \"games_played\", \"value\": 1}",
+      "points": "10",
+      "isSecret": "0",
+      "createdAt": "2026-02-13 18:20:14"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tdescription\ticon\tcategory\tcondition\tpoints\tisSecret\tcreatedAt\n1\tFirst Win\tComplete your first game\t🎯\tmilestone\t{\"type\": \"games_played\", \"value\": 1}\t10\t0\t2026-02-13 18:20:14\n",
+  "stderr": "",
+  "execution_time_ms": 75
+}

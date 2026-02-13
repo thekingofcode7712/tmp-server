@@ -761,3 +761,36 @@ export const userWeeklyChallenges = mysqlTable("userWeeklyChallenges", {
 });
 export type UserWeeklyChallenge = typeof userWeeklyChallenges.$inferSelect;
 export type InsertUserWeeklyChallenge = typeof userWeeklyChallenges.$inferInsert;
+
+/**
+ * Bits Shop Items
+ */
+export const shopItems = mysqlTable("shopItems", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  category: mysqlEnum("category", ["powerup", "cosmetic", "exchange", "boost"]).notNull(),
+  price: int("price").notNull(), // Price in Bits
+  icon: varchar("icon", { length: 50 }), // Icon name or emoji
+  isActive: boolean("isActive").default(true).notNull(),
+  metadata: json("metadata"), // Additional item-specific data
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ShopItem = typeof shopItems.$inferSelect;
+export type InsertShopItem = typeof shopItems.$inferInsert;
+
+/**
+ * User Shop Purchases
+ */
+export const userPurchases = mysqlTable("userPurchases", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  itemId: int("itemId").notNull(),
+  pricePaid: int("pricePaid").notNull(), // Bits spent
+  quantity: int("quantity").default(1).notNull(),
+  purchasedAt: timestamp("purchasedAt").defaultNow().notNull(),
+});
+
+export type UserPurchase = typeof userPurchases.$inferSelect;
+export type InsertUserPurchase = typeof userPurchases.$inferInsert;

@@ -29,6 +29,7 @@ import WordProcessor from "./pages/WordProcessor";
 import ServerStatus from "./pages/ServerStatus";
 import Addons from "./pages/Addons";
 import MyAddons from "./pages/MyAddons";
+import BitsShop from "./pages/BitsShop";
 import GameStats from "./pages/GameStats";
 import WeeklyChallenges from "./pages/WeeklyChallenges";
 import { Themes } from "./pages/Themes";
@@ -64,6 +65,7 @@ function Router() {
       <Route path="/server-status" component={ServerStatus} />
       <Route path="/addons" component={Addons} />
       <Route path="/my-addons" component={MyAddons} />
+      <Route path="/bits-shop" component={BitsShop} />
       <Route path="/game-stats" component={GameStats} />
       <Route path="/weekly-challenges" component={WeeklyChallenges} />
       <Route path="/themes" component={Themes} />

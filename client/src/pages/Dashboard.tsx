@@ -56,6 +56,7 @@ export default function Dashboard() {
     { icon: Shield, label: "VPN", path: "/vpn", color: "text-teal-500" },
     { icon: ShoppingCart, label: "Add-ons", path: "/addons", color: "text-amber-500" },
     { icon: Package, label: "My Add-ons", path: "/my-addons", color: "text-lime-500" },
+    { icon: ShoppingCart, label: "Bits Shop", path: "/bits-shop", color: "text-purple-500" },
     { icon: Palette, label: "Themes", path: "/themes", color: "text-fuchsia-500" },
     { icon: Settings, label: "Settings", path: "/settings", color: "text-slate-500" },
     { icon: CreditCard, label: "Subscription", path: "/subscription", color: "text-emerald-500" },
@@ -216,22 +217,27 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Access Menu */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Quick Access</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-            {menuItems.map((item) => (
-              <button
-                key={item.path}
-                onClick={() => setLocation(item.path)}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card hover:bg-accent/50 border border-border hover:border-primary/30 transition-all hover:scale-105 hover:shadow-lg group"
-              >
-                <item.icon className={`h-6 w-6 ${item.color} group-hover:scale-110 transition-transform`} />
-                <span className="text-xs font-medium text-center line-clamp-2">{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Menu Selection */}
+        <Card className="border-primary/20 shadow-lg">
+          <CardHeader>
+            <CardTitle>Navigate to Feature</CardTitle>
+            <CardDescription>Select a feature to access from the dropdown below</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <select
+              onChange={(e) => e.target.value && setLocation(e.target.value)}
+              className="w-full p-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              defaultValue=""
+            >
+              <option value="" disabled>Select a feature...</option>
+              {menuItems.map((item) => (
+                <option key={item.path} value={item.path}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
