@@ -161,6 +161,7 @@ export const appRouter = router({
         subscriptionStatus: subscription?.status || "active",
         pausedUntil: subscription?.pausedUntil || null,
         aiCredits: user?.aiCredits || 0,
+        bitsBalance: user?.bitsBalance || 0,
         fileCount: files.length,
         recentFiles,
         recentActivity,

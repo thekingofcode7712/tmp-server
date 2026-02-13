@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `bitsBalance` int DEFAULT 1000 NOT NULL;

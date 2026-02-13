@@ -22,6 +22,9 @@ export const users = mysqlTable("users", {
   // AI Credits
   aiCredits: int("aiCredits").default(100).notNull(),
   
+  // Bits to Play (in-game currency)
+  bitsBalance: int("bitsBalance").default(1000).notNull(),
+  
   // Customization (one-time purchase)
   hasCustomization: boolean("hasCustomization").default(false).notNull(),
   customLogo: text("customLogo"),

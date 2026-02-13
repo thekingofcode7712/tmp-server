@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Share2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Share2, Trophy, Users, Target } from "lucide-react";
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -153,23 +153,29 @@ export default function GamePlay() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <header className="border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm shadow-sm">
         <div className="container py-4">
           <div className="flex items-center gap-4">
             <Link href="/games">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="hover:bg-primary/10">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <div>
-              <h1 className="text-2xl font-bold">{getGameTitle()}</h1>
-              <div className="flex items-center gap-4">
-                <p className="text-sm text-muted-foreground">Current Score: {score}</p>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{getGameTitle()}</h1>
+              <div className="flex items-center gap-4 mt-1">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                  <Trophy className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-semibold text-primary">{score}</p>
+                </div>
                 {challengeScore && (
-                  <p className="text-sm font-semibold text-primary">
-                    🎯 Challenge: Beat {challengeScore}
-                  </p>
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 animate-pulse">
+                    <Target className="h-4 w-4 text-amber-600" />
+                    <p className="text-sm font-semibold text-amber-600">
+                      Beat {challengeScore}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>

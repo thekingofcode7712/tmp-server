@@ -1,18 +1,19 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { 
   HardDrive, Mail, Gamepad2, Terminal, Bot, Link as LinkIcon, 
-  Download, Settings, CreditCard, Database, LogOut, Shield, ShieldOff, ShoppingCart, Palette 
+  Download, Settings, CreditCard, Database, LogOut, Shield, ShoppingCart, Palette,
+  Activity, Trophy, Package, Target
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -41,17 +42,42 @@ export default function Dashboard() {
   const emailStorageUsedGB = stats ? (stats.emailStorageUsed / (1024 ** 3)).toFixed(2) : "0";
   const emailStorageLimitGB = stats ? (stats.emailStorageLimit / (1024 ** 3)).toFixed(2) : "15";
 
+  const menuItems = [
+    { icon: HardDrive, label: "Cloud Storage", path: "/storage", color: "text-blue-500" },
+    { icon: Download, label: "Video Downloader", path: "/video-downloader", color: "text-red-500" },
+    { icon: LinkIcon, label: "Link Uploader", path: "/links", color: "text-green-500" },
+    { icon: Gamepad2, label: "Games", path: "/games", color: "text-purple-500" },
+    { icon: Trophy, label: "Game Stats", path: "/game-stats", color: "text-yellow-500" },
+    { icon: Target, label: "Weekly Challenges", path: "/weekly-challenges", color: "text-orange-500" },
+    { icon: Mail, label: "Email", path: "/email", color: "text-cyan-500" },
+    { icon: Bot, label: "AI Chat", path: "/ai-chat", color: "text-pink-500" },
+    { icon: Terminal, label: "CLI", path: "/cli", color: "text-gray-500" },
+    { icon: Database, label: "Backups", path: "/backups", color: "text-indigo-500" },
+    { icon: Shield, label: "VPN", path: "/vpn", color: "text-teal-500" },
+    { icon: ShoppingCart, label: "Add-ons", path: "/addons", color: "text-amber-500" },
+    { icon: Package, label: "My Add-ons", path: "/my-addons", color: "text-lime-500" },
+    { icon: Palette, label: "Themes", path: "/themes", color: "text-fuchsia-500" },
+    { icon: Settings, label: "Settings", path: "/settings", color: "text-slate-500" },
+    { icon: CreditCard, label: "Subscription", path: "/subscription", color: "text-emerald-500" },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm shadow-sm">
         <div className="container py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">TMP Server</h1>
-              <p className="text-sm text-muted-foreground">Welcome back, {user?.name}</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">TMP Server</h1>
+              <p className="text-sm text-muted-foreground mt-1">Welcome back, {user?.name}</p>
             </div>
             <div className="flex items-center gap-2">
+              <Link href="/server-status">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Activity className="h-4 w-4" />
+                  Server Status
+                </Button>
+              </Link>
               <Link href="/settings">
                 <Button variant="ghost" size="icon">
                   <Settings className="h-5 w-5" />
@@ -83,311 +109,130 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="container py-8">
-        {/* Storage Overview */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Storage Overview</CardTitle>
-            <CardDescription>
-              {storageUsedGB} GB of {storageLimitGB} GB used
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-4 w-full" />
-            ) : (
-              <>
-                <Progress value={storagePercent} className="mb-2" />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>{stats?.fileCount || 0} files</span>
-                  <span>{stats?.subscriptionTier || "free"} plan</span>
-                </div>
-                {storagePercent >= 90 && (
-                  <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-600 dark:text-red-400">
-                    ⚠️ File storage almost full! Please delete files or upgrade your plan.
-                  </div>
-                )}
-                {storagePercent >= 80 && storagePercent < 95 && (
-                  <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-sm text-yellow-600 dark:text-yellow-400">
-                    ⚠️ Storage is 80% full. Consider upgrading your plan.
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Email Storage Overview */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Email Storage</CardTitle>
-            <CardDescription>
-              {emailStorageUsedGB} GB of {emailStorageLimitGB} GB used
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-4 w-full" />
-            ) : (
-              <>
-                <Progress value={emailStoragePercent} className="mb-2" />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Email storage</span>
-                  <span>15GB free</span>
-                </div>
-                {emailStoragePercent >= 90 && (
-                  <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-600 dark:text-red-400">
-                    ⚠️ Email storage almost full! Please delete emails or upgrade your plan.
-                  </div>
-                )}
-                {emailStoragePercent >= 75 && emailStoragePercent < 90 && (
-                  <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-sm text-yellow-600 dark:text-yellow-400">
-                    ⚠️ Email storage is {emailStoragePercent.toFixed(0)}% full
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">AI Credits</CardTitle>
+      <div className="container py-8 space-y-8">
+        {/* Storage & Email Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Storage Overview */}
+          <Card className="border-primary/20 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <HardDrive className="h-5 w-5 text-primary" />
+                <CardTitle>Cloud Storage</CardTitle>
+              </div>
+              <CardDescription>
+                {storageUsedGB} GB of {storageLimitGB} GB used
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.aiCredits || 0}</div>
-              <p className="text-xs text-muted-foreground">credits remaining</p>
-              {stats && stats.aiCredits > 0 && stats.aiCredits <= 10 && (
-                <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-600 dark:text-yellow-400">
-                  ⚠️ Low credits! <Link href="/buy-credits" className="underline">Buy more</Link>
-                </div>
+              {statsLoading ? (
+                <Skeleton className="h-4 w-full" />
+              ) : (
+                <>
+                  <Progress value={storagePercent} className="mb-2 h-3" />
+                  <div className="flex justify-between text-sm text-muted-foreground mt-3">
+                    <span>{stats?.fileCount || 0} files</span>
+                    <span>{stats?.subscriptionTier || "free"} plan</span>
+                  </div>
+                  {storagePercent >= 90 && (
+                    <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
+                      ⚠️ Storage almost full! <Link href="/subscription" className="underline font-semibold">Upgrade now</Link>
+                    </div>
+                  )}
+                  {storagePercent >= 75 && storagePercent < 90 && (
+                    <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm text-yellow-600 dark:text-yellow-400">
+                      ⚠️ Storage is {storagePercent.toFixed(0)}% full
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Files Stored</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.fileCount || 0}</div>
-              <p className="text-xs text-muted-foreground">total files</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Subscription</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold capitalize">{stats?.subscriptionTier || "Free"}</div>
-              <p className="text-xs text-muted-foreground">current plan</p>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Link href="/storage">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <HardDrive className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>Cloud Storage</CardTitle>
-                <CardDescription>Upload and manage your files</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/email">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <Mail className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>Email</CardTitle>
-                <CardDescription>Send and receive emails</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/games">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <Gamepad2 className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>Games</CardTitle>
-                <CardDescription>Play 20 games with leaderboards</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/video-downloader">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <Download className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>Video Downloader</CardTitle>
-                <CardDescription>Download videos from URLs</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/links">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <LinkIcon className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>Link Uploader</CardTitle>
-                <CardDescription>Save music, video, and app links</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/ai-chat">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <Bot className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>AI Chat</CardTitle>
-                <CardDescription>Chat with AI assistant</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/cli">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <Terminal className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>CLI Terminal</CardTitle>
-                <CardDescription>200+ commands available</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/backups">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <Database className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>Backups</CardTitle>
-                <CardDescription>Backup and restore your data</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/subscription">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <CreditCard className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>Subscription</CardTitle>
-                <CardDescription>Manage your plan</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/vpn">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <Shield className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>VPN Service</CardTitle>
-                <CardDescription>Secure your connection</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/adblocker">
-            <Card className="card-hover cursor-pointer">
-              <CardHeader>
-                <ShieldOff className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>Ad Blocker</CardTitle>
-                <CardDescription>Block ads and trackers</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/addons">
-            <Card className="card-hover cursor-pointer border-primary/50">
-              <CardHeader>
-                <ShoppingCart className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>Add-ons Marketplace</CardTitle>
-                <CardDescription>Premium features for only £3 each</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
-          <Link href="/themes">
-            <Card className="card-hover cursor-pointer border-primary/50">
-              <CardHeader>
-                <Palette className="h-8 w-8 text-primary mb-2" />
-                <CardTitle>Theme Marketplace</CardTitle>
-                <CardDescription>23 premium themes - £3 each or £34.99 for all</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-        </div>
-
-        {/* Recent Files */}
-        {stats?.recentFiles && stats.recentFiles.length > 0 && (
-          <Card className="mt-8">
+          {/* Email Storage Overview */}
+          <Card className="border-cyan-500/20 shadow-lg">
             <CardHeader>
-              <CardTitle>Recent Files</CardTitle>
-              <CardDescription>Your most recently uploaded files</CardDescription>
+              <div className="flex items-center gap-2">
+                <Mail className="h-5 w-5 text-cyan-500" />
+                <CardTitle>Email Storage</CardTitle>
+              </div>
+              <CardDescription>
+                {emailStorageUsedGB} GB of {emailStorageLimitGB} GB used
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {stats.recentFiles.map((file) => (
-                  <div key={file.id} className="flex items-center justify-between p-2 rounded hover:bg-muted">
-                    <div className="flex-1">
-                      <p className="font-medium">{file.fileName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {((file.fileSize || 0) / 1024).toFixed(2)} KB
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={file.fileUrl} target="_blank" rel="noopener noreferrer">
-                        View
-                      </a>
-                    </Button>
+              {statsLoading ? (
+                <Skeleton className="h-4 w-full" />
+              ) : (
+                <>
+                  <Progress value={emailStoragePercent} className="mb-2 h-3" />
+                  <div className="flex justify-between text-sm text-muted-foreground mt-3">
+                    <span>Email storage</span>
+                    <span>15GB free</span>
                   </div>
-                ))}
-              </div>
+                  {emailStoragePercent >= 90 && (
+                    <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
+                      ⚠️ Email storage almost full!
+                    </div>
+                  )}
+                  {emailStoragePercent >= 75 && emailStoragePercent < 90 && (
+                    <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm text-yellow-600 dark:text-yellow-400">
+                      ⚠️ Email storage is {emailStoragePercent.toFixed(0)}% full
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
-        )}
-      </div>
+        </div>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-card mt-12">
-        <div className="container py-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="font-semibold mb-2">TMP Server</h3>
-              <p className="text-sm text-muted-foreground">
-                Your complete cloud platform with storage, email, games, and more.
-              </p>
+        {/* Server Analytics */}
+        <Card className="border-primary/20 shadow-lg">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              <CardTitle>Server Analytics</CardTitle>
             </div>
-            <div>
-              <h3 className="font-semibold mb-2">Quick Links</h3>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li><Link href="/storage"><a className="hover:text-foreground">Cloud Storage</a></Link></li>
-                <li><Link href="/email"><a className="hover:text-foreground">Email</a></Link></li>
-                <li><Link href="/games"><a className="hover:text-foreground">Games</a></Link></li>
-                <li><Link href="/subscription"><a className="hover:text-foreground">Subscription</a></Link></li>
-              </ul>
+            <CardDescription>Real-time server performance metrics</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+                <p className="text-sm text-muted-foreground mb-1">Total Files</p>
+                <p className="text-2xl font-bold text-primary">{stats?.fileCount || 0}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-cyan-500/5 border border-cyan-500/10">
+                <p className="text-sm text-muted-foreground mb-1">AI Credits</p>
+                <p className="text-2xl font-bold text-cyan-600">{stats?.aiCredits || 0}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/10">
+                <p className="text-sm text-muted-foreground mb-1">Bits Balance</p>
+                <p className="text-2xl font-bold text-purple-600">{stats?.bitsBalance?.toLocaleString() || 0}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+                <p className="text-sm text-muted-foreground mb-1">Plan</p>
+                <p className="text-2xl font-bold text-emerald-600 capitalize">{stats?.subscriptionTier || "Free"}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold mb-2">Support</h3>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>
-                  <a href="mailto:support@tmpcollectables.com" className="hover:text-foreground">
-                    support@tmpcollectables.com
-                  </a>
-                </li>
-                <li><Link href="/terms"><a className="hover:text-foreground">Terms of Service</a></Link></li>
-                <li><Link href="/privacy"><a className="hover:text-foreground">Privacy Policy</a></Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-6 pt-6 border-t border-border text-center text-sm text-muted-foreground">
-            © 2026 TMP Server. All rights reserved.
+          </CardContent>
+        </Card>
+
+        {/* Quick Access Menu */}
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Quick Access</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            {menuItems.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => setLocation(item.path)}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card hover:bg-accent/50 border border-border hover:border-primary/30 transition-all hover:scale-105 hover:shadow-lg group"
+              >
+                <item.icon className={`h-6 w-6 ${item.color} group-hover:scale-110 transition-transform`} />
+                <span className="text-xs font-medium text-center line-clamp-2">{item.label}</span>
+              </button>
+            ))}
           </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }

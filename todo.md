@@ -313,3 +313,14 @@
 - [x] Add Game Stats and My Add-ons links to sidebar navigation
 - [x] Implement achievement unlock toast notifications during gameplay
 - [x] Create weekly challenges system with database schema and UI
+- [x] Add Weekly Challenges link to sidebar navigation
+- [x] Improve game visual design with better styling and animations
+- [x] Implement Bits to Play currency system with database schema
+- [ ] Implement challenge auto-completion when target scores are reached
+- [ ] Add instant reward claiming for completed challenges
+- [ ] Create challenge leaderboards showing top performers for each challenge
+- [x] Redesign Dashboard to show only storage, email storage, and server analytics
+- [x] Add menu selection feature to Dashboard for quick navigation to all features
+- [ ] Fix challenge auto-completion syntax error and complete implementation
+- [ ] Add challenge completion endpoint to backend
+- [ ] Create challenge leaderboards UI
