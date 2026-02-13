@@ -375,3 +375,10 @@
 - [x] Generate app icons for iOS and Android (192x192, 512x512)
 - [x] Add iOS-specific meta tags for app installation
 - [x] Upload icons to CDN and update manifest
+- [x] Install Capacitor CLI and core packages
+- [x] Configure Capacitor for iOS and Android platforms
+- [x] Add native push notifications plugin
+- [x] Create capacitor.config.ts configuration
+- [x] Generate iOS and Android project files
+- [x] Create build and deployment instructions document
+- [x] Create app installation info page at /app-info

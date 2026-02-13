@@ -38,6 +38,7 @@ import Referrals from "./pages/Referrals";
 import { Themes } from "./pages/Themes";
 import CodeSnippets from "./pages/CodeSnippets";
 import Admin from "./pages/Admin";
+import AppInfo from "./pages/AppInfo";
 import Login from "./pages/Login";
 import SharedFile from "./pages/SharedFile";
 import Activity from "./pages/Activity";
@@ -45,9 +46,9 @@ import { useApplyPurchasedTheme } from "./hooks/useApplyPurchasedTheme";
 
 function Router() {
   return (
-    <Switch>
-      <Route path={"/login"} component={Login} />
-      <Route path={"/share/:token"} component={SharedFile} />
+    <Switch>      <Route path="/login" component={Login} />
+      <Route path="/app-info" component={AppInfo} />
+      <Route path="/share/:token" component={SharedFile} />
       <Route path={"/"} component={Dashboard} />
       <Route path={"/activity"} component={Activity} />
       <Route path={"/storage"} component={CloudStorage} />

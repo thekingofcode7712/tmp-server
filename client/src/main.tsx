@@ -7,6 +7,7 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
+import { initPushNotifications, setupPushListeners } from "./lib/pushNotifications";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,10 @@ const trpcClient = trpc.createClient({
     }),
   ],
 });
+
+// Initialize push notifications for native apps
+setupPushListeners();
+initPushNotifications().catch(err => console.log('Push notifications not available:', err));
 
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
