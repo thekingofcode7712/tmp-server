@@ -30,6 +30,7 @@ import ServerStatus from "./pages/ServerStatus";
 import Addons from "./pages/Addons";
 import MyAddons from "./pages/MyAddons";
 import GameStats from "./pages/GameStats";
+import WeeklyChallenges from "./pages/WeeklyChallenges";
 import { Themes } from "./pages/Themes";
 import Login from "./pages/Login";
 import SharedFile from "./pages/SharedFile";
@@ -64,6 +65,7 @@ function Router() {
       <Route path="/addons" component={Addons} />
       <Route path="/my-addons" component={MyAddons} />
       <Route path="/game-stats" component={GameStats} />
+      <Route path="/weekly-challenges" component={WeeklyChallenges} />
       <Route path="/themes" component={Themes} />
       <Route path={"/checkout-success"} component={CheckoutSuccess} />
       <Route path={"/terms"} component={TermsOfService} />

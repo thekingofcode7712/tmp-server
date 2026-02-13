@@ -23,15 +23,29 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, HardDrive, Mail, Gamepad2, Terminal, Bot, Link as LinkIcon, Download, Settings, CreditCard, Database, Shield, ShoppingCart, Palette, Trophy, Package } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: HardDrive, label: "Cloud Storage", path: "/storage" },
+  { icon: Download, label: "Video Downloader", path: "/video-downloader" },
+  { icon: LinkIcon, label: "Link Uploader", path: "/links" },
+  { icon: Gamepad2, label: "Games", path: "/games" },
+  { icon: Trophy, label: "Game Stats", path: "/game-stats" },
+  { icon: Mail, label: "Email", path: "/email" },
+  { icon: Bot, label: "AI Chat", path: "/ai-chat" },
+  { icon: Terminal, label: "CLI", path: "/cli" },
+  { icon: Database, label: "Backups", path: "/backups" },
+  { icon: Shield, label: "VPN", path: "/vpn" },
+  { icon: ShoppingCart, label: "Add-ons", path: "/addons" },
+  { icon: Package, label: "My Add-ons", path: "/my-addons" },
+  { icon: Palette, label: "Themes", path: "/themes" },
+  { icon: Settings, label: "Settings", path: "/settings" },
+  { icon: CreditCard, label: "Subscription", path: "/subscription" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

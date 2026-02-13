@@ -309,3 +309,7 @@
 - [x] Build game statistics dashboard with charts showing total games, average scores, win streaks
 - [x] Display achievements on user profiles and My Add-ons page
 - [x] Fix add-on purchase processing - purchases complete but add-ons aren't being granted to users
+- [x] Prevent duplicate theme and bundle purchases - show "Already Owned" instead of buy button
+- [x] Add Game Stats and My Add-ons links to sidebar navigation
+- [x] Implement achievement unlock toast notifications during gameplay
+- [x] Create weekly challenges system with database schema and UI

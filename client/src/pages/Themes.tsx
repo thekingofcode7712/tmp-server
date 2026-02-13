@@ -25,6 +25,12 @@ export function Themes() {
     return userThemes?.some(ut => ut.theme.id === themeId) || false;
   };
 
+  const { data: userBundles } = trpc.themes.getUserBundles.useQuery();
+  
+  const hasBundle = (bundleId: number) => {
+    return userBundles?.some((ub: any) => ub.bundleId === bundleId) || false;
+  };
+
   const handlePurchaseTheme = async (themeId: number, themeName: string) => {
     try {
       setPurchasing(true);
@@ -192,14 +198,26 @@ export function Themes() {
                         </div>
                       </div>
                       
-                      <Button 
-                        onClick={() => handlePurchaseBundle(bundle.id, bundle.name)}
-                        disabled={purchasing}
-                        className="w-full"
-                        size="lg"
-                      >
-                        Purchase Bundle
-                      </Button>
+                      {hasBundle(bundle.id) ? (
+                        <Button 
+                          disabled
+                          variant="outline"
+                          className="w-full"
+                          size="lg"
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          Already Owned
+                        </Button>
+                      ) : (
+                        <Button 
+                          onClick={() => handlePurchaseBundle(bundle.id, bundle.name)}
+                          disabled={purchasing}
+                          className="w-full"
+                          size="lg"
+                        >
+                          Purchase Bundle
+                        </Button>
+                      )}
                     </div>
                   </Card>
                 );

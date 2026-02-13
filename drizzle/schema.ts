@@ -727,3 +727,34 @@ export const emailStoragePlans = mysqlTable("emailStoragePlans", {
 export type EmailStoragePlan = typeof emailStoragePlans.$inferSelect;
 export type InsertEmailStoragePlan = typeof emailStoragePlans.$inferInsert;
 
+/**
+ * Weekly challenges for games
+ */
+export const weeklyChallenges = mysqlTable("weeklyChallenges", {
+  id: int("id").autoincrement().primaryKey(),
+  gameName: varchar("gameName", { length: 100 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  targetScore: int("targetScore").notNull(),
+  reward: int("reward").notNull(), // AI credits or other rewards
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type WeeklyChallenge = typeof weeklyChallenges.$inferSelect;
+export type InsertWeeklyChallenge = typeof weeklyChallenges.$inferInsert;
+
+/**
+ * User weekly challenge completions
+ */
+export const userWeeklyChallenges = mysqlTable("userWeeklyChallenges", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  challengeId: int("challengeId").notNull(),
+  score: int("score").notNull(),
+  completedAt: timestamp("completedAt").defaultNow().notNull(),
+  rewardClaimed: boolean("rewardClaimed").default(false).notNull(),
+});
+export type UserWeeklyChallenge = typeof userWeeklyChallenges.$inferSelect;
+export type InsertUserWeeklyChallenge = typeof userWeeklyChallenges.$inferInsert;

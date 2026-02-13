@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO weeklyChallenges (gameName, title, description, targetScore, reward, startDate, endDate, isActive) VALUES\n('snake', 'Snake Master Challenge', 'Reach a score of 500 or higher in Snake', 500, 100, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), TRUE),\n('tetris', 'Tetris Pro Challenge', 'Clear 100 lines in a single Tetris game', 100, 150, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), TRUE),\n('2048', '2048 Expert Challenge', 'Reach the 2048 tile', 2048, 200, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), TRUE);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute INSERT INTO weeklyChallenges (gameName, title, description, targetScore, reward, startDate, endDate, isActive) VALUES\n('snake', 'Snake Master Challenge', 'Reach a score of 500 or higher in Snake', 500, 100, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), TRUE),\n('tetris', 'Tetris Pro Challenge', 'Clear 100 lines in a single Tetris game', 100, 150, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), TRUE),\n('2048', '2048 Expert Challenge', 'Reach the 2048 tile', 2048, 200, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), TRUE);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 82
+}

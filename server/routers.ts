@@ -1119,6 +1119,31 @@ export const appRouter = router({
     }),
   }),
 
+  // Weekly Challenges
+  challenges: router({
+    getActive: protectedProcedure.query(async () => {
+      const db_instance = await db.getDb();
+      if (!db_instance) return [];
+      const { weeklyChallenges } = await import('../drizzle/schema');
+      const { and, eq, gte } = await import('drizzle-orm');
+      const now = new Date();
+      return db_instance.select().from(weeklyChallenges)
+        .where(and(
+          eq(weeklyChallenges.isActive, true),
+          gte(weeklyChallenges.endDate, now)
+        ));
+    }),
+    
+    getUserCompletions: protectedProcedure.query(async ({ ctx }) => {
+      const db_instance = await db.getDb();
+      if (!db_instance) return [];
+      const { userWeeklyChallenges } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      return db_instance.select().from(userWeeklyChallenges)
+        .where(eq(userWeeklyChallenges.userId, ctx.user.id));
+    }),
+  }),
+
   // AI Chatbot
   ai: router({
     chat: protectedProcedure
@@ -2258,6 +2283,14 @@ export const appRouter = router({
 
     getUserThemes: protectedProcedure.query(async ({ ctx }) => {
       return await db.getUserThemes(ctx.user.id);
+    }),
+
+    getUserBundles: protectedProcedure.query(async ({ ctx }) => {
+      const db_instance = await db.getDb();
+      if (!db_instance) return [];
+      const { userThemeBundles } = await import('../drizzle/schema');
+      const { eq } = await import('drizzle-orm');
+      return db_instance.select().from(userThemeBundles).where(eq(userThemeBundles.userId, ctx.user.id));
     }),
 
     purchaseTheme: protectedProcedure

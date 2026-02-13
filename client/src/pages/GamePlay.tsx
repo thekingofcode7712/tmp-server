@@ -33,9 +33,24 @@ export default function GamePlay() {
     { enabled: !!gameName }
   );
 
+  const checkAchievementsMutation = trpc.achievements.checkAndUnlock.useMutation({
+    onSuccess: (newAchievements) => {
+      if (newAchievements && newAchievements.length > 0) {
+        newAchievements.forEach((achievement: any) => {
+          toast.success(`🏆 Achievement Unlocked: ${achievement.name}`, {
+            description: `${achievement.description} (+${achievement.points} points)`,
+            duration: 8000,
+          });
+        });
+      }
+    },
+  });
+
   const submitScoreMutation = trpc.games.submitScore.useMutation({
     onSuccess: () => {
       toast.success("Score submitted!");
+      // Check for new achievements after submitting score
+      checkAchievementsMutation.mutate();
     },
   });
 
