@@ -827,3 +827,25 @@ export const codeSnippets = mysqlTable("codeSnippets", {
 
 export type CodeSnippet = typeof codeSnippets.$inferSelect;
 export type InsertCodeSnippet = typeof codeSnippets.$inferInsert;
+
+/**
+ * App Builds (iOS .ipa and Android .aab files)
+ */
+export const appBuilds = mysqlTable("appBuilds", {
+  id: int("id").autoincrement().primaryKey(),
+  platform: mysqlEnum("platform", ["ios", "android"]).notNull(),
+  version: varchar("version", { length: 50 }).notNull(), // e.g., "1.0.0"
+  buildNumber: int("buildNumber").notNull(), // Incrementing build number
+  fileName: varchar("fileName", { length: 500 }).notNull(),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileSize: bigint("fileSize", { mode: "number" }).notNull(),
+  releaseNotes: text("releaseNotes"),
+  isPublic: boolean("isPublic").default(true).notNull(), // Whether build is publicly downloadable
+  downloadCount: int("downloadCount").default(0).notNull(),
+  uploadedBy: int("uploadedBy").notNull(), // User ID of uploader (admin only)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AppBuild = typeof appBuilds.$inferSelect;
+export type InsertAppBuild = typeof appBuilds.$inferInsert;

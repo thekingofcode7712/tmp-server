@@ -39,6 +39,8 @@ import { Themes } from "./pages/Themes";
 import CodeSnippets from "./pages/CodeSnippets";
 import Admin from "./pages/Admin";
 import AppInfo from "./pages/AppInfo";
+import AppBuilds from "./pages/AppBuilds";
+import AppBuildUpload from "./pages/AppBuildUpload";
 import Login from "./pages/Login";
 import SharedFile from "./pages/SharedFile";
 import Activity from "./pages/Activity";
@@ -48,6 +50,8 @@ function Router() {
   return (
     <Switch>      <Route path="/login" component={Login} />
       <Route path="/app-info" component={AppInfo} />
+      <Route path="/app-builds" component={AppBuilds} />
+      <Route path="/app-build-upload" component={AppBuildUpload} />
       <Route path="/share/:token" component={SharedFile} />
       <Route path={"/"} component={Dashboard} />
       <Route path={"/activity"} component={Activity} />

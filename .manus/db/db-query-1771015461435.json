@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `appBuilds` (\n  `id` int AUTO_INCREMENT PRIMARY KEY,\n  `platform` enum('ios', 'android') NOT NULL,\n  `version` varchar(50) NOT NULL,\n  `buildNumber` int NOT NULL,\n  `fileName` varchar(500) NOT NULL,\n  `fileKey` varchar(500) NOT NULL,\n  `fileUrl` text NOT NULL,\n  `fileSize` bigint NOT NULL,\n  `releaseNotes` text,\n  `isPublic` boolean DEFAULT true NOT NULL,\n  `downloadCount` int DEFAULT 0 NOT NULL,\n  `uploadedBy` int NOT NULL,\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3zi9SS7LHoe5L4D.0c0efd27f0c1 --database NAAb8kuuPdPYhzAyGHkU6a --execute CREATE TABLE IF NOT EXISTS `appBuilds` (\n  `id` int AUTO_INCREMENT PRIMARY KEY,\n  `platform` enum('ios', 'android') NOT NULL,\n  `version` varchar(50) NOT NULL,\n  `buildNumber` int NOT NULL,\n  `fileName` varchar(500) NOT NULL,\n  `fileKey` varchar(500) NOT NULL,\n  `fileUrl` text NOT NULL,\n  `fileSize` bigint NOT NULL,\n  `releaseNotes` text,\n  `isPublic` boolean DEFAULT true NOT NULL,\n  `downloadCount` int DEFAULT 0 NOT NULL,\n  `uploadedBy` int NOT NULL,\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 321
+}

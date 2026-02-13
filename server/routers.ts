@@ -2934,5 +2934,117 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  // App Builds Management
+  appBuilds: router({
+    uploadBuild: protectedProcedure
+      .input(z.object({
+        platform: z.enum(['ios', 'android']),
+        version: z.string(),
+        buildNumber: z.number(),
+        fileName: z.string(),
+        fileData: z.string(), // base64 encoded file
+        releaseNotes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Only admin (owner) can upload builds
+        if (ctx.user.id !== 1) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admins can upload app builds' });
+        }
+
+        const db_instance = await getDb();
+        if (!db_instance) throw new Error("Database not available");
+        const { appBuilds } = await import("../drizzle/schema");
+
+        // Decode base64 and upload to S3
+        const fileBuffer = Buffer.from(input.fileData, 'base64');
+        const fileExtension = input.platform === 'ios' ? 'ipa' : 'aab';
+        const fileKey = `app-builds/${input.platform}/${input.version}-${input.buildNumber}.${fileExtension}`;
+        
+        const { url } = await storagePut(fileKey, fileBuffer, 
+          input.platform === 'ios' ? 'application/octet-stream' : 'application/vnd.android.package-archive'
+        );
+
+        // Save to database
+        const [build] = await db_instance.insert(appBuilds).values({
+          platform: input.platform,
+          version: input.version,
+          buildNumber: input.buildNumber,
+          fileName: input.fileName,
+          fileKey,
+          fileUrl: url,
+          fileSize: fileBuffer.length,
+          releaseNotes: input.releaseNotes,
+          isPublic: true,
+          uploadedBy: ctx.user.id,
+        });
+
+        return { success: true, buildId: build.insertId, downloadUrl: url };
+      }),
+
+    getAllBuilds: publicProcedure.query(async () => {
+      const db_instance = await getDb();
+      if (!db_instance) throw new Error("Database not available");
+      const { appBuilds } = await import("../drizzle/schema");
+      const { desc } = await import("drizzle-orm");
+
+      const builds = await db_instance.select().from(appBuilds).orderBy(desc(appBuilds.createdAt));
+      return builds;
+    }),
+
+    getLatestBuilds: publicProcedure.query(async () => {
+      const db_instance = await getDb();
+      if (!db_instance) throw new Error("Database not available");
+      const { appBuilds } = await import("../drizzle/schema");
+      const { desc, eq } = await import("drizzle-orm");
+
+      const iosBuilds = await db_instance.select().from(appBuilds)
+        .where(eq(appBuilds.platform, 'ios'))
+        .orderBy(desc(appBuilds.createdAt))
+        .limit(1);
+      
+      const androidBuilds = await db_instance.select().from(appBuilds)
+        .where(eq(appBuilds.platform, 'android'))
+        .orderBy(desc(appBuilds.createdAt))
+        .limit(1);
+
+      return {
+        ios: iosBuilds[0] || null,
+        android: androidBuilds[0] || null,
+      };
+    }),
+
+    incrementDownload: publicProcedure
+      .input(z.object({ buildId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db_instance = await getDb();
+        if (!db_instance) throw new Error("Database not available");
+        const { appBuilds } = await import("../drizzle/schema");
+        const { eq, sql } = await import("drizzle-orm");
+
+        await db_instance.update(appBuilds)
+          .set({ downloadCount: sql`download_count + 1` })
+          .where(eq(appBuilds.id, input.buildId));
+
+        return { success: true };
+      }),
+
+    deleteBuild: protectedProcedure
+      .input(z.object({ buildId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Only admin can delete builds
+        if (ctx.user.id !== 1) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Only admins can delete builds' });
+        }
+
+        const db_instance = await getDb();
+        if (!db_instance) throw new Error("Database not available");
+        const { appBuilds } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+
+        await db_instance.delete(appBuilds).where(eq(appBuilds.id, input.buildId));
+        return { success: true };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

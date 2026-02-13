@@ -382,3 +382,12 @@
 - [x] Generate iOS and Android project files
 - [x] Create build and deployment instructions document
 - [x] Create app installation info page at /app-info
+- [x] Add Firebase configuration guide for push notifications
+- [x] Create Firebase setup instructions for iOS and Android
+- [x] Generate iOS app store screenshots (1290x2796)
+- [x] Generate Android Play Store screenshots (1080x1920)
+- [x] Create app build upload page for uploading iOS (.ipa) and Android (.aab) builds from website
+- [x] Add build management dashboard showing uploaded builds with download links
+- [x] Implement build file storage and metadata tracking in database
+- [x] Add build version tracking and release notes
+- [x] Create public download page for app builds
