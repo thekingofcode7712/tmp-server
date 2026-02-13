@@ -338,3 +338,6 @@
 - [x] Add weekly and monthly leaderboard periods
 - [x] Implement power-up activation system for purchased items
 - [ ] Add visual effects for active power-ups in games
+- [ ] Integrate power-ups into game mechanics with visual effects
+- [ ] Implement Bits earning system - award Bits based on game scores
+- [ ] Create automatic prize distribution for weekly/monthly leaderboard winners

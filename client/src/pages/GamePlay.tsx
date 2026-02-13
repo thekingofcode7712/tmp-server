@@ -12,6 +12,8 @@ export default function GamePlay() {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [challengeScore, setChallengeScore] = useState<number | null>(null);
+  const [activePowerUps, setActivePowerUps] = useState<any[]>([]);
+  const [scoreMultiplier, setScoreMultiplier] = useState(1);
   
   // Detect challenge parameter
   useEffect(() => {
@@ -46,6 +48,8 @@ export default function GamePlay() {
     },
   });
 
+  const { data: powerUps } = trpc.powerups.getActive.useQuery();
+  
   const submitScoreMutation = trpc.games.submitScore.useMutation({
     onSuccess: () => {
       toast.success("Score submitted!");
@@ -53,6 +57,16 @@ export default function GamePlay() {
       checkAchievementsMutation.mutate();
     },
   });
+  
+  // Load active power-ups
+  useEffect(() => {
+    if (powerUps) {
+      setActivePowerUps(powerUps);
+      // Apply score multiplier if Score Multiplier boost is active
+      const hasScoreMultiplier = powerUps.some((p: any) => p.powerUpType === 'score_multiplier');
+      setScoreMultiplier(hasScoreMultiplier ? 1.5 : 1);
+    }
+  }, [powerUps]);
 
   const handleScoreUpdate = (newScore: number) => {
     setScore(newScore);
@@ -61,10 +75,22 @@ export default function GamePlay() {
   const handleGameOver = (finalScore: number) => {
     setGameOver(true);
     if (finalScore > 0 && gameName) {
+      // Apply score multiplier and award Bits
+      const adjustedScore = Math.floor(finalScore * scoreMultiplier);
+      const bitsEarned = Math.floor(adjustedScore / 100);
+      
       submitScoreMutation.mutate({
         gameName,
-        score: finalScore,
+        score: adjustedScore,
+        bitsEarned,
       });
+      
+      if (bitsEarned > 0) {
+        toast.success(`+${bitsEarned} Bits earned!`, {
+          description: `Score: ${adjustedScore}${scoreMultiplier > 1 ? ' (with multiplier)' : ''}`,
+          duration: 4000,
+        });
+      }
       
       // Check if challenge was beaten
       if (challengeScore && finalScore > challengeScore) {

@@ -1082,6 +1082,7 @@ export const appRouter = router({
         score: z.number(),
         level: z.number().optional(),
         duration: z.number().optional(),
+        bitsEarned: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         await db.createGameScore({
@@ -1091,6 +1092,16 @@ export const appRouter = router({
           level: input.level,
           duration: input.duration,
         });
+        
+        if (input.bitsEarned && input.bitsEarned > 0) {
+          const db_instance = await db.getDb();
+          if (db_instance) {
+            const { users } = await import('../drizzle/schema');
+            const { eq } = await import('drizzle-orm');
+            await db_instance.update(users).set({ bitsBalance: ctx.user.bitsBalance + input.bitsEarned }).where(eq(users.id, ctx.user.id));
+          }
+        }
+        
         return { success: true };
       }),
     
@@ -2705,6 +2716,84 @@ export const appRouter = router({
         });
 
         return { checkoutUrl: session.url };
+      }),
+    distributePrizes: protectedProcedure
+      .input(z.object({ period: z.enum(["weekly", "monthly"]) }))
+      .mutation(async ({ ctx, input }) => {
+        const db_instance = await db.getDb();
+        if (!db_instance) return { success: false };
+        
+        const { gameScores, users } = await import('../drizzle/schema');
+        const { desc, gte, and, eq } = await import('drizzle-orm');
+        
+        const games = [
+          "snake", "tetris", "pong", "2048", "memory", "tictactoe", "connect4",
+          "minesweeper", "flappybird", "breakout", "spaceinvaders", "sudoku",
+          "trivia", "puzzle", "pacman", "racing", "platformer", "solitaire",
+          "chess", "checkers"
+        ];
+        
+        // Prize distribution: 1st = 500 AI Credits, 2nd = 300, 3rd = 100
+        const prizes = [500, 300, 100];
+        
+        for (const game of games) {
+          let query = db_instance
+            .select({
+              userId: gameScores.userId,
+              score: gameScores.score,
+            })
+            .from(gameScores)
+            .where(eq(gameScores.gameName, game))
+            .orderBy(desc(gameScores.score))
+            .limit(3);
+          
+          if (input.period === "weekly") {
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            query = db_instance
+              .select({
+                userId: gameScores.userId,
+                score: gameScores.score,
+              })
+              .from(gameScores)
+              .where(and(
+                eq(gameScores.gameName, game),
+                gte(gameScores.createdAt, weekAgo)
+              ))
+              .orderBy(desc(gameScores.score))
+              .limit(3);
+          } else if (input.period === "monthly") {
+            const monthAgo = new Date();
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            query = db_instance
+              .select({
+                userId: gameScores.userId,
+                score: gameScores.score,
+              })
+              .from(gameScores)
+              .where(and(
+                eq(gameScores.gameName, game),
+                gte(gameScores.createdAt, monthAgo)
+              ))
+              .orderBy(desc(gameScores.score))
+              .limit(3);
+          }
+          
+          const topScores = await query;
+          
+          // Award prizes to top 3
+          for (let i = 0; i < topScores.length && i < 3; i++) {
+            const winner = topScores[i];
+            const prize = prizes[i];
+            
+            const { sql } = await import('drizzle-orm');
+            await db_instance.update(users)
+              .set({ aiCredits: sql`${users.aiCredits} + ${prize}` })
+              .where(eq(users.id, winner.userId));
+          }
+        }
+        
+        return { success: true, message: "Prizes distributed!" };
       }),
   }),
 });

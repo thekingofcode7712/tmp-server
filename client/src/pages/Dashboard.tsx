@@ -1,4 +1,3 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,13 +9,20 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
-  const { user, loading, isAuthenticated, logout } = useAuth();
   const [, setLocation] = useLocation();
-  const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery(undefined, {
-    enabled: isAuthenticated,
+  const { data: user, isLoading: userLoading } = trpc.auth.me.useQuery();
+  const { data: stats, isLoading: statsLoading } = trpc.dashboard.stats.useQuery();
+  const logout = trpc.auth.logout.useMutation({
+    onSuccess: () => {
+      window.location.href = '/login';
+    },
   });
+
+  const isAuthenticated = !!user;
+  const loading = userLoading;
 
   if (loading) {
     return (
@@ -84,7 +90,7 @@ export default function Dashboard() {
                   <Settings className="h-5 w-5" />
                 </Button>
               </Link>
-              <Button variant="ghost" size="icon" onClick={() => logout()}>
+              <Button variant="ghost" size="icon" onClick={() => logout.mutate()}>
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>
@@ -217,25 +223,30 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Menu Selection */}
+        {/* Menu Selection - Manus Style Grid */}
         <Card className="border-primary/20 shadow-lg">
           <CardHeader>
-            <CardTitle>Navigate to Feature</CardTitle>
-            <CardDescription>Select a feature to access from the dropdown below</CardDescription>
+            <CardTitle>Quick Access Menu</CardTitle>
+            <CardDescription>Click on any feature to navigate</CardDescription>
           </CardHeader>
           <CardContent>
-            <select
-              onChange={(e) => e.target.value && setLocation(e.target.value)}
-              className="w-full p-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              defaultValue=""
-            >
-              <option value="" disabled>Select a feature...</option>
-              {menuItems.map((item) => (
-                <option key={item.path} value={item.path}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+              {menuItems.map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => setLocation(item.path)}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
+                  >
+                    <IconComponent className={`h-6 w-6 ${item.color} group-hover:scale-110 transition-transform`} />
+                    <span className="text-xs font-medium text-center text-muted-foreground group-hover:text-foreground transition-colors">
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       </div>
