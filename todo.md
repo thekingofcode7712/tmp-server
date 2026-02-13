@@ -233,3 +233,19 @@
 - [x] Frontend shows seamless progress for entire file (not per chunk)
 - [x] Files >50MB automatically use chunked upload, <50MB use direct upload
 - [ ] Manual testing required: Upload 300MB+ files to verify system works end-to-end
+
+### Drag-and-Drop Upload
+- [x] Add drag-and-drop zone to storage page
+- [x] Show visual feedback when dragging files over the zone
+- [x] Support dropping multiple files at once
+- [x] Integrate with existing upload queue system
+- [x] Replaced old upload button with integrated drag-and-drop zone
+
+### File Compression
+- [x] Add compression option for large files before upload
+- [x] Use browser-based compression (pako library for gzip)
+- [x] Show compression progress and size reduction via toast notifications
+- [x] Compression toggle checkbox in drag-and-drop zone
+- [x] Only compress files >1MB and only if compression reduces size
+- [ ] Automatically decompress on download (future enhancement)
+- [ ] Store compression metadata in database (future enhancement)

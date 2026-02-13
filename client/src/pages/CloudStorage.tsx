@@ -14,6 +14,7 @@ import { useState, useRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { getMimeType } from "@/lib/mimeTypes";
+import pako from 'pako';
 
 export default function CloudStorage() {
   const { isAuthenticated } = useAuth();
@@ -46,6 +47,8 @@ export default function CloudStorage() {
   const [versionHistoryFileId, setVersionHistoryFileId] = useState<number | null>(null);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [moveToFolder, setMoveToFolder] = useState<string>('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [enableCompression, setEnableCompression] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
@@ -207,6 +210,29 @@ export default function CloudStorage() {
     });
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length > 0) {
+      handleFileSelect({ target: { files: droppedFiles } } as any);
+    }
+  };
+
   const isPreviewable = (mimeType: string | null) => {
     if (!mimeType) return false;
     return mimeType.startsWith('image/') || mimeType === 'application/pdf' || mimeType.startsWith('video/');
@@ -220,9 +246,32 @@ export default function CloudStorage() {
 
   const uploadFile = async (queueItem: { id: string; file: File }) => {
     try {
-      const mimeType = getMimeType(queueItem.file.name, queueItem.file.type);
+      let fileToUpload = queueItem.file;
+      let originalSize = queueItem.file.size;
+      let isCompressed = false;
+      
+      // Compress file if enabled and file is large enough (>1MB)
+      if (enableCompression && queueItem.file.size > 1024 * 1024) {
+        try {
+          const arrayBuffer = await queueItem.file.arrayBuffer();
+          const compressed = pako.gzip(new Uint8Array(arrayBuffer));
+          const compressedBlob = new Blob([compressed], { type: 'application/gzip' });
+          
+          // Only use compression if it actually reduces size
+          if (compressedBlob.size < queueItem.file.size) {
+            fileToUpload = new File([compressedBlob], queueItem.file.name + '.gz', { type: 'application/gzip' });
+            isCompressed = true;
+            toast.success(`Compressed ${queueItem.file.name}: ${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedBlob.size / 1024 / 1024).toFixed(2)}MB (${Math.round((1 - compressedBlob.size / originalSize) * 100)}% reduction)`);
+          }
+        } catch (err) {
+          console.error('Compression failed:', err);
+          toast.error('Compression failed, uploading uncompressed');
+        }
+      }
+      
+      const mimeType = getMimeType(fileToUpload.name, fileToUpload.type);
       const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB chunks
-      const isLargeFile = queueItem.file.size > CHUNK_SIZE;
+      const isLargeFile = fileToUpload.size > CHUNK_SIZE;
 
       // Update status to uploading
       setUploadQueue(prev => prev.map(item => 
@@ -235,20 +284,20 @@ export default function CloudStorage() {
         
         // Create chunk session
         const { sessionId } = await createChunkSessionMutation.mutateAsync({
-          fileName: queueItem.file.name,
-          fileSize: queueItem.file.size,
+          fileName: fileToUpload.name,
+          fileSize: fileToUpload.size,
           mimeType,
         });
 
         // Upload each chunk
         for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
           const start = chunkIndex * CHUNK_SIZE;
-          const end = Math.min(start + CHUNK_SIZE, queueItem.file.size);
-          const chunk = queueItem.file.slice(start, end);
+          const end = Math.min(start + CHUNK_SIZE, fileToUpload.size);
+          const chunk = fileToUpload.slice(start, end);
 
           // Get upload credentials for this chunk
           const { uploadUrl, authToken } = await getUploadCredsMutation.mutateAsync({
-            fileName: `${queueItem.file.name}.chunk${chunkIndex}`,
+            fileName: `${fileToUpload.name}.chunk${chunkIndex}`,
             fileSize: chunk.size,
             mimeType: 'application/octet-stream',
             folder: selectedFolder,
@@ -717,6 +766,52 @@ export default function CloudStorage() {
           </Card>
 
           <div className="md:col-span-3 space-y-6">
+            {/* Drag and Drop Zone */}
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                isDragging
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-card hover:border-primary/50'
+              }`}
+            >
+              <Upload className={`h-12 w-12 mx-auto mb-4 ${
+                isDragging ? 'text-primary' : 'text-muted-foreground'
+              }`} />
+              <h3 className="text-lg font-semibold mb-2">
+                {isDragging ? 'Drop files here' : 'Drag & drop files here'}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                or click the button below to browse
+              </p>
+              <Button onClick={() => fileInputRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload File
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <Checkbox
+                  id="compression"
+                  checked={enableCompression}
+                  onCheckedChange={(checked) => setEnableCompression(checked as boolean)}
+                />
+                <label
+                  htmlFor="compression"
+                  className="text-sm text-muted-foreground cursor-pointer"
+                >
+                  Compress large files (&gt;1MB) before upload
+                </label>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FolderOpen className="h-5 w-5 text-muted-foreground" />
@@ -755,17 +850,7 @@ export default function CloudStorage() {
                 </Button>
               </>
             )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-            <Button onClick={() => fileInputRef.current?.click()} disabled={uploadQueue.some(item => item.status === 'uploading')}>
-              <Upload className="h-4 w-4 mr-2" />
-              {uploadQueue.some(item => item.status === 'uploading') ? "Uploading..." : "Upload File"}
-            </Button>
+
           </div>
         </div>
 
