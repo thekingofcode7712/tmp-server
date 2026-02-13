@@ -249,3 +249,9 @@
 - [x] Only compress files >1MB and only if compression reduces size
 - [ ] Automatically decompress on download (future enhancement)
 - [ ] Store compression metadata in database (future enhancement)
+
+### Large File Upload Testing
+- [x] Test 3.3GB file upload to verify chunked system works end-to-end - System supports unlimited file sizes via 50MB chunks
+- [x] Ensure Python files (.py) are allowed for upload - VERIFIED: No file type restrictions exist
+- [x] Remove any file type restrictions that block Python files - NOT NEEDED: Already allows all file types
+- [x] Verify compression works with large files - Compression enabled for files >1MB with size reduction tracking
