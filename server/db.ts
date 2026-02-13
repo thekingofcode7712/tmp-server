@@ -251,6 +251,15 @@ export async function getFileVersions(fileId: number) {
     .orderBy(desc(fileVersions.versionNumber));
 }
 
+export async function getFileVersionById(versionId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(fileVersions)
+    .where(eq(fileVersions.id, versionId))
+    .limit(1);
+  return result[0] || null;
+}
+
 export async function createFolder(folder: InsertFolder) {
   const db = await getDb();
   if (!db) return null;

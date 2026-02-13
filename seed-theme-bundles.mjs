@@ -43,8 +43,8 @@ const bundles = [
     name: 'All Themes Bundle',
     description: `Unlock all ${allThemes.length} premium themes! Get every color scheme and save over 70%.`,
     themeIds: allThemeIds,
-    price: 2500, // £25
-    savings: allThemes.length * 300 - 2500, // Save £44+ (normally £69 for 23 themes)
+    price: 4499, // £44.99
+    savings: allThemes.length * 300 - 4499, // Save £24+ (normally £69 for 23 themes)
   },
 ];
 

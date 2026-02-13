@@ -92,9 +92,13 @@ export default function CloudStorage() {
 
   const restoreVersionMutation = trpc.storage.restoreFileVersion.useMutation({
     onSuccess: () => {
-      toast.success("Version restored!");
+      toast.success("File restored to previous version!");
       utils.storage.getFiles.invalidate();
+      utils.storage.getFileVersions.invalidate();
       setShowVersionHistory(false);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to restore version");
     },
   });
 
@@ -1174,7 +1178,7 @@ export default function CloudStorage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => restoreVersionMutation.mutate({ fileId: versionHistoryFileId!, versionNumber: version.versionNumber })}
+                          onClick={() => restoreVersionMutation.mutate({ fileId: versionHistoryFileId!, versionId: version.id })}
                           disabled={restoreVersionMutation.isPending}
                         >
                           {restoreVersionMutation.isPending ? "Restoring..." : "Restore"}

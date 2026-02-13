@@ -477,6 +477,58 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Get file version history
+    getFileVersions: protectedProcedure
+      .input(z.object({ fileId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const file = await db.getFileById(input.fileId);
+        if (!file || file.userId !== ctx.user.id) {
+          throw new Error("File not found");
+        }
+        return await db.getFileVersions(input.fileId);
+      }),
+
+    // Restore file to previous version
+    restoreFileVersion: protectedProcedure
+      .input(z.object({ 
+        fileId: z.number(),
+        versionId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const file = await db.getFileById(input.fileId);
+        if (!file || file.userId !== ctx.user.id) {
+          throw new Error("File not found");
+        }
+        
+        const version = await db.getFileVersionById(input.versionId);
+        if (!version || version.fileId !== input.fileId) {
+          throw new Error("Version not found");
+        }
+
+        // Create new version from current file before restoring
+        await db.createFileVersion({
+          fileId: input.fileId,
+          versionNumber: file.versionNumber,
+          fileName: file.fileName,
+          fileKey: file.fileKey,
+          fileUrl: file.fileUrl,
+          fileSize: file.fileSize,
+          mimeType: file.mimeType,
+        });
+
+        // Restore file to selected version
+        await db.updateFile(input.fileId, {
+          fileName: version.fileName,
+          fileKey: version.fileKey,
+          fileUrl: version.fileUrl,
+          fileSize: version.fileSize,
+          mimeType: version.mimeType,
+          versionNumber: file.versionNumber + 1,
+        });
+
+        return { success: true };
+      }),
+
     createShareLink: protectedProcedure
       .input(z.object({
         fileId: z.number(),
@@ -559,50 +611,7 @@ export const appRouter = router({
         if (!file) throw new Error("File not found");
 
         return { fileUrl: file.fileUrl };
-      }),
-
-    getFileVersions: protectedProcedure
-      .input(z.object({ fileId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getFileVersions(input.fileId);
-      }),
-
-    restoreFileVersion: protectedProcedure
-      .input(z.object({ fileId: z.number(), versionNumber: z.number() }))
-      .mutation(async ({ input, ctx }) => {
-        const versions = await db.getFileVersions(input.fileId);
-        const targetVersion = versions.find(v => v.versionNumber === input.versionNumber);
-        if (!targetVersion) throw new Error("Version not found");
-
-        const currentFile = await db.getFileById(input.fileId);
-        if (!currentFile || currentFile.userId !== ctx.user.id) {
-          throw new Error("File not found or unauthorized");
-        }
-
-        // Create version backup of current file
-        await db.createFileVersion({
-          fileId: input.fileId,
-          versionNumber: currentFile.versionNumber,
-          fileName: currentFile.fileName,
-          fileKey: currentFile.fileKey,
-          fileUrl: currentFile.fileUrl,
-          fileSize: currentFile.fileSize,
-          mimeType: currentFile.mimeType,
-        });
-
-        // Restore from version
-        await db.updateFile(input.fileId, {
-          fileName: targetVersion.fileName,
-          fileKey: targetVersion.fileKey,
-          fileUrl: targetVersion.fileUrl,
-          fileSize: targetVersion.fileSize,
-          mimeType: targetVersion.mimeType,
-          versionNumber: currentFile.versionNumber + 1,
-        });
-
-        return { success: true };
-      }),
-
+       }),
     searchFiles: protectedProcedure
       .input(z.object({
         searchTerm: z.string(),

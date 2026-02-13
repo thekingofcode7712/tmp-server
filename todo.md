@@ -255,3 +255,30 @@
 - [x] Ensure Python files (.py) are allowed for upload - VERIFIED: No file type restrictions exist
 - [x] Remove any file type restrictions that block Python files - NOT NEEDED: Already allows all file types
 - [x] Verify compression works with large files - Compression enabled for files >1MB with size reduction tracking
+
+### File Versioning UI
+- [ ] Display version history for each file in a dialog/modal
+- [ ] Show version number, upload date, file size, and uploader for each version
+- [ ] Add restore button to revert to previous version
+- [ ] Add compare functionality to view differences between versions
+- [ ] Highlight current/active version in version list
+
+### Bulk File Actions
+- [ ] Add select-all checkbox in file list header
+- [ ] Add individual checkboxes for each file
+- [ ] Show bulk action toolbar when files are selected
+- [ ] Implement bulk delete operation
+- [ ] Implement bulk move to folder operation
+- [ ] Implement bulk download as ZIP operation
+- [ ] Show selected file count in bulk action toolbar
+
+### Email Subscription Pricing
+- [x] Update email subscription prices to match storage subscription prices
+- [x] Ensure pricing consistency across all subscription tiers
+- [x] Updated: 50GB (£2.99), 100GB (£3.99), 200GB (£10.99), Unlimited (£100)
+- [x] Removed 25GB tier to match storage tiers
+
+### Theme Bundle Pricing Update
+- [x] Update "All Themes Bundle" price from £25 to £44.99
+- [x] Fix TypeScript duplicate property errors in routers.ts
+- [x] Updated database with new pricing
