@@ -498,6 +498,17 @@ export default function CloudStorage() {
     toast.info('Upload cancelled');
   };
 
+  const handleRetryUpload = (id: string) => {
+    const item = uploadQueue.find(i => i.id === id);
+    if (item) {
+      setUploadQueue(prev => prev.map(i => 
+        i.id === id ? { ...i, status: 'uploading' as const, progress: 0, error: undefined, startTime: Date.now() } : i
+      ));
+      uploadFile(item);
+      toast.info('Retrying upload...');
+    }
+  };
+
   const generateThumbnail = (file: File): Promise<string | undefined> => {
     return new Promise((resolve) => {
       if (file.type.startsWith('image/')) {
@@ -1000,6 +1011,18 @@ export default function CloudStorage() {
                           >
                             <span className="sr-only">Resume</span>
                             ▶
+                          </Button>
+                        )}
+                        {item.status === 'error' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-blue-500 hover:text-blue-600"
+                            onClick={() => handleRetryUpload(item.id)}
+                            title="Retry upload"
+                          >
+                            <span className="sr-only">Retry</span>
+                            ↻
                           </Button>
                         )}
                         {(item.status === 'uploading' || item.status === 'paused' || item.status === 'pending') && (

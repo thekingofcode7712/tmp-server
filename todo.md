@@ -408,6 +408,6 @@
 - [x] Implement pause/resume upload functionality for ongoing uploads - now actually pauses and resumes
 - [x] Add duplicate file detection with warnings before uploading
 - [ ] Add upload speed and time remaining display
-- [ ] Implement selective file retry for failed uploads
+- [x] Implement selective file retry for failed uploads
 - [ ] Add upload history and logs display
 - [x] Make AI credits and bits balance infinite on dashboard
