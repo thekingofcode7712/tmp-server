@@ -404,3 +404,6 @@
 - [x] Remove file upload limit to allow unlimited simultaneous file uploads
 - [x] Add "Upload All" folder button - Allow users to drag entire folders and upload all contents recursively
 - [x] Fix 300+ photo upload failure - implemented batched uploads (50 files at a time) to prevent browser overload
+- [x] Add upload progress indicator showing batch progress and overall completion percentage
+- [x] Implement pause/resume upload functionality for ongoing uploads - now actually pauses and resumes
+- [x] Add duplicate file detection with warnings before uploading

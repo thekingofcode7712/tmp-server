@@ -49,6 +49,7 @@ export default function CloudStorage() {
   const [moveToFolder, setMoveToFolder] = useState<string>('');
   const [isDragging, setIsDragging] = useState(false);
   const [enableCompression, setEnableCompression] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
@@ -296,6 +297,11 @@ export default function CloudStorage() {
 
         // Upload each chunk
         for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+          // Check if upload is paused
+          const currentItem = uploadQueue.find(item => item.id === queueItem.id);
+          if (currentItem?.status === 'paused') {
+            return; // Stop uploading if paused
+          }
           const start = chunkIndex * CHUNK_SIZE;
           const end = Math.min(start + CHUNK_SIZE, fileToUpload.size);
           const chunk = fileToUpload.slice(start, end);
@@ -383,6 +389,13 @@ export default function CloudStorage() {
 
         const fileUrl = await new Promise<string>((resolve, reject) => {
           xhr.upload.onprogress = (e) => {
+            // Check if paused during upload
+            const currentItem = uploadQueue.find(item => item.id === queueItem.id);
+            if (currentItem?.status === 'paused') {
+              xhr.abort();
+              reject(new Error('Upload paused'));
+              return;
+            }
             if (e.lengthComputable) {
               const progress = (e.loaded / e.total) * 90;
               setUploadQueue(prev => prev.map(item => 
@@ -463,7 +476,11 @@ export default function CloudStorage() {
   const handleResumeUpload = (id: string) => {
     const item = uploadQueue.find(i => i.id === id);
     if (item) {
+      setUploadQueue(prev => prev.map(i => 
+        i.id === id ? { ...i, status: 'uploading' as const } : i
+      ));
       uploadFile(item);
+      toast.info('Upload resumed');
     }
   };
 
@@ -517,6 +534,17 @@ export default function CloudStorage() {
       // Extract folder name from first file's path
       const folderName = (files[0] as any).webkitRelativePath.split('/')[0];
       toast.info(`Uploading folder "${folderName}" with ${files.length} file(s)`);
+    }
+
+    // Check for duplicates
+    const duplicates = files.filter(file => 
+      files && files.some(existing => existing.name === file.name && existing.size === file.size)
+    );
+    
+    if (duplicates.length > 0) {
+      const duplicateNames = duplicates.slice(0, 3).map(f => f.name).join(', ');
+      const moreCount = duplicates.length > 3 ? ` +${duplicates.length - 3} more` : '';
+      toast.warning(`Found ${duplicates.length} duplicate file(s): ${duplicateNames}${moreCount}`);
     }
 
     // Add all files to queue with thumbnails
@@ -893,6 +921,15 @@ export default function CloudStorage() {
               <CardDescription>
                 {uploadQueue.filter(item => item.status === 'completed').length} of {uploadQueue.length} files uploaded
               </CardDescription>
+              {isUploading && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">Overall Progress</span>
+                    <span className="text-muted-foreground">{Math.round((uploadQueue.filter(item => item.status === 'completed').length / uploadQueue.length) * 100)}%</span>
+                  </div>
+                  <Progress value={(uploadQueue.filter(item => item.status === 'completed').length / uploadQueue.length) * 100} className="h-2" />
+                </div>
+              )}
             </CardHeader>
             <CardContent className="space-y-3">
               {uploadQueue.map(item => (
