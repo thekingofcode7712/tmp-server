@@ -533,8 +533,12 @@ export default function CloudStorage() {
       toast.info(`Added ${files.length} file(s) to upload queue`);
     }
 
-    // Start uploading all files simultaneously (no limit)
-    await Promise.all(newQueueItems.map(item => uploadFile(item)));
+    // Upload files in batches of 50 to prevent browser overload
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < newQueueItems.length; i += BATCH_SIZE) {
+      const batch = newQueueItems.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(item => uploadFile(item)));
+    }
 
     // Reset both file inputs
     if (fileInputRef.current) {

@@ -403,3 +403,4 @@
 - [ ] Test Android build on device
 - [x] Remove file upload limit to allow unlimited simultaneous file uploads
 - [x] Add "Upload All" folder button - Allow users to drag entire folders and upload all contents recursively
+- [x] Fix 300+ photo upload failure - implemented batched uploads (50 files at a time) to prevent browser overload
