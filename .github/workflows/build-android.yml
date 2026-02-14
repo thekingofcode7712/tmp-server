@@ -1,4 +1,4 @@
-name: Build Android App (Final Fix)
+name: Build Android App (Init Script Fix)
 
 on:
   workflow_dispatch:
@@ -34,24 +34,26 @@ jobs:
       - name: Sync Capacitor
         run: pnpm exec cap sync android
       
-      - name: Apply Gradle fix for bcprov issue
+      - name: Create Gradle init script to fix bcprov
         run: |
-          cat >> android/build.gradle << 'EOF'
-          
-          // Force bcprov resolution to avoid jar creation issues
-          configurations.all {
-              resolutionStrategy {
-                  force 'org.bouncycastle:bcprov-jdk15on:1.70'
-                  eachDependency { details ->
-                      if (details.requested.group == 'org.bouncycastle' && details.requested.name == 'bcprov-jdk18on') {
-                          details.useVersion '1.70'
-                          details.because 'Avoid bcprov-jdk18on jar creation issues'
+          mkdir -p ~/.gradle/init.d
+          cat > ~/.gradle/init.d/fix-bcprov.gradle << 'EOF'
+          allprojects {
+              configurations.all {
+                  resolutionStrategy {
+                      eachDependency { DependencyResolveDetails details ->
+                          if (details.requested.group == 'org.bouncycastle') {
+                              if (details.requested.name.startsWith('bcprov-jdk')) {
+                                  details.useTarget group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.70'
+                                  details.because 'Replace all bcprov variants with stable 1.70 version'
+                              }
+                          }
                       }
                   }
               }
           }
           EOF
-          cat android/build.gradle
+          cat ~/.gradle/init.d/fix-bcprov.gradle
       
       - name: Clear Gradle caches
         run: |
@@ -62,7 +64,7 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew clean bundleRelease --no-daemon --no-configuration-cache --stacktrace --info 2>&1 | tee build.log
+          ./gradlew clean bundleRelease --no-daemon --stacktrace
       
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
@@ -72,10 +74,12 @@ jobs:
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
       
-      - name: Upload build logs
+      - name: Upload build logs on failure
         uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
           name: build-logs
-          path: android/build.log
+          path: |
+            android/app/build/outputs/logs/
+            ~/.gradle/daemon/*/daemon-*.out.log
           retention-days: 7
