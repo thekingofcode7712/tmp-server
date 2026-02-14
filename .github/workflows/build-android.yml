@@ -1,4 +1,4 @@
-name: Build Android App (Init Script Fix)
+name: Build Android App (No Config Cache)
 
 on:
   workflow_dispatch:
@@ -34,37 +34,37 @@ jobs:
       - name: Sync Capacitor
         run: pnpm exec cap sync android
       
-      - name: Create Gradle init script to fix bcprov
+      - name: Disable Gradle configuration cache
         run: |
-          mkdir -p ~/.gradle/init.d
-          cat > ~/.gradle/init.d/fix-bcprov.gradle << 'EOF'
-          allprojects {
-              configurations.all {
-                  resolutionStrategy {
-                      eachDependency { DependencyResolveDetails details ->
-                          if (details.requested.group == 'org.bouncycastle') {
-                              if (details.requested.name.startsWith('bcprov-jdk')) {
-                                  details.useTarget group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.70'
-                                  details.because 'Replace all bcprov variants with stable 1.70 version'
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-          EOF
-          cat ~/.gradle/init.d/fix-bcprov.gradle
+          echo "org.gradle.configuration-cache=false" >> android/gradle.properties
+          echo "org.gradle.caching=false" >> android/gradle.properties
+          cat android/gradle.properties
       
-      - name: Clear Gradle caches
-        run: |
-          rm -rf ~/.gradle/caches/
-          rm -rf ~/.gradle/daemon/
-      
-      - name: Build Android App Bundle
+      - name: Pre-download all dependencies
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew clean bundleRelease --no-daemon --stacktrace
+          ./gradlew dependencies --no-daemon --no-configuration-cache || true
+      
+      - name: Clear problematic caches
+        run: |
+          rm -rf ~/.gradle/caches/jars-9/
+          rm -rf ~/.gradle/caches/transforms-3/
+      
+      - name: Build Android App Bundle (with retries)
+        run: |
+          cd android
+          for i in 1 2 3; do
+            echo "Build attempt $i"
+            if ./gradlew clean bundleRelease --no-daemon --no-configuration-cache --no-build-cache --refresh-dependencies --stacktrace; then
+              echo "Build succeeded on attempt $i"
+              exit 0
+            fi
+            echo "Build failed on attempt $i, clearing caches..."
+            rm -rf ~/.gradle/caches/jars-9/
+            sleep 5
+          done
+          exit 1
       
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
@@ -73,13 +73,3 @@ jobs:
           name: app-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
-      
-      - name: Upload build logs on failure
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: build-logs
-          path: |
-            android/app/build/outputs/logs/
-            ~/.gradle/daemon/*/daemon-*.out.log
-          retention-days: 7
