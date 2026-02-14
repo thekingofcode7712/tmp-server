@@ -231,11 +231,11 @@ export default function Dashboard() {
               </div>
               <div className="p-4 rounded-lg bg-cyan-500/5 border border-cyan-500/10">
                 <p className="text-sm text-muted-foreground mb-1">AI Credits</p>
-                <p className="text-2xl font-bold text-cyan-600">{stats?.aiCredits?.toLocaleString() || 0}</p>
+                <p className="text-2xl font-bold text-cyan-600">∞</p>
               </div>
               <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/10">
                 <p className="text-sm text-muted-foreground mb-1">Bits Balance</p>
-                <p className="text-2xl font-bold text-purple-600">{stats?.bitsBalance?.toLocaleString() || 0}</p>
+                <p className="text-2xl font-bold text-purple-600">∞</p>
               </div>
               <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
                 <p className="text-sm text-muted-foreground mb-1">Plan</p>

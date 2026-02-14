@@ -29,6 +29,10 @@ export default function CloudStorage() {
     error?: string;
     thumbnail?: string;
     xhr?: XMLHttpRequest;
+    uploadSpeed?: number;
+    timeRemaining?: number;
+    uploadedBytes?: number;
+    startTime?: number;
   }>>([]);
   const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "date-asc" | "date-desc" | "size-asc" | "size-desc">("date-desc");
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
@@ -554,6 +558,7 @@ export default function CloudStorage() {
       progress: 0,
       status: 'pending' as const,
       thumbnail: await generateThumbnail(file),
+      startTime: Date.now(),
     })));
 
     setUploadQueue(prev => [...prev, ...newQueueItems]);
