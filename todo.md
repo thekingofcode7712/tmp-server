@@ -402,3 +402,4 @@
 - [ ] Generate signed .aab file (requires local Android Studio)
 - [ ] Test Android build on device
 - [x] Remove file upload limit to allow unlimited simultaneous file uploads
+- [x] Add "Upload All" folder button - Allow users to drag entire folders and upload all contents recursively

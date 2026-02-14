@@ -50,6 +50,7 @@ export default function CloudStorage() {
   const [isDragging, setIsDragging] = useState(false);
   const [enableCompression, setEnableCompression] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
   const utils = trpc.useUtils();
 
   const { data: files, isLoading } = trpc.storage.getFiles.useQuery(
@@ -509,6 +510,15 @@ export default function CloudStorage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    // Detect if this is a folder upload by checking webkitRelativePath
+    const isFolder = files.some(f => (f as any).webkitRelativePath);
+    
+    if (isFolder) {
+      // Extract folder name from first file's path
+      const folderName = (files[0] as any).webkitRelativePath.split('/')[0];
+      toast.info(`Uploading folder "${folderName}" with ${files.length} file(s)`);
+    }
+
     // Add all files to queue with thumbnails
     const newQueueItems = await Promise.all(files.map(async (file) => ({
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -519,14 +529,19 @@ export default function CloudStorage() {
     })));
 
     setUploadQueue(prev => [...prev, ...newQueueItems]);
-    toast.info(`Added ${files.length} file(s) to upload queue`);
+    if (!isFolder) {
+      toast.info(`Added ${files.length} file(s) to upload queue`);
+    }
 
     // Start uploading all files simultaneously (no limit)
     await Promise.all(newQueueItems.map(item => uploadFile(item)));
 
-    // Reset file input
+    // Reset both file inputs
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+    if (folderInputRef.current) {
+      folderInputRef.current.value = '';
     }
   };
 
@@ -779,18 +794,32 @@ export default function CloudStorage() {
                 isDragging ? 'text-primary' : 'text-muted-foreground'
               }`} />
               <h3 className="text-lg font-semibold mb-2">
-                {isDragging ? 'Drop files here' : 'Drag & drop files here'}
+                {isDragging ? 'Drop files or folders here' : 'Drag & drop files or folders here'}
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                or click the button below to browse
+                or click the buttons below to browse
               </p>
-              <Button onClick={() => fileInputRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-2" />
-                Upload File
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Files
+                </Button>
+                <Button onClick={() => folderInputRef.current?.click()} variant="outline">
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Upload Folder
+                </Button>
+              </div>
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <input
+                ref={folderInputRef}
+                type="file"
+                {...({ webkitdirectory: '', directory: '' } as any)}
                 multiple
                 onChange={handleFileSelect}
                 className="hidden"
