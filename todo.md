@@ -401,3 +401,4 @@
 - [x] Create build guides and automation script
 - [ ] Generate signed .aab file (requires local Android Studio)
 - [ ] Test Android build on device
+- [x] Remove file upload limit to allow unlimited simultaneous file uploads

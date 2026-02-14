@@ -1,0 +1,81 @@
+name: Build Android App (Final Fix)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build web app
+        run: pnpm run build
+      
+      - name: Sync Capacitor
+        run: pnpm exec cap sync android
+      
+      - name: Apply Gradle fix for bcprov issue
+        run: |
+          cat >> android/build.gradle << 'EOF'
+          
+          // Force bcprov resolution to avoid jar creation issues
+          configurations.all {
+              resolutionStrategy {
+                  force 'org.bouncycastle:bcprov-jdk15on:1.70'
+                  eachDependency { details ->
+                      if (details.requested.group == 'org.bouncycastle' && details.requested.name == 'bcprov-jdk18on') {
+                          details.useVersion '1.70'
+                          details.because 'Avoid bcprov-jdk18on jar creation issues'
+                      }
+                  }
+              }
+          }
+          EOF
+          cat android/build.gradle
+      
+      - name: Clear Gradle caches
+        run: |
+          rm -rf ~/.gradle/caches/
+          rm -rf ~/.gradle/daemon/
+      
+      - name: Build Android App Bundle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew clean bundleRelease --no-daemon --no-configuration-cache --stacktrace --info 2>&1 | tee build.log
+      
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: app-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+      
+      - name: Upload build logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-logs
+          path: android/build.log
+          retention-days: 7
