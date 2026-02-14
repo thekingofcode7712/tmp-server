@@ -1,10 +1,7 @@
-name: Build Android App
+name: Build Android App (Fixed)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
   build:
@@ -37,23 +34,52 @@ jobs:
       - name: Sync Capacitor
         run: pnpm exec cap sync android
       
-      - name: Build Android App Bundle
+      - name: Clear Gradle caches
+        run: |
+          rm -rf ~/.gradle/caches/
+          rm -rf ~/.gradle/daemon/
+      
+      - name: Download bcprov jar manually
+        run: |
+          mkdir -p ~/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.79
+          cd ~/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.79
+          wget -q https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.79/bcprov-jdk18on-1.79.jar
+      
+      - name: Build Android Debug APK (for testing )
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew bundleRelease --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
+        continue-on-error: true
+      
+      - name: Build Android App Bundle
+        run: |
+          cd android
+          ./gradlew clean
+          ./gradlew bundleRelease --no-daemon --no-configuration-cache --stacktrace
       
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
+        if: success()
         with:
-          name: app-release
+          name: app-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
       
-      - name: Upload APK artifact (if exists)
+      - name: Upload Debug APK (if AAB fails)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: app-release-apk
-          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+      
+      - name: Upload build logs
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-logs
+          path: |
+            android/app/build/outputs/logs/
+            ~/.gradle/daemon/*/daemon-*.out.log
+          retention-days: 7
