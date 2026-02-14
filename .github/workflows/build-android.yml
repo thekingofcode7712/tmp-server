@@ -1,4 +1,4 @@
-name: Build Android App (Fixed)
+name: Build Android App (Final Fix)
 
 on:
   workflow_dispatch:
@@ -26,7 +26,7 @@ jobs:
         run: npm install -g pnpm
       
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
       
       - name: Build web app
         run: pnpm run build
@@ -34,29 +34,35 @@ jobs:
       - name: Sync Capacitor
         run: pnpm exec cap sync android
       
+      - name: Apply Gradle fix for bcprov issue
+        run: |
+          cat >> android/build.gradle << 'EOF'
+          
+          // Force bcprov resolution to avoid jar creation issues
+          configurations.all {
+              resolutionStrategy {
+                  force 'org.bouncycastle:bcprov-jdk15on:1.70'
+                  eachDependency { details ->
+                      if (details.requested.group == 'org.bouncycastle' && details.requested.name == 'bcprov-jdk18on') {
+                          details.useVersion '1.70'
+                          details.because 'Avoid bcprov-jdk18on jar creation issues'
+                      }
+                  }
+              }
+          }
+          EOF
+          cat android/build.gradle
+      
       - name: Clear Gradle caches
         run: |
           rm -rf ~/.gradle/caches/
           rm -rf ~/.gradle/daemon/
       
-      - name: Download bcprov jar manually
-        run: |
-          mkdir -p ~/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.79
-          cd ~/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.79
-          wget -q https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.79/bcprov-jdk18on-1.79.jar
-      
-      - name: Build Android Debug APK (for testing )
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
-        continue-on-error: true
-      
       - name: Build Android App Bundle
         run: |
           cd android
-          ./gradlew clean
-          ./gradlew bundleRelease --no-daemon --no-configuration-cache --stacktrace
+          chmod +x gradlew
+          ./gradlew clean bundleRelease --no-daemon --no-configuration-cache --stacktrace --info 2>&1 | tee build.log
       
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
@@ -66,20 +72,10 @@ jobs:
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
       
-      - name: Upload Debug APK (if AAB fails)
+      - name: Upload build logs
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: app-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
-      
-      - name: Upload build logs
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
           name: build-logs
-          path: |
-            android/app/build/outputs/logs/
-            ~/.gradle/daemon/*/daemon-*.out.log
+          path: android/build.log
           retention-days: 7
