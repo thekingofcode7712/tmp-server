@@ -45,7 +45,7 @@ jobs:
           cd ~/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.79
           wget -q https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.79/bcprov-jdk18on-1.79.jar
       
-      - name: Build Android Debug APK (for testing )
+      - name: Build Android Debug APK (for testing)
         run: |
           cd android
           chmod +x gradlew
