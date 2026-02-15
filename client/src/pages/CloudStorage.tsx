@@ -16,6 +16,15 @@ import { toast } from "sonner";
 import { getMimeType } from "@/lib/mimeTypes";
 import pako from 'pako';
 
+// Format file size to human-readable format
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+};
+
 export default function CloudStorage() {
   const { isAuthenticated } = useAuth();
   const [selectedFolder, setSelectedFolder] = useState("/");
@@ -509,6 +518,18 @@ export default function CloudStorage() {
     }
   };
 
+  const handleBulkRetry = () => {
+    const failedItems = uploadQueue.filter(item => item.status === 'error');
+    if (failedItems.length === 0) return;
+    setUploadQueue(prev => prev.map(item => 
+      item.status === 'error' 
+        ? { ...item, status: 'uploading' as const, progress: 0, error: undefined, startTime: Date.now() }
+        : item
+    ));
+    failedItems.forEach(item => uploadFile(item));
+    toast.info(`Retrying ${failedItems.length} failed uploads...`);
+  };
+
   const generateThumbnail = (file: File): Promise<string | undefined> => {
     return new Promise((resolve) => {
       if (file.type.startsWith('image/')) {
@@ -933,10 +954,25 @@ export default function CloudStorage() {
         {uploadQueue.length > 0 && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-lg">Upload Queue</CardTitle>
-              <CardDescription>
-                {uploadQueue.filter(item => item.status === 'completed').length} of {uploadQueue.length} files uploaded
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Upload Queue</CardTitle>
+                  <CardDescription>
+                    {uploadQueue.filter(item => item.status === 'completed').length} of {uploadQueue.length} files uploaded
+                  </CardDescription>
+                </div>
+                {uploadQueue.some(item => item.status === 'error') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkRetry}
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    <span className="mr-2">↻</span>
+                    Retry All Failed
+                  </Button>
+                )}
+              </div>
               {isUploading && (
                 <div className="mt-3 space-y-2">
                   <div className="flex items-center justify-between text-sm">
@@ -977,7 +1013,7 @@ export default function CloudStorage() {
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-muted-foreground">
-                            {(item.file.size / 1024 / 1024).toFixed(2)} MB
+                            {formatFileSize(item.file.size)}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {item.status === 'completed' && '• Done'}
