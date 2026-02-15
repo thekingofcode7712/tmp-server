@@ -45,6 +45,7 @@ import Login from "./pages/Login";
 import SharedFile from "./pages/SharedFile";
 import Activity from "./pages/Activity";
 import { useApplyPurchasedTheme } from "./hooks/useApplyPurchasedTheme";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 function Router() {
   return (
@@ -102,6 +103,7 @@ function App() {
       <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
+          <PWAInstallPrompt />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

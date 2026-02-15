@@ -413,3 +413,4 @@
 - [x] Make AI credits and bits balance infinite on dashboard
 - [x] Add bulk retry button to retry all failed uploads at once
 - [x] Add human-readable file size formatting (KB, MB, GB, TB) to upload queue
+- [x] Add Progressive Web App (PWA) with "Add to Home Screen" functionality
