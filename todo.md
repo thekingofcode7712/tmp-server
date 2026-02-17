@@ -452,3 +452,13 @@
 - [x] Remove all AWS SDK dependencies from server code
 - [x] Create comprehensive storage tests (all passing)
 - [x] Verify dev server runs without errors
+
+
+## Storage Optimization Phase 2
+
+- [x] Create S3-to-R2 migration job with progress tracking
+- [x] Build storage analytics dashboard UI with cost breakdown
+- [ ] Implement file lifecycle policies and auto-cleanup
+- [ ] Add storage analytics router to server
+- [ ] Create comprehensive tests for migration and analytics
+- [ ] Integrate migration job into scheduled tasks
