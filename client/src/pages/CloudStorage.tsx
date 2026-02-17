@@ -42,6 +42,8 @@ export default function CloudStorage() {
     timeRemaining?: number;
     uploadedBytes?: number;
     startTime?: number;
+    r2Cost?: number;
+    r2FileKey?: string;
   }>>([]);
   const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "date-asc" | "date-desc" | "size-asc" | "size-desc">("date-desc");
   const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
@@ -262,6 +264,10 @@ export default function CloudStorage() {
   const createChunkSessionMutation = trpc.storage.createChunkSession.useMutation();
   const registerChunkMutation = trpc.storage.registerChunk.useMutation();
   const combineChunksMutation = trpc.storage.combineChunks.useMutation();
+  
+  // R2 Storage mutations
+  const uploadFileR2Mutation = trpc.storage.uploadFileR2.useMutation();
+  const deleteFileR2Mutation = trpc.storage.deleteFileR2.useMutation();
 
   const uploadFile = async (queueItem: { id: string; file: File }) => {
     try {

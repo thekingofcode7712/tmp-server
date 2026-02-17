@@ -422,3 +422,23 @@
 - [ ] Add offline mode indicator showing connection status
 - [ ] Implement app update notifications with auto-update capability
 - [ ] Add app shortcuts for quick access to features from home screen
+
+## R2 Integration Phase 2
+
+- [x] Fix TypeScript router conflict in server/routers.ts
+- [x] Verify Cloudflare R2 integration with uploadToR2, getDownloadUrl, deleteFromR2 functions
+- [x] Add comprehensive test suite for R2 storage (16 passing tests)
+- [x] Create CloudStorage-R2.tsx component with R2 upload integration
+- [x] Implement R2 file upload with base64 encoding
+- [x] Add R2 cost tracking in upload queue
+- [x] Implement R2 file download with signed URLs
+- [x] Add file compression support for large files
+- [x] Create integration tests for CloudStorage R2 functionality (18 tests)
+- [ ] Migrate existing CloudStorage.tsx to use R2 endpoints
+- [ ] Update file download to use getDownloadUrlR2 for signed URLs
+- [ ] Add cost summary dashboard showing total R2 expenses
+- [ ] Implement batch file operations with R2 (delete, move)
+- [ ] Add file versioning support with R2 storage
+- [ ] Create migration script to move existing S3 files to R2
+- [ ] Test end-to-end upload/download workflow with R2
+- [ ] Add analytics tracking for R2 uploads and downloads
