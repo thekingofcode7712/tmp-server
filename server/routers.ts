@@ -7,13 +7,11 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
-import { storagePut } from "./storage";
-import { uploadToR2, getDownloadUrl, deleteFromR2, calculateStorageCost } from "./storage-r2";
+import { storagePut, storageGet, storageDelete, calculateStorageCost } from "./storage";
 import { nanoid } from "nanoid";
 import { executeCommand } from "./cli-executor";
 import { invokeLLM } from "./_core/llm";
 import { sendEmail as sendEmailSMTP, pollUserEmails } from "./email-service";
-import { storageGet } from "./storage";
 import AdmZip from 'adm-zip';
 import axios from 'axios';
 import { routeThroughProxy, getProxyConfig } from './proxy-service';
@@ -48,7 +46,7 @@ export const appRouter = router({
       // Check S3 storage
       try {
         // Storage is available if env vars are set
-        checks.storage = !!process.env.AWS_ACCESS_KEY_ID;
+        checks.storage = !!process.env.CLOUDFLARE_R2_BUCKET_NAME;
       } catch (error) {
         console.error('[Status] Storage check failed:', error);
       }
@@ -697,7 +695,7 @@ export const appRouter = router({
           const buffer = Buffer.from(input.fileData, 'base64');
           const fileKey = `${ctx.user.id}/${Date.now()}-${nanoid()}/${input.fileName}`;
           
-          const result = await uploadToR2(fileKey, buffer, input.contentType);
+          const result = await storagePut(fileKey, buffer, input.contentType);
           
           // Log upload for billing
           console.log(`[R2 Upload] User: ${ctx.user.id}, File: ${input.fileName}, Size: ${buffer.length} bytes, Cost: £${result.cost}`);
@@ -724,7 +722,7 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         try {
-          const url = await getDownloadUrl(input.fileKey);
+          const { url } = await storageGet(input.fileKey);
           return { success: true, url };
         } catch (error) {
           console.error('[R2 Download URL Error]:', error);
@@ -749,7 +747,7 @@ export const appRouter = router({
             });
           }
 
-          await deleteFromR2(input.fileKey);
+          await storageDelete(input.fileKey);
           console.log(`[R2 Delete] User: ${ctx.user.id}, File: ${input.fileKey}`);
           
           return { success: true, message: 'File deleted successfully' };
