@@ -35,5 +35,59 @@
       "type": "image/png",
       "form_factor": "wide"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cloud Storage",
+      "short_name": "Storage",
+      "description": "Access your cloud storage",
+      "url": "/storage",
+      "icons": [
+        {
+          "src": "https://files.manuscdn.com/user_upload_by_module/session_file/310519663345990379/CcQyubLGdoIVqsFG.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "AI Chat",
+      "short_name": "AI",
+      "description": "Chat with AI assistant",
+      "url": "/ai-chat",
+      "icons": [
+        {
+          "src": "https://files.manuscdn.com/user_upload_by_module/session_file/310519663345990379/CcQyubLGdoIVqsFG.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Games",
+      "short_name": "Games",
+      "description": "Play games and earn bits",
+      "url": "/games",
+      "icons": [
+        {
+          "src": "https://files.manuscdn.com/user_upload_by_module/session_file/310519663345990379/CcQyubLGdoIVqsFG.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Video Downloader",
+      "short_name": "Download",
+      "description": "Download videos from the web",
+      "url": "/video-downloader",
+      "icons": [
+        {
+          "src": "https://files.manuscdn.com/user_upload_by_module/session_file/310519663345990379/CcQyubLGdoIVqsFG.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }

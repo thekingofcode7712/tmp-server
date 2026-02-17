@@ -414,3 +414,11 @@
 - [x] Add bulk retry button to retry all failed uploads at once
 - [x] Add human-readable file size formatting (KB, MB, GB, TB) to upload queue
 - [x] Add Progressive Web App (PWA) with "Add to Home Screen" functionality
+- [ ] Add offline mode indicator showing connection status
+- [ ] Implement app update notifications with auto-update capability
+- [ ] Add app shortcuts for quick access to features from home screen
+- [x] Integrate Cloudflare R2 for cloud storage backend
+- [x] Implement dynamic pricing with £2 minimum profit guarantee per transaction
+- [ ] Add offline mode indicator showing connection status
+- [ ] Implement app update notifications with auto-update capability
+- [ ] Add app shortcuts for quick access to features from home screen

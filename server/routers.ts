@@ -8,6 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { storagePut } from "./storage";
+import { uploadToR2, getDownloadUrl, deleteFromR2, calculateStorageCost } from "./storage-r2";
 import { nanoid } from "nanoid";
 import { executeCommand } from "./cli-executor";
 import { invokeLLM } from "./_core/llm";
@@ -682,6 +683,97 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         await db.moveFileToFolder(input.fileId, input.newFolder, ctx.user.id);
         return { success: true };
+      }),
+
+    // Cloudflare R2 Storage Methods
+    uploadFileR2: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileData: z.string(), // base64 encoded
+        contentType: z.string().default('application/octet-stream'),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const buffer = Buffer.from(input.fileData, 'base64');
+          const fileKey = `${ctx.user.id}/${Date.now()}-${nanoid()}/${input.fileName}`;
+          
+          const result = await uploadToR2(fileKey, buffer, input.contentType);
+          
+          // Log upload for billing
+          console.log(`[R2 Upload] User: ${ctx.user.id}, File: ${input.fileName}, Size: ${buffer.length} bytes, Cost: £${result.cost}`);
+          
+          return {
+            success: true,
+            url: result.url,
+            key: result.key,
+            cost: result.cost,
+            message: `File uploaded successfully. Storage cost: £${result.cost}`,
+          };
+        } catch (error) {
+          console.error('[R2 Upload Error]:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to upload file to R2 storage',
+          });
+        }
+      }),
+
+    getDownloadUrlR2: protectedProcedure
+      .input(z.object({
+        fileKey: z.string(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const url = await getDownloadUrl(input.fileKey);
+          return { success: true, url };
+        } catch (error) {
+          console.error('[R2 Download URL Error]:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to generate download URL',
+          });
+        }
+      }),
+
+    deleteFileR2: protectedProcedure
+      .input(z.object({
+        fileKey: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          // Verify user owns the file
+          if (!input.fileKey.startsWith(ctx.user.id.toString())) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'You do not have permission to delete this file',
+            });
+          }
+
+          await deleteFromR2(input.fileKey);
+          console.log(`[R2 Delete] User: ${ctx.user.id}, File: ${input.fileKey}`);
+          
+          return { success: true, message: 'File deleted successfully' };
+        } catch (error) {
+          console.error('[R2 Delete Error]:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to delete file',
+          });
+        }
+      }),
+
+    calculateStorageCostR2: publicProcedure
+      .input(z.object({
+        fileSizeBytes: z.number().positive(),
+      }))
+      .query(({ input }) => {
+        const cost = calculateStorageCost(input.fileSizeBytes);
+        return {
+          fileSizeBytes: input.fileSizeBytes,
+          cost,
+          currency: 'GBP',
+          minProfitMargin: 2,
+        };
       }),
   }),
 
@@ -3047,4 +3139,5 @@ export const appRouter = router({
       }),
   }),
 });
+
 export type AppRouter = typeof appRouter;
