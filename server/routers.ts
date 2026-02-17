@@ -19,6 +19,7 @@ import { fetchFilterList, shouldBlockUrl, isKnownAdDomain, COMMON_AD_DOMAINS } f
 import { getOrCreateProxyCredentials, regenerateProxyCredentials } from './proxy-auth';
 import { storageAnalyticsRouter } from './routers/storage-analytics';
 import { themesRouter } from './routers/themes';
+import { customThemesRouter } from './routers/custom-themes';
 import { initializeScheduledMigration } from './jobs/scheduled-migration';
 
 export const appRouter = router({
@@ -2704,6 +2705,8 @@ export const appRouter = router({
         return { checkoutUrl: session.url };
       }),
   }),
+
+  customThemes: customThemesRouter,
 
   themes: router({
     getAll: publicProcedure.query(async () => {
