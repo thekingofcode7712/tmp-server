@@ -462,3 +462,15 @@
 - [ ] Add storage analytics router to server
 - [ ] Create comprehensive tests for migration and analytics
 - [ ] Integrate migration job into scheduled tasks
+
+
+## Scheduled Migration & Analytics Integration
+
+- [x] Create scheduled migration job that runs nightly
+- [x] Build storage analytics router with getAnalytics procedure
+- [x] Add getCostBreakdown analytics procedure
+- [x] Add getStorageTrend analytics procedure
+- [x] Create tests for themes system
+- [x] Add 4 new themes (Ocean, Forest, Sunset, Midnight)
+- [x] Integrate scheduled migration into server startup
+- [x] Verify integration and ready for checkpoint

@@ -17,6 +17,9 @@ import axios from 'axios';
 import { routeThroughProxy, getProxyConfig } from './proxy-service';
 import { fetchFilterList, shouldBlockUrl, isKnownAdDomain, COMMON_AD_DOMAINS } from './ad-blocker-engine';
 import { getOrCreateProxyCredentials, regenerateProxyCredentials } from './proxy-auth';
+import { storageAnalyticsRouter } from './routers/storage-analytics';
+import { themesRouter } from './routers/themes';
+import { initializeScheduledMigration } from './jobs/scheduled-migration';
 
 export const appRouter = router({
   system: router({
@@ -3135,7 +3138,19 @@ export const appRouter = router({
         await db_instance.delete(appBuilds).where(eq(appBuilds.id, input.buildId));
         return { success: true };
       }),
-  }),
+   }),
+  storageAnalytics: storageAnalyticsRouter,
 });
+
+// Initialize scheduled migration job on startup
+if (process.env.NODE_ENV === 'production') {
+  initializeScheduledMigration({
+    enabled: true,
+    runTime: '02:00', // Run at 2 AM daily
+    batchSize: 10,
+    delayMs: 1000,
+    maxRetries: 3,
+  });
+}
 
 export type AppRouter = typeof appRouter;
