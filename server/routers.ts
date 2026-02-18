@@ -20,6 +20,7 @@ import { getOrCreateProxyCredentials, regenerateProxyCredentials } from './proxy
 import { storageAnalyticsRouter } from './routers/storage-analytics';
 import { themesRouter } from './routers/themes';
 import { customThemesRouter } from './routers/custom-themes';
+import { customUISchemeRouter } from './routers/custom-ui-schemes';
 import { initializeScheduledMigration } from './jobs/scheduled-migration';
 
 export const appRouter = router({
@@ -1123,19 +1124,21 @@ export const appRouter = router({
     }),
     
     createStorageCheckout: protectedProcedure
-      .input(z.object({ tier: z.enum(['50gb', '100gb', '200gb', 'unlimited']) }))
+      .input(z.object({ tier: z.enum(['50gb', '100gb', '200gb', '500gb', '1tb', 'unlimited']) }))
       .mutation(async ({ ctx, input }) => {
         const Stripe = (await import('stripe')).default;
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
           apiVersion: '2026-01-28.clover',
         });
         
-        // Map tier to price and storage
+        // Map tier to price and storage - Flexible pricing: £2.50 + £1.50 per tier, special pricing for 500GB (£30) and 1TB (£64.99)
         const tierConfig = {
-          '50gb': { name: '50GB Email Storage', price: 299, storage: '50GB' },
-          '100gb': { name: '100GB Email Storage', price: 399, storage: '100GB' },
-          '200gb': { name: '200GB Email Storage', price: 1099, storage: '200GB' },
-          'unlimited': { name: 'Unlimited Email Storage', price: 10000, storage: 'Unlimited' },
+          '50gb': { name: '50GB Email Storage', price: 250, storage: '50GB' },
+          '100gb': { name: '100GB Email Storage', price: 400, storage: '100GB' },
+          '200gb': { name: '200GB Email Storage', price: 550, storage: '200GB' },
+          '500gb': { name: '500GB Email Storage', price: 3000, storage: '500GB' },
+          '1tb': { name: '1TB Email Storage', price: 6499, storage: '1TB' },
+          'unlimited': { name: 'Unlimited Email Storage', price: 9999, storage: 'Unlimited' },
         };
         
         const config = tierConfig[input.tier];
@@ -2707,6 +2710,8 @@ export const appRouter = router({
   }),
 
   customThemes: customThemesRouter,
+
+  customUISchemes: customUISchemeRouter,
 
   themes: router({
     getAll: publicProcedure.query(async () => {

@@ -485,3 +485,13 @@
 - [x] Create tests for analytics dashboard and paid themes (12/12 passing)
 - [x] Integrate customThemes router into main router
 - [x] Save checkpoint with all features complete
+
+
+## Custom UI Color Schemes & Flexible Pricing
+
+- [x] Update subscription pricing: Flexible starting at £2.50, +£1.50 per tier, 500GB=£30, 1TB=£64.99
+- [x] Create customUISchemes database table with color properties
+- [x] Build UI color scheme editor with hex color picker
+- [x] Integrate Stripe payment for custom UI schemes (£4.99 per scheme)
+- [x] Create tests for custom UI schemes and new pricing (18/18 passing)
+- [x] Save checkpoint with custom UI schemes complete
