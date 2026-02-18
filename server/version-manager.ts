@@ -17,26 +17,24 @@ export interface AppVersion {
 
 class VersionManager {
   private currentVersion: AppVersion;
-  private versionFile: string;
   private updateCheckInterval: NodeJS.Timeout | null = null;
 
   constructor() {
-    this.versionFile = path.join(process.cwd(), '.version.json');
     this.currentVersion = this.loadVersion();
     this.startAutoUpdate();
   }
 
   /**
-   * Load version from file or create new one
+   * Load version from environment or create new one
    */
   private loadVersion(): AppVersion {
     try {
-      if (fs.existsSync(this.versionFile)) {
-        const data = fs.readFileSync(this.versionFile, 'utf-8');
-        return JSON.parse(data);
+      const versionEnv = process.env.APP_VERSION;
+      if (versionEnv) {
+        return JSON.parse(versionEnv);
       }
     } catch (error) {
-      console.error('[VersionManager] Failed to load version file:', error);
+      console.error('[VersionManager] Failed to load version from env:', error);
     }
 
     // Create default version
@@ -75,11 +73,12 @@ class VersionManager {
   }
 
   /**
-   * Save version to file
+   * Save version to environment variable
    */
   private saveVersion(version: AppVersion): void {
     try {
-      fs.writeFileSync(this.versionFile, JSON.stringify(version, null, 2));
+      process.env.APP_VERSION = JSON.stringify(version);
+      console.log('[VersionManager] Version saved to environment');
     } catch (error) {
       console.error('[VersionManager] Failed to save version:', error);
     }

@@ -514,4 +514,6 @@
 - [x] Add update notification UI component
 - [x] Create tests for auto-update functionality (30/30 passing)
 - [x] Integrate version router into main router
-- [x] Save checkpoint with auto-update complete
+- [x] Fix deployment issue - migrate version manager to use environment variables
+- [x] Remove .version.json from git tracking
+- [x] Save checkpoint with auto-update complete and deployment fix
