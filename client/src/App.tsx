@@ -44,6 +44,11 @@ import AppBuildUpload from "./pages/AppBuildUpload";
 import Login from "./pages/Login";
 import SharedFile from "./pages/SharedFile";
 import Activity from "./pages/Activity";
+import ThemeSelector from "./pages/ThemeSelector";
+import CustomThemeEditor from "./pages/CustomThemeEditor";
+import CustomUISchemeEditor from "./pages/CustomUISchemeEditor";
+import StorageAnalyticsDashboard from "./pages/StorageAnalyticsDashboard";
+import InstallAsApp from "./pages/InstallAsApp";
 import { useApplyPurchasedTheme } from "./hooks/useApplyPurchasedTheme";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
@@ -85,8 +90,12 @@ function Router() {
       <Route path="/code-snippets" component={CodeSnippets} />
       <Route path="/admin" component={Admin} />
       <Route path="/themes" component={Themes} />
-      <Route path={"/checkout-success"} component={CheckoutSuccess} />
-      <Route path={"/terms"} component={TermsOfService} />
+      <Route path="/theme-selector" component={ThemeSelector} />
+      <Route path="/custom-theme-editor" component={CustomThemeEditor} />
+      <Route path="/custom-ui-schemes" component={CustomUISchemeEditor} />
+      <Route path="/storage-analytics" component={StorageAnalyticsDashboard} />
+      <Route path="/install-as-app" component={InstallAsApp} />
+      <Route path={"/ checkout-success"} component={CheckoutSuccess} />      <Route path={"/terms"} component={TermsOfService} />
       <Route path={"/privacy"} component={PrivacyPolicy} />
       <Route path={"/status"} component={Status} />
       <Route path={"/404"} component={NotFound} />
