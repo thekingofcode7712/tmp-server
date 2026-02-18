@@ -495,3 +495,23 @@
 - [x] Integrate Stripe payment for custom UI schemes (£4.99 per scheme)
 - [x] Create tests for custom UI schemes and new pricing (18/18 passing)
 - [x] Save checkpoint with custom UI schemes complete
+
+
+## Theme Selector UI with Live Preview
+
+- [x] Create theme selector page component with browsing and filtering
+- [x] Build live preview system showing theme colors in real-time
+- [x] Implement apply/save theme functionality with persistence
+- [x] Create PWA installation guide page (InstallAsApp.tsx)
+- [ ] Create tests for theme selector and preview system
+- [ ] Save checkpoint with theme selector complete
+
+
+## PWA Auto-Update Functionality
+
+- [x] Create version manager with aggressive cache update strategy
+- [x] Implement version checking endpoint on server (version router)
+- [x] Add update notification UI component
+- [x] Create tests for auto-update functionality (30/30 passing)
+- [x] Integrate version router into main router
+- [x] Save checkpoint with auto-update complete

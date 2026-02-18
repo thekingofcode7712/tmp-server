@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0-1771374088657",
+  "buildTime": 1771374088657,
+  "hash": "1771374088657-g0",
+  "features": [
+    "Cloud Storage with R2",
+    "Custom UI Themes",
+    "Email Storage",
+    "Analytics Dashboard",
+    "PWA Support"
+  ],
+  "breakingChanges": false
+}

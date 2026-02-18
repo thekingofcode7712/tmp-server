@@ -21,6 +21,7 @@ import { storageAnalyticsRouter } from './routers/storage-analytics';
 import { themesRouter } from './routers/themes';
 import { customThemesRouter } from './routers/custom-themes';
 import { customUISchemeRouter } from './routers/custom-ui-schemes';
+import { versionRouter } from './routers/version';
 import { initializeScheduledMigration } from './jobs/scheduled-migration';
 
 export const appRouter = router({
@@ -2712,6 +2713,7 @@ export const appRouter = router({
   customThemes: customThemesRouter,
 
   customUISchemes: customUISchemeRouter,
+  version: versionRouter,
 
   themes: router({
     getAll: publicProcedure.query(async () => {
